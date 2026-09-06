@@ -1,0 +1,152 @@
+
+###### Laravel
+
+# Dependencies
+/vendor/
+/node_modules/
+
+# Laravel
+.env
+.env.*
+!.env.example
+
+# Laravel storage
+/storage/*.key
+/storage/app/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+
+# Public generated files
+/public/hot
+/public/storage
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build files
+/public/build/
+/public/mix-manifest.json
+
+# PHPUnit
+.phpunit.result.cache
+.phpunit.cache/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Docker local overrides
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Environment / secrets
+*.pem
+*.key
+*.crt
+*.p12
+
+# Database dumps
+*.sql
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+
+
+###### react
+
+
+# Dependencies
+node_modules/
+
+# Build
+dist/
+build/
+.vite/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+
+# Testing
+playwright-report/
+test-results/
+
+# Local configuration
+docker-compose.override.yml
+
+# Secrets / certificates
+*.pem
+*.key
+*.crt
+*.p12
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Ignore all Markdown files
+*.md
+!README.md

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="smartpos-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="50%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+    <linearGradient id="smartpos-gloss" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+    </linearGradient>
+    <filter id="smartpos-shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#059669" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Container Squircle with shadow -->
+  <rect x="6" y="6" width="108" height="108" rx="30" fill="url(#smartpos-bg)" filter="url(#smartpos-shadow)" />
+  
+  <!-- Subtle Top Highlight -->
+  <rect x="7" y="7" width="106" height="54" rx="29" fill="url(#smartpos-gloss)" />
+
+  <!-- Smart POS Terminal Screen Body -->
+  <path d="M34 40C34 35.5817 37.5817 32 42 32H78C82.4183 32 86 35.5817 86 40V78C86 82.4183 82.4183 86 78 86H42C37.5817 86 34 82.4183 34 78V40Z" fill="#ffffff" />
+  
+  <!-- Terminal Screen Inner Bezel -->
+  <rect x="41" y="39" width="38" height="26" rx="4" fill="#0f172a" />
+  
+  <!-- Screen Display Data lines -->
+  <rect x="46" y="45" width="18" height="3" rx="1.5" fill="#34d399" />
+  <rect x="46" y="52" width="28" height="3" rx="1.5" fill="#94a3b8" />
+  <circle cx="73" cy="46.5" r="2" fill="#10b981" />
+
+  <!-- Contactless NFC Payment Waves -->
+  <path d="M44 75C46 72 49 70 53 70" stroke="#059669" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M49 78C51 76 53 75 56 75" stroke="#059669" stroke-width="2.5" stroke-linecap="round" />
+  
+  <!-- Card Slot / Base Bar -->
+  <rect x="63" y="72" width="16" height="5" rx="2.5" fill="#10b981" />
+  
+  <!-- Smart Dot / Spark -->
+  <circle cx="83" cy="35" r="5" fill="#38bdf8" stroke="#ffffff" stroke-width="2" />
+</svg>

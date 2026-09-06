@@ -3,6 +3,7 @@ import {
   Product,
   Employee,
   RoleItem,
+  PermissionItem,
   Sale,
   DashboardMetrics,
   Invoice,
@@ -21,6 +22,12 @@ import {
   SystemSettings,
   UserProfile,
   ReportSummaryResponse,
+  AttendanceRecord,
+  AttendanceMetrics,
+  ScanAttendanceResponse,
+  StoreAttendanceQrResponse,
+  AttendanceReportResponse,
+  AttendanceQrCode,
 } from '../foundation/types';
 
 export const getProducts = async (): Promise<Product[]> => {
@@ -240,6 +247,65 @@ export const updateSystemSettings = async (data: Partial<SystemSettings>): Promi
   return res.data.data;
 };
 
+export const uploadStoreLogo = async (file: File): Promise<{ success: boolean; image_url: string; store_logo_url: string; relative_url: string }> => {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await apiClient.post('/settings/upload-logo', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return res.data;
+};
+
+// Authentication API
+export const loginApi = async (credentials: { username: string; password?: string; pin?: string }) => {
+  try {
+    const res = await apiClient.post('/auth/login', credentials);
+    return res.data;
+  } catch (err: any) {
+    throw err;
+  }
+};
+
+export const sendOtpApi = async (data: { type: 'register' | 'forgot_password'; identifier: string }) => {
+  const res = await apiClient.post('/auth/send-otp', data);
+  return res.data;
+};
+
+export const verifyOtpApi = async (data: { type: 'register' | 'forgot_password'; identifier: string; otp_code: string }) => {
+  const res = await apiClient.post('/auth/verify-otp', data);
+  return res.data;
+};
+
+export const oauthLoginApi = async (provider: string) => {
+  const res = await apiClient.post(`/auth/oauth/${provider}/callback`);
+  return res.data;
+};
+
+export const registerApi = async (data: {
+  username: string;
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  role?: string;
+}) => {
+  const res = await apiClient.post('/auth/register', data);
+  return res.data;
+};
+
+export const forgotPasswordApi = async (email: string) => {
+  const res = await apiClient.post('/auth/forgot-password', { email });
+  return res.data;
+};
+
+export const resetPasswordApi = async (data: { email: string; code: string; new_password: string }) => {
+  const res = await apiClient.post('/auth/reset-password', data);
+  return res.data;
+};
+
 
 // Coupon & Promotion APIs
 export const getCoupons = async (): Promise<any[]> => {
@@ -290,6 +356,18 @@ export const updateProduct = async (id: number, payload: any): Promise<Product> 
   return res.data.data;
 };
 
+export const uploadProductImage = async (file: File): Promise<{ success: boolean; image_url: string; relative_url: string }> => {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const res = await apiClient.post('/products/upload-image', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return res.data;
+};
+
 export const deleteProduct = async (id: number): Promise<void> => {
   await apiClient.delete(`/products/${id}`);
 };
@@ -322,6 +400,17 @@ export const updateEmployee = async (id: number, payload: any): Promise<Employee
   return res.data.data;
 };
 
+export const uploadEmployeeAvatar = async (file: File): Promise<{ success: boolean; avatar_url: string; relative_url: string }> => {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await apiClient.post('/employees/upload-avatar', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return res.data;
+};
+
 export const deleteEmployee = async (id: number): Promise<void> => {
   await apiClient.delete(`/employees/${id}`);
 };
@@ -329,6 +418,30 @@ export const deleteEmployee = async (id: number): Promise<void> => {
 export const getRoles = async (): Promise<RoleItem[]> => {
   const res = await apiClient.get('/roles');
   return res.data?.data || [];
+};
+
+export const getSystemPermissions = async (): Promise<{ data: PermissionItem[]; grouped: Record<string, PermissionItem[]> }> => {
+  const res = await apiClient.get('/roles/permissions');
+  return res.data;
+};
+
+export const createRole = async (payload: { name: string; code?: string; description?: string; permission_ids?: number[] }): Promise<RoleItem> => {
+  const res = await apiClient.post('/roles', payload);
+  return res.data.data;
+};
+
+export const updateRole = async (id: number, payload: { name?: string; code?: string; description?: string; permission_ids?: number[] }): Promise<RoleItem> => {
+  const res = await apiClient.put(`/roles/${id}`, payload);
+  return res.data.data;
+};
+
+export const syncRolePermissions = async (roleId: number, permissionIds: number[]): Promise<RoleItem> => {
+  const res = await apiClient.put(`/roles/${roleId}/permissions`, { permission_ids: permissionIds });
+  return res.data.data;
+};
+
+export const deleteRole = async (id: number): Promise<void> => {
+  await apiClient.delete(`/roles/${id}`);
 };
 
 // Reporting & Analytics APIs
@@ -341,4 +454,121 @@ export const getReportsSummary = async (params?: {
   const res = await apiClient.get('/reports/summary', { params });
   return res.data;
 };
+
+// Attendance & Scanner Time Clock APIs
+export const getAttendances = async (params?: {
+  date?: string;
+  start_date?: string;
+  end_date?: string;
+  employee_id?: number;
+  status?: string;
+}): Promise<{ data: AttendanceRecord[]; metrics: AttendanceMetrics }> => {
+  const res = await apiClient.get('/attendances', { params });
+  return res.data;
+};
+
+export const scanAttendance = async (
+  barcode: string,
+  method: 'BARCODE_SCANNER' | 'CAMERA' | 'MANUAL' = 'BARCODE_SCANNER'
+): Promise<ScanAttendanceResponse> => {
+  const res = await apiClient.post('/attendances/scan', { barcode, method });
+  return res.data;
+};
+
+export const createManualAttendance = async (payload: {
+  employee_id: number;
+  date: string;
+  clock_in: string;
+  clock_out?: string;
+  status?: string;
+  notes?: string;
+}): Promise<AttendanceRecord> => {
+  const res = await apiClient.post('/attendances/manual', payload);
+  return res.data.data;
+};
+
+export const getStoreAttendanceQr = async (branchId: number = 1): Promise<StoreAttendanceQrResponse> => {
+  const res = await apiClient.get('/attendances/store-qr', { params: { branch_id: branchId } });
+  return res.data.data;
+};
+
+export const scanStoreAttendance = async (
+  storeQrCode: string,
+  employeeId?: number,
+  method: string = 'QR_SCAN',
+  latitude?: number,
+  longitude?: number,
+  deviceInfo?: string
+): Promise<ScanAttendanceResponse> => {
+  const res = await apiClient.post('/attendances/scan-store', {
+    store_qr_code: storeQrCode,
+    employee_id: employeeId,
+    method,
+    latitude,
+    longitude,
+    device_info: deviceInfo,
+  });
+  return res.data;
+};
+
+export const getAttendanceReport = async (params?: {
+  preset?: string;
+  year?: number;
+  month?: number;
+  start_date?: string;
+  end_date?: string;
+  employee_id?: number;
+  punctuality_status?: string;
+  branch_id?: number;
+}): Promise<AttendanceReportResponse> => {
+  const res = await apiClient.get('/attendances/report', { params });
+  return res.data;
+};
+
+// Store QR Codes Admin CRUD APIs
+export const getAttendanceQrCodes = async (params?: {
+  store_id?: number;
+  status?: string;
+}): Promise<{ success: boolean; data: AttendanceQrCode[]; stores: any[] }> => {
+  const res = await apiClient.get('/attendances/qr-codes', { params });
+  return res.data;
+};
+
+export const createAttendanceQrCode = async (payload: {
+  store_id: number;
+  name?: string;
+  expires_at?: string;
+}): Promise<{ success: boolean; data: AttendanceQrCode; message: string }> => {
+  const res = await apiClient.post('/attendances/qr-codes', payload);
+  return res.data;
+};
+
+export const regenerateAttendanceQrCode = async (id: number): Promise<{ success: boolean; data: AttendanceQrCode; message: string }> => {
+  const res = await apiClient.post(`/attendances/qr-codes/${id}/regenerate`);
+  return res.data;
+};
+
+export const updateAttendanceQrCodeStatus = async (
+  id: number,
+  status: 'ACTIVE' | 'INACTIVE' | 'EXPIRED'
+): Promise<{ success: boolean; data: AttendanceQrCode; message: string }> => {
+  const res = await apiClient.patch(`/attendances/qr-codes/${id}/status`, { status });
+  return res.data;
+};
+
+export const deleteAttendanceQrCode = async (id: number): Promise<{ success: boolean; message: string }> => {
+  const res = await apiClient.delete(`/attendances/qr-codes/${id}`);
+  return res.data;
+};
+
+export const updateAttendanceNotes = async (
+  id: number,
+  notes: string
+): Promise<{ success: boolean; data: AttendanceRecord; message: string }> => {
+  const res = await apiClient.put(`/attendances/${id}/notes`, { notes });
+  return res.data;
+};
+
+
+
 

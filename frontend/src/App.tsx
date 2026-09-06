@@ -13,13 +13,17 @@ import { PurchasingPortalView } from './features/purchasing/PurchasingPortalView
 import { ShiftManagementView } from './features/shifts/ShiftManagementView';
 import { CustomerManagementView } from './features/customers/CustomerManagementView';
 import { EmployeeManagementView } from './features/employees/EmployeeManagementView';
+import { AttendanceKioskView } from './features/employees/AttendanceKioskView';
+import { StoreQrManagementView } from './features/employees/StoreQrManagementView';
+import { StaffPayrollView } from './features/employees/StaffPayrollView';
 import { NotificationsView } from './features/notifications/NotificationsView';
 import { SecurityAuditView } from './features/security/SecurityAuditView';
 import { BackupManagementView } from './features/backup/BackupManagementView';
 import { SettingsView } from './features/settings/SettingsView';
 import { UserProfileView } from './features/profile/UserProfileView';
+import { CustomerFacingDisplay } from './features/pos/CustomerFacingDisplay';
 import { KeyboardShortcutsModal } from './presentation/components/KeyboardShortcutsModal';
-import { Keyboard } from 'lucide-react';
+import { LoginView } from './features/auth/LoginView';
 
 const MainContent: React.FC = () => {
   const { activeTab, isSidebarCollapsed } = useApp();
@@ -41,6 +45,9 @@ const MainContent: React.FC = () => {
       {activeTab === 'shifts' && <ShiftManagementView />}
       {activeTab === 'customers' && <CustomerManagementView />}
       {activeTab === 'employees' && <EmployeeManagementView />}
+      {activeTab === 'attendances' && <AttendanceKioskView />}
+      {activeTab === 'store-qr-codes' && <StoreQrManagementView />}
+      {activeTab === 'payroll' && <StaffPayrollView />}
       {activeTab === 'notifications' && <NotificationsView />}
       {activeTab === 'security' && <SecurityAuditView />}
       {activeTab === 'backup' && <BackupManagementView />}
@@ -50,6 +57,21 @@ const MainContent: React.FC = () => {
   );
 };
 
+const AppShellContent: React.FC = () => {
+  const { isAuthenticated, isLocked } = useApp();
+
+  if (!isAuthenticated || isLocked) {
+    return <LoginView />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col relative">
+      <SidebarNav />
+      <Navbar />
+      <MainContent />
+    </div>
+  );
+};
 
 const AppShell: React.FC = () => {
   const { setActiveTab } = useApp();
@@ -132,22 +154,26 @@ const AppShell: React.FC = () => {
   }, [setActiveTab]);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col relative">
-      <SidebarNav />
-      <Navbar />
-      <MainContent />
-
-
-
+    <>
+      <AppShellContent />
       <KeyboardShortcutsModal
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
       />
-    </div>
+    </>
   );
 };
 
 export const App: React.FC = () => {
+  const isCustomerDisplay =
+    typeof window !== 'undefined' &&
+    (window.location.search.includes('display=customer') ||
+      window.location.pathname.includes('customer-display'));
+
+  if (isCustomerDisplay) {
+    return <CustomerFacingDisplay />;
+  }
+
   return (
     <AppProvider>
       <AppShell />

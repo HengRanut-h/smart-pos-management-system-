@@ -5,6 +5,7 @@ import {
   ShoppingCart,
   Globe,
   Lock,
+  LogOut,
   Keyboard,
 } from 'lucide-react';
 
@@ -21,6 +22,8 @@ export const Navbar: React.FC = () => {
     toggleSidebarCollapse,
     toggleMobileDrawer,
     currentUser,
+    logoutUser,
+    lockSession,
   } = useApp();
 
   const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -49,6 +52,8 @@ export const Navbar: React.FC = () => {
         return 'Customers & Loyalty';
       case 'employees':
         return 'Staff & Cashiers Directory';
+      case 'attendances':
+        return 'Staff Attendance & Time Clock';
       case 'notifications':
         return 'Notification Center';
       case 'security':
@@ -130,27 +135,47 @@ export const Navbar: React.FC = () => {
           </button>
 
           {/* User Profile Quick Chip */}
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`flex items-center space-x-2 p-1.5 sm:px-2.5 sm:py-1 rounded-xl text-xs font-bold transition border ${
-              activeTab === 'profile'
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-800 shadow-xs'
-                : 'bg-white border-gray-200/80 hover:bg-gray-50 text-gray-700 shadow-xs'
-            }`}
-            title="User Profile & Cashier Account"
-          >
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-[10px] shadow-xs">
-              {currentUser?.first_name?.charAt(0) || 'L'}{currentUser?.last_name?.charAt(0) || 'A'}
-            </div>
-            <div className="text-left hidden md:block leading-tight">
-              <span className="block text-xs font-bold text-gray-900 truncate max-w-[90px]">
-                {currentUser?.first_name || 'Lead'} {currentUser?.last_name || 'Admin'}
-              </span>
-              <span className="block text-[9px] text-emerald-600 font-semibold truncate max-w-[90px]">
-                {currentUser?.primary_role || 'Admin'}
-              </span>
-            </div>
-          </button>
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`flex items-center space-x-2 p-1.5 sm:px-2.5 sm:py-1 rounded-xl text-xs font-bold transition border ${
+                activeTab === 'profile'
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800 shadow-xs'
+                  : 'bg-white border-gray-200/80 hover:bg-gray-50 text-gray-700 shadow-xs'
+              }`}
+              title="User Profile & Cashier Account"
+            >
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-[10px] shadow-xs">
+                {currentUser?.first_name?.charAt(0) || 'L'}{currentUser?.last_name?.charAt(0) || 'A'}
+              </div>
+              <div className="text-left hidden md:block leading-tight">
+                <span className="block text-xs font-bold text-gray-900 truncate max-w-[90px]">
+                  {currentUser?.first_name || 'Lead'} {currentUser?.last_name || 'Admin'}
+                </span>
+                <span className="block text-[9px] text-emerald-600 font-semibold truncate max-w-[90px]">
+                  {currentUser?.primary_role || 'Admin'}
+                </span>
+              </div>
+            </button>
+
+            {/* Quick Lock Station */}
+            <button
+              onClick={lockSession}
+              className="p-2 rounded-xl text-gray-600 hover:text-amber-700 hover:bg-amber-50 transition border border-gray-200/80 shadow-xs"
+              title="Lock Terminal Station"
+            >
+              <Lock className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Quick Logout */}
+            <button
+              onClick={logoutUser}
+              className="p-2 rounded-xl text-gray-600 hover:text-rose-600 hover:bg-rose-50 transition border border-gray-200/80 shadow-xs"
+              title="Log Out of System"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
           {/* Bilingual Switcher */}
           <div className="flex items-center bg-gray-100 p-1 rounded-xl">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../application/context/AppContext';
 import { Product } from '../../foundation/types';
+import { BarcodeLabelModal } from './BarcodeLabelModal';
 import {
   getProducts,
   createProduct,
@@ -8,6 +9,7 @@ import {
   deleteProduct,
   getCategories,
   getUnits,
+  uploadProductImage,
 } from '../../data-access/posApi';
 import {
   Plus,
@@ -34,6 +36,12 @@ import {
   Tag,
   Eye,
   Check,
+  Upload,
+  Download,
+  ExternalLink,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
 } from 'lucide-react';
 
 // Sample product image presets for fast selection
@@ -49,6 +57,20 @@ const SAMPLE_IMAGE_PRESETS = [
   { label: 'USB Cable', url: 'https://images.unsplash.com/photo-1588508065123-287b28e013da?w=400&auto=format&fit=crop&q=80' },
   { label: 'Phone Case', url: 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400&auto=format&fit=crop&q=80' },
 ];
+
+
+// Helper: Calculate valid EAN-13 with Modulo-10 check digit
+const generateValidEan13 = (prefix = '200') => {
+  const middle = Math.floor(100000000 + Math.random() * 900000000).toString();
+  const twelve = (prefix + middle).slice(0, 12);
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    sum += parseInt(twelve[i], 10) * (i % 2 === 0 ? 1 : 3);
+  }
+  const rem = sum % 10;
+  const check = rem === 0 ? 0 : 10 - rem;
+  return twelve + check;
+};
 
 export const ProductCatalogView: React.FC = () => {
   const { lang, t, refreshProducts: refreshGlobalProducts } = useApp();
@@ -74,6 +96,30 @@ export const ProductCatalogView: React.FC = () => {
   const [barcodeProduct, setBarcodeProduct] = useState<Product | null>(null);
   const [barcodeQuantity, setBarcodeQuantity] = useState(1);
 
+  // Image Lightbox Preview Modal State
+  const [previewImageModal, setPreviewImageModal] = useState<{
+    isOpen: boolean;
+    url: string;
+    title: string;
+    sku?: string;
+    price?: number;
+    category?: string;
+  } | null>(null);
+  const [previewZoomLevel, setPreviewZoomLevel] = useState<number>(1);
+
+  const handlePreviewImage = (url: string, title: string, sku?: string, price?: number, category?: string) => {
+    if (!url) return;
+    setPreviewZoomLevel(1);
+    setPreviewImageModal({
+      isOpen: true,
+      url,
+      title,
+      sku,
+      price,
+      category,
+    });
+  };
+
   // Form State for Add / Edit
   const [formName, setFormName] = useState('');
   const [formSku, setFormSku] = useState('');
@@ -89,7 +135,32 @@ export const ProductCatalogView: React.FC = () => {
   const [formDescription, setFormDescription] = useState('');
   const [formError, setFormError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [successToast, setSuccessToast] = useState('');
+
+  const handleLocalImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image file size must be less than 5MB.');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const res = await uploadProductImage(file);
+      if (res.image_url) {
+        setFormImageUrl(res.image_url);
+        showToast('Product photo uploaded successfully!');
+      }
+    } catch (err: any) {
+      console.error('Failed to upload image', err);
+      alert(err.response?.data?.message || 'Failed to upload product image file.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   const loadData = async () => {
     setIsLoading(true);
@@ -204,7 +275,7 @@ export const ProductCatalogView: React.FC = () => {
     setFormName('');
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     setFormSku(`SKU-${randomSuffix}`);
-    setFormBarcode(`885${Math.floor(1000000000 + Math.random() * 9000000000)}`);
+    setFormBarcode(generateValidEan13('200'));
     setFormCategoryId(categories[0]?.id || 1);
     setFormUnitId(units[0]?.id || 3);
     setFormCostPrice(1.0);
@@ -403,6 +474,18 @@ export const ProductCatalogView: React.FC = () => {
             title="Refresh Catalog Data"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-emerald-600' : ''}`} />
+          </button>
+
+          <button
+            onClick={() => {
+              setBarcodeProduct(null);
+              setIsBarcodeModalOpen(true);
+            }}
+            className="px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs sm:text-sm border border-indigo-200/80 flex items-center space-x-1.5 transition shadow-2xs"
+            title="Design & Print Barcode Price Stickers"
+          >
+            <Printer className="w-4 h-4 text-indigo-600" />
+            <span>{lang === 'kh' ? 'បោះពុម្ពបាកូដ' : 'Print Barcode Labels'}</span>
           </button>
 
           <button
@@ -616,14 +699,24 @@ export const ProductCatalogView: React.FC = () => {
                 className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md hover:border-emerald-300 transition group flex flex-col justify-between"
               >
                 {/* Product Image Header */}
-                <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+                <div
+                  className={`relative aspect-[4/3] bg-gray-100 overflow-hidden ${p.image_url ? 'cursor-pointer group/img' : ''}`}
+                  onClick={() => p.image_url && handlePreviewImage(p.image_url, p.name, p.sku, sellPrice, p.category?.name)}
+                  title={p.image_url ? "Click to view full photo" : "No image"}
+                >
                   {p.image_url ? (
-                    <img
-                      src={p.image_url}
-                      alt={p.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                      loading="lazy"
-                    />
+                    <>
+                      <img
+                        src={p.image_url}
+                        alt={p.name}
+                        className="w-full h-full object-cover group-hover/img:scale-105 transition duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center space-x-1.5 text-white font-bold text-xs backdrop-blur-[1px]">
+                        <Eye className="w-5 h-5 drop-shadow-md" />
+                        <span className="drop-shadow-md">Preview Image</span>
+                      </div>
+                    </>
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                       <ImageIcon className="w-10 h-10 mb-1 opacity-50" />
@@ -632,14 +725,14 @@ export const ProductCatalogView: React.FC = () => {
                   )}
 
                   {/* Category badge */}
-                  <div className="absolute top-2.5 left-2.5">
+                  <div className="absolute top-2.5 left-2.5 z-10">
                     <span className="px-2 py-1 bg-gray-900/80 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg uppercase tracking-wider">
                       {p.category?.name || 'General'}
                     </span>
                   </div>
 
                   {/* Stock Pill */}
-                  <div className="absolute top-2.5 right-2.5">
+                  <div className="absolute top-2.5 right-2.5 z-10">
                     <span
                       className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-xs ${
                         isOut
@@ -754,9 +847,20 @@ export const ProductCatalogView: React.FC = () => {
                     <tr key={p.id} className="hover:bg-gray-50/80 transition">
                       {/* Product Name & Photo */}
                       <td className="px-4 py-3 flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
+                        <div
+                          onClick={() => p.image_url && handlePreviewImage(p.image_url, p.name, p.sku, sellPrice, p.category?.name)}
+                          className={`w-10 h-10 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200 relative group/tblthumb ${
+                            p.image_url ? 'cursor-pointer hover:border-emerald-500 hover:ring-2 hover:ring-emerald-200 transition' : ''
+                          }`}
+                          title={p.image_url ? "Click to view full photo" : "No image"}
+                        >
                           {p.image_url ? (
-                            <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                            <>
+                              <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/tblthumb:opacity-100 transition flex items-center justify-center">
+                                <Eye className="w-4 h-4 text-white drop-shadow-xs" />
+                              </div>
+                            </>
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-gray-400">
                               <Package className="w-4 h-4" />
@@ -818,6 +922,15 @@ export const ProductCatalogView: React.FC = () => {
                       {/* Actions */}
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center space-x-1">
+                          {p.image_url && (
+                            <button
+                              onClick={() => handlePreviewImage(p.image_url!, p.name, p.sku, sellPrice, p.category?.name)}
+                              className="p-1.5 text-teal-600 hover:text-teal-800 hover:bg-teal-50 rounded-lg transition"
+                              title="Preview Full Image"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleOpenBarcodeModal(p)}
                             className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
@@ -943,7 +1056,7 @@ export const ProductCatalogView: React.FC = () => {
                       />
                       <button
                         type="button"
-                        onClick={() => setFormBarcode(`885${Math.floor(1000000000 + Math.random() * 9000000000)}`)}
+                        onClick={() => setFormBarcode(generateValidEan13('200'))}
                         className="px-2.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-xl font-bold"
                         title="Generate EAN-13 Barcode"
                       >
@@ -1073,13 +1186,49 @@ export const ProductCatalogView: React.FC = () => {
 
               {/* Product Media & Image Selector */}
               <div className="space-y-3 pt-3 border-t border-gray-100">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Product Photo</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Product Photo</h4>
+                  <span className="text-[10px] text-gray-400 font-semibold uppercase">Supports PNG, JPG, WEBP (Max 5MB)</span>
+                </div>
+
+                {/* Local Device Upload Dropzone */}
+                <div className="bg-emerald-50/50 p-3.5 rounded-2xl border-2 border-dashed border-emerald-200 hover:border-emerald-400 transition flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                      {isUploadingImage ? (
+                        <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Upload className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-gray-900 block">
+                        {isUploadingImage ? 'Uploading Image...' : 'Upload Photo from Local Computer'}
+                      </span>
+                      <p className="text-[10px] text-gray-500">
+                        Choose an image file stored on your PC or Laptop disk
+                      </p>
+                    </div>
+                  </div>
+
+                  <label className="cursor-pointer px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition shrink-0">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Browse File</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLocalImageUpload}
+                      disabled={isUploadingImage}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Image URL</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Or Enter Web Image URL</label>
                   <input
                     type="url"
-                    placeholder="https://images.unsplash.com/..."
+                    placeholder="https://images.unsplash.com/... or /storage/products/..."
                     value={formImageUrl}
                     onChange={(e) => setFormImageUrl(e.target.value)}
                     className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-hidden focus:border-emerald-500 focus:bg-white"
@@ -1112,21 +1261,49 @@ export const ProductCatalogView: React.FC = () => {
 
                 {/* Live Image Preview */}
                 {formImageUrl && (
-                  <div className="flex items-center space-x-3 p-2 bg-gray-50 rounded-2xl border border-gray-200">
-                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 shrink-0 border border-gray-300">
-                      <img
-                        src={formImageUrl}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as any).src = 'https://placehold.co/100x100?text=Invalid+URL';
-                        }}
-                      />
+                  <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-2xl border border-gray-200">
+                    <div className="flex items-center space-x-3 overflow-hidden">
+                      <div
+                        onClick={() => handlePreviewImage(formImageUrl, formName || 'Product Image Preview', formSku, Number(formSellingPrice) || 0)}
+                        className="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 shrink-0 border border-gray-300 relative group/previewthumb cursor-pointer hover:border-emerald-500 hover:ring-2 hover:ring-emerald-200 transition"
+                        title="Click to view full photo"
+                      >
+                        <img
+                          src={formImageUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as any).src = 'https://placehold.co/100x100?text=Invalid+URL';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/previewthumb:opacity-100 transition flex items-center justify-center">
+                          <Eye className="w-4 h-4 text-white drop-shadow-xs" />
+                        </div>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-xs font-bold text-gray-900 block truncate">Active Product Image</span>
+                          <button
+                            type="button"
+                            onClick={() => handlePreviewImage(formImageUrl, formName || 'Product Image Preview', formSku, Number(formSellingPrice) || 0)}
+                            className="text-[10px] text-emerald-600 hover:underline font-bold flex items-center space-x-0.5"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>Preview</span>
+                          </button>
+                        </div>
+                        <span className="text-[10px] font-mono text-emerald-700 block truncate max-w-xs">{formImageUrl}</span>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 min-w-0 flex-1">
-                      <span className="font-bold text-gray-800 block">Photo Preview Ready</span>
-                      <span className="text-[10px] text-gray-400 truncate block">{formImageUrl}</span>
-                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setFormImageUrl('')}
+                      className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                      title="Clear photo"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -1305,6 +1482,158 @@ export const ProductCatalogView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* 8. HIGH-RES FULL IMAGE LIGHTBOX PREVIEW MODAL                             */}
+      {/* ========================================================================= */}
+      {previewImageModal && previewImageModal.isOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 transition-all duration-300"
+          onClick={() => setPreviewImageModal(null)}
+        >
+          {/* Header Bar */}
+          <div
+            className="w-full max-w-5xl flex items-center justify-between text-white border-b border-white/10 pb-4 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center space-x-3 overflow-hidden">
+              <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-2xl border border-emerald-500/30">
+                <ImageIcon className="w-6 h-6" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-bold text-white truncate">{previewImageModal.title}</h3>
+                <div className="flex items-center space-x-2 text-xs text-gray-300 font-mono">
+                  {previewImageModal.sku && <span>SKU: {previewImageModal.sku}</span>}
+                  {previewImageModal.category && (
+                    <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-sans font-bold text-[10px] uppercase border border-emerald-500/30">
+                      {previewImageModal.category}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Lightbox Controls & Actions */}
+            <div className="flex items-center space-x-2">
+              {/* Zoom Out */}
+              <button
+                type="button"
+                onClick={() => setPreviewZoomLevel((prev) => Math.max(0.6, prev - 0.2))}
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition border border-white/10"
+                title="Zoom Out"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+
+              {/* Reset Zoom */}
+              <button
+                type="button"
+                onClick={() => setPreviewZoomLevel(1)}
+                className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold rounded-xl transition border border-white/10"
+                title="Reset Zoom"
+              >
+                {Math.round(previewZoomLevel * 100)}%
+              </button>
+
+              {/* Zoom In */}
+              <button
+                type="button"
+                onClick={() => setPreviewZoomLevel((prev) => Math.min(2.5, prev + 0.2))}
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition border border-white/10"
+                title="Zoom In"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+
+              <div className="h-5 w-px bg-white/20 mx-1" />
+
+              {/* Download Image */}
+              <a
+                href={previewImageModal.url}
+                download={`${previewImageModal.title || 'product_image'}.jpg`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition shadow-lg shadow-emerald-900/50 flex items-center space-x-1.5 text-xs font-bold"
+                title="Download full resolution image"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Download</span>
+              </a>
+
+              {/* Open in New Tab */}
+              <a
+                href={previewImageModal.url}
+                target="_blank"
+                rel="noreferrer"
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition border border-white/10"
+                title="Open image in new tab"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setPreviewImageModal(null)}
+                className="p-2 bg-rose-600/80 hover:bg-rose-600 text-white rounded-xl transition shadow-md"
+                title="Close preview (Esc)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Image Display Area */}
+          <div
+            className="flex-1 w-full max-w-5xl flex items-center justify-center overflow-auto py-4 my-auto relative select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={previewImageModal.url}
+              alt={previewImageModal.title}
+              style={{ transform: `scale(${previewZoomLevel})` }}
+              className="max-h-[70vh] max-w-full object-contain rounded-2xl shadow-2xl border border-white/15 transition-transform duration-200"
+              onError={(e) => {
+                (e.target as any).src = 'https://placehold.co/600x400?text=Image+Load+Error';
+              }}
+            />
+          </div>
+
+          {/* Footer Info Strip */}
+          <div
+            className="w-full max-w-5xl bg-white/10 backdrop-blur-md rounded-2xl p-3 border border-white/10 flex items-center justify-between text-white z-10 text-xs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center space-x-5">
+              {previewImageModal.price !== undefined && (
+                <div>
+                  <span className="text-gray-400 block text-[10px] font-semibold">Retail Price:</span>
+                  <span className="text-base font-black text-emerald-400">${Number(previewImageModal.price).toFixed(2)}</span>
+                </div>
+              )}
+              {previewImageModal.sku && (
+                <div>
+                  <span className="text-gray-400 block text-[10px] font-semibold">Product SKU:</span>
+                  <span className="font-mono text-gray-200 font-bold">{previewImageModal.sku}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="text-right min-w-0 max-w-xs sm:max-w-md">
+              <span className="text-gray-400 block text-[10px] font-semibold">Direct Image Link:</span>
+              <span className="font-mono text-[10px] text-emerald-300 block truncate">{previewImageModal.url}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Barcode & Price Tag Label Printing Studio Modal */}
+      <BarcodeLabelModal
+        isOpen={isBarcodeModalOpen}
+        onClose={() => setIsBarcodeModalOpen(false)}
+        products={products}
+        initialSelectedProduct={barcodeProduct}
+      />
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../application/context/AppContext';
 import { AuditLogItem } from '../../foundation/types';
 import { getAuditLogs } from '../../data-access/posApi';
+import { RolePermissionManagementView } from '../employees/RolePermissionManagementView';
 import {
   Shield,
   Search,
@@ -213,41 +214,7 @@ export const SecurityAuditView: React.FC = () => {
         )}
 
         {activeTab === 'ROLES' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {roles.map((role) => (
-              <div key={role.code} className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-gray-700">
-                      {role.name.charAt(0)}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900">{role.name}</h3>
-                      <span className="text-xs font-mono text-gray-400">{role.code}</span>
-                    </div>
-                  </div>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${role.badgeColor}`}>
-                    {role.usersCount} Active Users
-                  </span>
-                </div>
-
-                <p className="text-xs text-gray-600">{role.description}</p>
-
-                <div>
-                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
-                    Granted Permissions
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {role.permissions.map((p) => (
-                      <span key={p} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-md text-[10px] font-mono font-semibold">
-                        {p}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <RolePermissionManagementView />
         )}
 
         {activeTab === 'POLICIES' && (

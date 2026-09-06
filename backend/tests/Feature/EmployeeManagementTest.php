@@ -137,4 +137,18 @@ class EmployeeManagementTest extends TestCase
         $this->assertTrue($response->json('success'));
         $this->assertNotEmpty($response->json('data'));
     }
+
+    public function test_upload_employee_avatar(): void
+    {
+        $file = \Illuminate\Http\UploadedFile::fake()->image('staff_avatar.jpg', 300, 300);
+
+        $response = $this->postJson('/api/v1/employees/upload-avatar', [
+            'image' => $file,
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertTrue($response->json('success'));
+        $this->assertNotNull($response->json('avatar_url'));
+        $this->assertNotNull($response->json('relative_url'));
+    }
 }

@@ -333,6 +333,8 @@ export interface BackupStatus {
 
 export interface SystemSettings {
   store_name: string;
+  store_logo_url?: string;
+  logo_shape?: 'rounded' | 'circle' | 'squircle' | 'square';
   branch_code: string;
   address: string;
   tax_identification_number: string;
@@ -348,6 +350,8 @@ export interface SystemSettings {
   receipt_printer_type: string;
   auto_print_receipt: boolean;
   receipt_footer_note: string;
+  security_pin_length?: 4 | 6 | 8;
+  master_security_pin?: string;
 }
 
 
@@ -384,11 +388,22 @@ export interface UserProfile {
 }
 
 
+export interface PermissionItem {
+  id: number;
+  name: string;
+  code: string;
+  module: string;
+  action: string;
+  description?: string | null;
+}
+
 export interface RoleItem {
   id: number;
   code: string;
   name: string;
   description?: string;
+  display_name?: string;
+  permissions?: PermissionItem[];
 }
 
 export interface Employee {
@@ -400,6 +415,7 @@ export interface Employee {
   phone?: string;
   email?: string;
   address?: string;
+  avatar_url?: string;
   branch_id: number;
   branch?: { id: number; name: string; code: string };
   hire_date?: string;
@@ -466,4 +482,112 @@ export interface ReportSummaryResponse {
     riel_equivalent: number;
   };
 }
+
+export interface AttendanceRecord {
+  id: number;
+  employee_id: number;
+  branch_id: number;
+  date: string;
+  clock_in: string;
+  clock_out: string | null;
+  total_minutes: number;
+  status: 'PRESENT' | 'LATE' | 'ON_DUTY' | 'COMPLETED' | 'OVERTIME';
+  scan_method: 'BARCODE_SCANNER' | 'CAMERA' | 'MANUAL';
+  notes?: string | null;
+  formatted_duration?: string;
+  is_on_duty?: boolean;
+  employee?: Employee;
+}
+
+export interface AttendanceMetrics {
+  date: string;
+  total_staff: number;
+  present_count: number;
+  on_duty_count: number;
+  completed_count: number;
+  late_count: number;
+  attendance_rate: number;
+}
+
+export interface ScanAttendanceResponse {
+  success: boolean;
+  action: 'CLOCKED_IN' | 'CLOCKED_OUT';
+  message: string;
+  sound_cue: 'CHIME_IN' | 'CHIME_OUT' | 'ERROR';
+  employee: Employee;
+  attendance: AttendanceRecord;
+}
+
+export interface StoreAttendanceQrResponse {
+  branch_id: number;
+  branch_name: string;
+  branch_code: string;
+  qr_token: string;
+  store_title: string;
+  instructions: string;
+}
+
+export interface EmployeeAttendanceSummary {
+  employee_id: number;
+  employee_code: string;
+  name: string;
+  role: string;
+  phone?: string | null;
+  total_shifts: number;
+  on_time_shifts: number;
+  late_shifts: number;
+  punctuality_rate: number;
+  total_minutes: number;
+  total_hours: number;
+  formatted_duration: string;
+  total_late_minutes: number;
+}
+
+export interface AttendanceReportResponse {
+  success: boolean;
+  period: {
+    preset: string;
+    start_date: string;
+    end_date: string;
+  };
+  metrics: {
+    total_shifts: number;
+    on_time_shifts: number;
+    late_shifts: number;
+    on_time_percentage: number;
+    total_work_minutes: number;
+    total_work_hours: number;
+    formatted_duration: string;
+    duration_breakdown: {
+      days: number;
+      hours: number;
+      minutes: number;
+    };
+    total_late_minutes: number;
+  };
+  employee_summaries: EmployeeAttendanceSummary[];
+  records: (AttendanceRecord & { late_minutes: number; scheduled_start: string })[];
+}
+
+export interface AttendanceQrCode {
+  id: number;
+  store_id: number;
+  qr_token: string;
+  name: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
+  expires_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  total_scans?: number;
+  is_expired?: boolean;
+  store?: {
+    id: number;
+    code: string;
+    name: string;
+    city?: string;
+  };
+}
+
+
+
 

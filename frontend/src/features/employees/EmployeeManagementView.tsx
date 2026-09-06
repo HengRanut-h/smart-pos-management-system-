@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../application/context/AppContext';
 import { Employee, RoleItem } from '../../foundation/types';
+import { StaffBadgePrintModal } from './StaffBadgePrintModal';
 import {
   getEmployees,
   createEmployee,
   updateEmployee,
   deleteEmployee,
   getRoles,
+  uploadEmployeeAvatar,
 } from '../../data-access/posApi';
 import {
   Users,
@@ -30,10 +32,30 @@ import {
   Check,
   Lock,
   BadgeCheck,
+  CreditCard,
+  Clock,
+  Printer,
+  Upload,
+  Image as ImageIcon,
+  Eye,
+  ExternalLink,
+  Download,
+  Sparkles,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 
+// Sample staff avatar presets for fast selection
+const SAMPLE_STAFF_AVATARS = [
+  { label: 'Male Manager', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80' },
+  { label: 'Female Cashier', url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=80' },
+  { label: 'Male Cashier', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80' },
+  { label: 'Female Manager', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80' },
+  { label: 'Store Admin', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80' },
+];
+
 export const EmployeeManagementView: React.FC = () => {
-  const { lang, t } = useApp();
+  const { lang, t, setActiveTab } = useApp();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [roles, setRoles] = useState<RoleItem[]>([]);
@@ -49,6 +71,8 @@ export const EmployeeManagementView: React.FC = () => {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
+  const [badgeTargetEmployee, setBadgeTargetEmployee] = useState<Employee | null>(null);
 
   // Form State
   const [formCode, setFormCode] = useState('');
@@ -59,6 +83,8 @@ export const EmployeeManagementView: React.FC = () => {
   const [formEmail, setFormEmail] = useState('');
   const [formAddress, setFormAddress] = useState('');
   const [formHireDate, setFormHireDate] = useState('');
+  const [formAvatarUrl, setFormAvatarUrl] = useState('');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [formCreateUser, setFormCreateUser] = useState(true);
   const [formUsername, setFormUsername] = useState('');
   const [formPassword, setFormPassword] = useState('');
@@ -66,6 +92,54 @@ export const EmployeeManagementView: React.FC = () => {
   const [formError, setFormError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Image Lightbox Preview Modal State
+  const [previewImageModal, setPreviewImageModal] = useState<{
+    isOpen: boolean;
+    url: string;
+    title: string;
+    sku?: string;
+    category?: string;
+  } | null>(null);
+  const [previewZoomLevel, setPreviewZoomLevel] = useState<number>(1);
+
+  const handlePreviewImage = (url: string, title: string, sku?: string, category?: string) => {
+    if (!url) return;
+    setPreviewZoomLevel(1);
+    setPreviewImageModal({
+      isOpen: true,
+      url,
+      title,
+      sku,
+      category,
+    });
+  };
+
+  const handleLocalAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setFormError('Image file size must be less than 5 MB.');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    setFormError('');
+
+    try {
+      const res = await uploadEmployeeAvatar(file);
+      if (res.success && res.avatar_url) {
+        setFormAvatarUrl(res.avatar_url);
+        showToast('Employee photo uploaded successfully!');
+      }
+    } catch (err: any) {
+      console.error('Failed to upload employee avatar', err);
+      setFormError(err.response?.data?.message || 'Failed to upload photo file.');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const loadData = async () => {
     setIsLoading(true);
@@ -150,6 +224,7 @@ export const EmployeeManagementView: React.FC = () => {
     setFormEmail('');
     setFormAddress('');
     setFormHireDate(new Date().toISOString().split('T')[0]);
+    setFormAvatarUrl('');
     setFormCreateUser(true);
     setFormUsername('');
     setFormPassword('password123');
@@ -169,6 +244,7 @@ export const EmployeeManagementView: React.FC = () => {
     setFormEmail(emp.email || '');
     setFormAddress(emp.address || '');
     setFormHireDate(emp.hire_date || '');
+    setFormAvatarUrl(emp.avatar_url || '');
     setFormCreateUser(!!emp.user);
     setFormUsername(emp.user?.username || '');
     setFormPassword('');
@@ -208,6 +284,7 @@ export const EmployeeManagementView: React.FC = () => {
           email: formEmail || null,
           address: formAddress || null,
           hire_date: formHireDate || null,
+          avatar_url: formAvatarUrl || null,
           role_id: formRoleId,
           password: formPassword ? formPassword : null,
         });
@@ -225,6 +302,7 @@ export const EmployeeManagementView: React.FC = () => {
           email: formEmail || null,
           address: formAddress || null,
           hire_date: formHireDate || null,
+          avatar_url: formAvatarUrl || null,
           create_user: formCreateUser,
           username: formCreateUser ? formUsername : null,
           password: formCreateUser ? formPassword : null,
@@ -310,6 +388,36 @@ export const EmployeeManagementView: React.FC = () => {
             title="Refresh Staff List"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-emerald-600' : ''}`} />
+          </button>
+
+          <button
+            onClick={() => setActiveTab('security')}
+            className="px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold rounded-xl text-xs sm:text-sm flex items-center space-x-1.5 transition shadow-xs"
+            title="Configure System Roles & Permissions Security Matrix"
+          >
+            <Shield className="w-4 h-4 text-emerald-600" />
+            <span>{lang === 'kh' ? 'តួនាទី & សិទ្ធិ' : 'Roles & Permissions'}</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('attendances')}
+            className="px-3.5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl text-xs sm:text-sm flex items-center space-x-1.5 transition shadow-xs"
+            title="Open Attendance & Scanner Kiosk"
+          >
+            <Clock className="w-4 h-4 text-emerald-600" />
+            <span>{lang === 'kh' ? 'ម៉ោងស្កេនវត្តមាន' : 'Attendance & Kiosk'}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setBadgeTargetEmployee(null);
+              setIsBadgeModalOpen(true);
+            }}
+            className="px-3.5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl text-xs sm:text-sm flex items-center space-x-1.5 transition shadow-xs"
+            title="Print Barcode ID Badges"
+          >
+            <Printer className="w-4 h-4 text-blue-600" />
+            <span>{lang === 'kh' ? 'បោះពុម្ពកាតបុគ្គលិក' : 'Print Badges'}</span>
           </button>
 
           <button
@@ -488,9 +596,22 @@ export const EmployeeManagementView: React.FC = () => {
                 <div className="space-y-3">
                   {/* Top card bar: Avatar & Employee Code */}
                   <div className="flex items-start justify-between">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-black text-sm shadow-md shadow-emerald-200">
-                      {initials}
-                    </div>
+                    {emp.avatar_url ? (
+                      <div
+                        onClick={() => handlePreviewImage(emp.avatar_url!, `${emp.first_name} ${emp.last_name}`, emp.employee_code, badge.label)}
+                        className="w-12 h-12 rounded-2xl overflow-hidden shrink-0 border border-emerald-300 shadow-md shadow-emerald-100 relative group/avatar cursor-pointer hover:ring-2 hover:ring-emerald-400 transition"
+                        title="Click to preview full staff photo"
+                      >
+                        <img src={emp.avatar_url} alt={emp.first_name} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/avatar:opacity-100 transition flex items-center justify-center">
+                          <Eye className="w-4 h-4 text-white drop-shadow-xs" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-black text-sm shadow-md shadow-emerald-200">
+                        {initials}
+                      </div>
+                    )}
                     <span className="font-mono text-xs font-bold bg-gray-100 text-gray-700 px-2.5 py-1 rounded-lg">
                       {emp.employee_code}
                     </span>
@@ -532,6 +653,28 @@ export const EmployeeManagementView: React.FC = () => {
 
                 {/* Card Action Buttons */}
                 <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                  {emp.avatar_url && (
+                    <button
+                      onClick={() => handlePreviewImage(emp.avatar_url!, `${emp.first_name} ${emp.last_name}`, emp.employee_code, badge.label)}
+                      className="p-1.5 text-teal-600 hover:text-teal-800 hover:bg-teal-50 rounded-xl border border-teal-200 transition"
+                      title="Preview Full Photo"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setBadgeTargetEmployee(emp);
+                      setIsBadgeModalOpen(true);
+                    }}
+                    className="py-1.5 px-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1 border border-gray-200 transition"
+                    title="Print Staff Barcode ID Badge"
+                  >
+                    <CreditCard className="w-3.5 h-3.5 text-blue-600" />
+                    <span className="hidden sm:inline">Badge</span>
+                  </button>
+
                   <button
                     onClick={() => handleOpenEditModal(emp)}
                     className="flex-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1 border border-emerald-200 transition"
@@ -579,9 +722,22 @@ export const EmployeeManagementView: React.FC = () => {
                   return (
                     <tr key={emp.id} className="hover:bg-gray-50/80 transition">
                       <td className="px-4 py-3 flex items-center space-x-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                          {emp.first_name.charAt(0)}{emp.last_name.charAt(0)}
-                        </div>
+                        {emp.avatar_url ? (
+                          <div
+                            onClick={() => handlePreviewImage(emp.avatar_url!, `${emp.first_name} ${emp.last_name}`, emp.employee_code, badge.label)}
+                            className="w-8 h-8 rounded-xl overflow-hidden shrink-0 border border-emerald-300 relative group/tblavatar cursor-pointer hover:ring-2 hover:ring-emerald-400 transition"
+                            title="Click to preview photo"
+                          >
+                            <img src={emp.avatar_url} alt={emp.first_name} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/tblavatar:opacity-100 transition flex items-center justify-center">
+                              <Eye className="w-3 h-3 text-white drop-shadow-xs" />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                            {emp.first_name.charAt(0)}{emp.last_name.charAt(0)}
+                          </div>
+                        )}
                         <div>
                           <span className="font-bold text-gray-900 block">{emp.first_name} {emp.last_name}</span>
                           <span className="text-[10px] text-gray-400">{emp.email || 'No email'}</span>
@@ -610,6 +766,25 @@ export const EmployeeManagementView: React.FC = () => {
 
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center space-x-1">
+                          {emp.avatar_url && (
+                            <button
+                              onClick={() => handlePreviewImage(emp.avatar_url!, `${emp.first_name} ${emp.last_name}`, emp.employee_code, badge.label)}
+                              className="p-1.5 text-teal-600 hover:text-teal-800 hover:bg-teal-50 rounded-lg transition"
+                              title="Preview Full Photo"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setBadgeTargetEmployee(emp);
+                              setIsBadgeModalOpen(true);
+                            }}
+                            className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition"
+                            title="Print Barcode ID Badge"
+                          >
+                            <CreditCard className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={() => handleOpenEditModal(emp)}
                             className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition"
@@ -773,6 +948,125 @@ export const EmployeeManagementView: React.FC = () => {
                 </div>
               </div>
 
+              {/* Staff Photo / Avatar Upload */}
+              <div className="pt-2 border-t border-gray-100 space-y-3">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center justify-between">
+                  <span>Staff Profile Photo / Avatar</span>
+                  <span className="text-[10px] text-gray-400 font-normal">Supports PNG, JPG, WEBP (Max 5MB)</span>
+                </h4>
+
+                {/* Dropzone for Uploading from Local Computer */}
+                <div className="p-3 bg-emerald-50/50 rounded-2xl border border-dashed border-emerald-300 space-y-2 text-center">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                    <label className="cursor-pointer px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center space-x-1.5 shrink-0">
+                      {isUploadingAvatar ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Uploading Photo...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          <span>Upload Photo from Local Computer</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLocalAvatarUpload}
+                        disabled={isUploadingAvatar}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <span className="text-[11px] text-gray-400 font-medium">or enter URL / pick sample below</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Web Image URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/... or /storage/employees/..."
+                    value={formAvatarUrl}
+                    onChange={(e) => setFormAvatarUrl(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-hidden focus:border-emerald-500 focus:bg-white"
+                  />
+                </div>
+
+                {/* Sample Avatar Presets */}
+                <div>
+                  <span className="text-[11px] font-semibold text-gray-500 block mb-1.5 flex items-center space-x-1">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Quick Sample Staff Avatars:</span>
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {SAMPLE_STAFF_AVATARS.map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setFormAvatarUrl(preset.url)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition border ${
+                          formAvatarUrl === preset.url
+                            ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
+                            : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Active Photo Preview */}
+                {formAvatarUrl && (
+                  <div className="flex items-center justify-between p-2 bg-gray-50 rounded-2xl border border-gray-200">
+                    <div className="flex items-center space-x-3 overflow-hidden">
+                      <div
+                        onClick={() => handlePreviewImage(formAvatarUrl, `${formFirstName || 'Staff'} ${formLastName || 'Photo'}`)}
+                        className="w-12 h-12 rounded-xl overflow-hidden bg-gray-200 shrink-0 border border-emerald-300 relative group/thumb cursor-pointer hover:ring-2 hover:ring-emerald-300 transition"
+                        title="Click to view full photo"
+                      >
+                        <img
+                          src={formAvatarUrl}
+                          alt="Avatar Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as any).src = 'https://placehold.co/100x100?text=Invalid+Photo';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/thumb:opacity-100 transition flex items-center justify-center">
+                          <Eye className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-xs font-bold text-gray-900 block truncate">Active Staff Photo</span>
+                          <button
+                            type="button"
+                            onClick={() => handlePreviewImage(formAvatarUrl, `${formFirstName || 'Staff'} ${formLastName || 'Photo'}`)}
+                            className="text-[10px] text-emerald-600 hover:underline font-bold flex items-center space-x-0.5"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>Preview</span>
+                          </button>
+                        </div>
+                        <span className="text-[10px] font-mono text-emerald-700 block truncate max-w-xs">{formAvatarUrl}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setFormAvatarUrl('')}
+                      className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                      title="Clear photo"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* POS Role & Credentials */}
               <div className="space-y-3 pt-3 border-t border-gray-100">
                 <div className="flex items-center justify-between">
@@ -909,6 +1203,146 @@ export const EmployeeManagementView: React.FC = () => {
           </div>
         </div>
       )}
+      {/* High-Res Staff Photo Lightbox Preview Modal */}
+      {previewImageModal && previewImageModal.isOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 transition-all duration-300"
+          onClick={() => setPreviewImageModal(null)}
+        >
+          {/* Header Bar */}
+          <div
+            className="w-full max-w-5xl flex items-center justify-between text-white border-b border-white/10 pb-4 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center space-x-3 overflow-hidden">
+              <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-2xl border border-emerald-500/30">
+                <ImageIcon className="w-6 h-6" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-bold text-white truncate">{previewImageModal.title}</h3>
+                <div className="flex items-center space-x-2 text-xs text-gray-300 font-mono">
+                  {previewImageModal.sku && <span>ID Code: {previewImageModal.sku}</span>}
+                  {previewImageModal.category && (
+                    <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-sans font-bold text-[10px] uppercase border border-emerald-500/30">
+                      {previewImageModal.category}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Lightbox Controls & Actions */}
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setPreviewZoomLevel((prev) => Math.max(0.6, prev - 0.2))}
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition border border-white/10"
+                title="Zoom Out"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPreviewZoomLevel(1)}
+                className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold rounded-xl transition border border-white/10"
+                title="Reset Zoom"
+              >
+                {Math.round(previewZoomLevel * 100)}%
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPreviewZoomLevel((prev) => Math.min(2.5, prev + 0.2))}
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition border border-white/10"
+                title="Zoom In"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+
+              <div className="h-5 w-px bg-white/20 mx-1" />
+
+              <a
+                href={previewImageModal.url}
+                download={`${previewImageModal.title || 'staff_photo'}.jpg`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition shadow-lg shadow-emerald-900/50 flex items-center space-x-1.5 text-xs font-bold"
+                title="Download staff photo"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline">Download</span>
+              </a>
+
+              <a
+                href={previewImageModal.url}
+                target="_blank"
+                rel="noreferrer"
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition border border-white/10"
+                title="Open photo in new tab"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setPreviewImageModal(null)}
+                className="p-2 bg-rose-600/80 hover:bg-rose-600 text-white rounded-xl transition shadow-md"
+                title="Close preview (Esc)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Photo Display Area */}
+          <div
+            className="flex-1 w-full max-w-5xl flex items-center justify-center overflow-auto py-4 my-auto relative select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={previewImageModal.url}
+              alt={previewImageModal.title}
+              style={{ transform: `scale(${previewZoomLevel})` }}
+              className="max-h-[70vh] max-w-full object-contain rounded-2xl shadow-2xl border border-white/15 transition-transform duration-200"
+              onError={(e) => {
+                (e.target as any).src = 'https://placehold.co/600x400?text=Photo+Load+Error';
+              }}
+            />
+          </div>
+
+          {/* Footer Info Strip */}
+          <div
+            className="w-full max-w-5xl bg-white/10 backdrop-blur-md rounded-2xl p-3 border border-white/10 flex items-center justify-between text-white z-10 text-xs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center space-x-5">
+              {previewImageModal.sku && (
+                <div>
+                  <span className="text-gray-400 block text-[10px] font-semibold">Employee Code:</span>
+                  <span className="font-mono text-gray-200 font-bold">{previewImageModal.sku}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="text-right min-w-0 max-w-xs sm:max-w-md">
+              <span className="text-gray-400 block text-[10px] font-semibold">Photo File Location:</span>
+              <span className="font-mono text-[10px] text-emerald-300 block truncate">{previewImageModal.url}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Staff Badges Print Modal */}
+      {isBadgeModalOpen && (
+        <StaffBadgePrintModal
+          isOpen={isBadgeModalOpen}
+          onClose={() => setIsBadgeModalOpen(false)}
+          employees={employees}
+          initialSelectedEmployee={badgeTargetEmployee}
+        />
+      )}
+
     </div>
   );
 };

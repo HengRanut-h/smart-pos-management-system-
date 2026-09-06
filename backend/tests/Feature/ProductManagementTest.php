@@ -163,4 +163,18 @@ class ProductManagementTest extends TestCase
         $unitRes->assertStatus(200);
         $this->assertNotEmpty($unitRes->json('data'));
     }
+
+    public function test_upload_product_image(): void
+    {
+        $file = \Illuminate\Http\UploadedFile::fake()->image('test_product.jpg', 400, 400);
+
+        $response = $this->postJson('/api/v1/products/upload-image', [
+            'image' => $file,
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertTrue($response->json('success'));
+        $this->assertNotNull($response->json('image_url'));
+        $this->assertNotNull($response->json('relative_url'));
+    }
 }

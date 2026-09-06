@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Language, translations } from '../../foundation/i18n/translations';
-import { Product, CartItem, Sale, Shift, UserProfile } from '../../foundation/types';
-import { getProducts, getCurrentShift, getUserProfile } from '../../data-access/posApi';
+import { Product, CartItem, Sale, Shift, UserProfile, SystemSettings } from '../../foundation/types';
+import { getProducts, getCurrentShift, getUserProfile, getSystemSettings } from '../../data-access/posApi';
 
 export type NavTab =
   | 'pos'
@@ -15,6 +15,9 @@ export type NavTab =
   | 'shifts'
   | 'customers'
   | 'employees'
+  | 'attendances'
+  | 'store-qr-codes'
+  | 'payroll'
   | 'notifications'
   | 'security'
   | 'backup'
@@ -28,7 +31,7 @@ interface AppContextType {
   products: Product[];
   isLoadingProducts: boolean;
   cart: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: number) => void;
   updateQuantity: (productId: number, qty: number) => void;
   clearCart: () => void;
@@ -52,6 +55,15 @@ interface AppContextType {
   currentUser: UserProfile | null;
   isLoadingProfile: boolean;
   refreshUserProfile: () => void;
+  storeSettings: SystemSettings | null;
+  refreshStoreSettings: () => void;
+  updateStoreSettingsState: (settings: SystemSettings) => void;
+  isAuthenticated: boolean;
+  isLocked: boolean;
+  loginUser: (user: UserProfile) => void;
+  logoutUser: () => void;
+  lockSession: () => void;
+  unlockSession: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -95,9 +107,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
-  // Current User Profile State
-  const [currentUser, setCurrentUser] = useState<UserProfile>(DEFAULT_USER);
+  // Current User Profile State & Auth Session
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
+    try {
+      const saved = localStorage.getItem('smartpos_auth_user');
+      return saved ? JSON.parse(saved) : DEFAULT_USER;
+    } catch {
+      return DEFAULT_USER;
+    }
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('smartpos_auth_logged_out') !== 'true';
+  });
+  const [isLocked, setIsLocked] = useState<boolean>(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+
+  const loginUser = (user: UserProfile) => {
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    setIsLocked(false);
+    localStorage.removeItem('smartpos_auth_logged_out');
+    localStorage.setItem('smartpos_auth_user', JSON.stringify(user));
+  };
+
+  const logoutUser = () => {
+    setIsAuthenticated(false);
+    setIsLocked(false);
+    localStorage.setItem('smartpos_auth_logged_out', 'true');
+  };
+
+  const lockSession = () => {
+    setIsLocked(true);
+  };
+
+  const unlockSession = () => {
+    setIsLocked(false);
+  };
+
+  // System Store Settings State with localStorage persistence
+  const [storeSettings, setStoreSettings] = useState<SystemSettings | null>(() => {
+    try {
+      const saved = localStorage.getItem('smartpos_store_settings');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const t = translations[lang];
 
@@ -127,13 +182,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .finally(() => setIsLoadingProfile(false));
   };
 
+  const refreshStoreSettings = () => {
+    getSystemSettings()
+      .then((data) => {
+        setStoreSettings(data);
+        try {
+          localStorage.setItem('smartpos_store_settings', JSON.stringify(data));
+        } catch (e) {
+          console.error('Failed to save store settings to localStorage', e);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load store settings', err);
+      });
+  };
+
+  const updateStoreSettingsState = (settings: SystemSettings) => {
+    setStoreSettings(settings);
+    try {
+      localStorage.setItem('smartpos_store_settings', JSON.stringify(settings));
+    } catch (e) {
+      console.error('Failed to save store settings to localStorage', e);
+    }
+  };
+
   useEffect(() => {
     refreshProducts();
     refreshShiftStatus();
     refreshUserProfile();
+    refreshStoreSettings();
   }, []);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, quantity: number = 1) => {
+    const qtyToAdd = Math.max(1, quantity);
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       const price = Number(product.selling_price);
@@ -142,9 +223,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           item.product.id === product.id
             ? {
                 ...item,
-                quantity: item.quantity + 1,
-                subtotal: (item.quantity + 1) * price,
-                total_amount: (item.quantity + 1) * price,
+                quantity: item.quantity + qtyToAdd,
+                subtotal: (item.quantity + qtyToAdd) * price,
+                total_amount: (item.quantity + qtyToAdd) * price,
               }
             : item
         );
@@ -153,12 +234,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ...prev,
         {
           product,
-          quantity: 1,
+          quantity: qtyToAdd,
           unit_price: price,
           discount_amount: 0,
           tax_amount: 0,
-          subtotal: price,
-          total_amount: price,
+          subtotal: price * qtyToAdd,
+          total_amount: price * qtyToAdd,
         },
       ];
     });
@@ -224,6 +305,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         currentUser,
         isLoadingProfile,
         refreshUserProfile,
+        storeSettings,
+        refreshStoreSettings,
+        updateStoreSettingsState,
+        isAuthenticated,
+        isLocked,
+        loginUser,
+        logoutUser,
+        lockSession,
+        unlockSession,
       }}
     >
       {children}

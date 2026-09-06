@@ -28,6 +28,9 @@ import {
   Database,
   SlidersHorizontal,
   ChevronLeft,
+  Clock,
+  QrCode,
+  DollarSign,
 } from 'lucide-react';
 
 interface NavItem {
@@ -205,6 +208,30 @@ export const SidebarNav: React.FC = () => {
             icon: <UserCheck className="w-4 h-4" />,
             tab: 'employees',
             description: 'Staff directory, roles & shifts',
+          },
+          {
+            id: 'attendances',
+            name: 'Attendance & Scanners',
+            nameKh: 'វត្តមាន & ស្កេនកាត',
+            icon: <Clock className="w-4 h-4" />,
+            tab: 'attendances',
+            description: 'Barcode punch clock-in & shifts',
+          },
+          {
+            id: 'store-qr-codes',
+            name: 'Store QR Codes',
+            nameKh: 'កូដ QR វត្តមានតាមហាង',
+            icon: <QrCode className="w-4 h-4" />,
+            tab: 'store-qr-codes',
+            description: 'Generate secure store QR tokens',
+          },
+          {
+            id: 'payroll',
+            name: 'Payroll & Salary Calculator',
+            nameKh: 'គណនាប្រាក់បៀវត្សរ៍',
+            icon: <DollarSign className="w-4 h-4" />,
+            tab: 'payroll',
+            description: 'Hours, OT (1.5x), part-time & payslips',
           },
         ],
       },
@@ -507,7 +534,7 @@ export const SidebarNav: React.FC = () => {
               onClick={() => handleSelectTab('pos')}
               title="SmartPOS Terminal"
             >
-              <SmartPosLogo variant="full" size="md" subtitle="HQ-01 Phnom Penh" />
+              <SmartPosLogo variant="full" size="md" />
             </div>
 
             {/* Collapse toggle button: ☰ fixed on far right */}

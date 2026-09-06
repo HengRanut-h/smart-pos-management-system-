@@ -28,6 +28,9 @@ import {
   CreditCard,
   Percent,
   Layers,
+  Monitor,
+  Package,
+  ShoppingCart,
 } from 'lucide-react';
 import { Customer, Product } from '../../foundation/types';
 import {
@@ -151,6 +154,7 @@ export const POSTerminal: React.FC = () => {
     }
   });
   const [isSyncingOffline, setIsSyncingOffline] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'catalog' | 'cart'>('catalog');
 
   const [selectedPosCategory, setSelectedPosCategory] = useState<string>('ALL');
 
@@ -178,6 +182,7 @@ export const POSTerminal: React.FC = () => {
       return matchesCat && matchesSearch;
     });
   }, [products, selectedPosCategory, search]);
+
 
 
   // Cash Register / Success Chime Sound
@@ -250,20 +255,38 @@ export const POSTerminal: React.FC = () => {
       const timeDiff = currentTime - lastKeyTime;
       lastKeyTime = currentTime;
 
+      // Quick hotkey to toggle Barcode Scanner Hub (F9 or Alt+S)
+      if ((e.key === 'F9' || (e.altKey && (e.key === 's' || e.key === 'S'))) && !isInput) {
+        e.preventDefault();
+        setIsBarcodeScannerModalOpen((prev) => !prev);
+        return;
+      }
+
       if (e.key === 'Enter') {
-        if (barcodeBuffer.length >= 3) {
-          const code = barcodeBuffer.trim().toLowerCase();
+        if (barcodeBuffer.length >= 2) {
+          let raw = barcodeBuffer.trim();
+          let qty = 1;
+          if (raw.includes('*')) {
+            const parts = raw.split('*');
+            const parsedQty = parseInt(parts[0], 10);
+            if (!isNaN(parsedQty) && parsedQty > 0) {
+              qty = parsedQty;
+              raw = parts.slice(1).join('*').trim();
+            }
+          }
+          const code = raw.toLowerCase();
           const matched = products.find(
             (p) =>
               p.sku.toLowerCase() === code ||
               (p.barcode && p.barcode.toLowerCase() === code) ||
-              p.name.toLowerCase() === code
+              p.name.toLowerCase() === code ||
+              p.name.toLowerCase().includes(code)
           );
 
           if (matched) {
-            addToCart(matched);
+            addToCart(matched, qty);
             playScanBeep();
-            setScannedNotification(`Scanned: ${matched.name} (${matched.sku})`);
+            setScannedNotification(`Scanned: ${qty > 1 ? `${qty}x ` : ''}${matched.name} (${matched.barcode || matched.sku})`);
             setTimeout(() => setScannedNotification(null), 2500);
             barcodeBuffer = '';
             e.preventDefault();
@@ -398,6 +421,61 @@ export const POSTerminal: React.FC = () => {
   const couponDiscount = appliedCoupon ? appliedCoupon.discount_amount : 0;
   const finalPayableTotal = Math.max(0, cartTotal - pointsDiscount - couponDiscount - manualDiscountAmount);
   const finalPayableTotalKhr = Math.round(finalPayableTotal * exchangeRate);
+
+  // Customer-Facing Display Sync (BroadcastChannel & localStorage)
+  useEffect(() => {
+    try {
+      const payload = {
+        items: cart.map((i) => ({
+          product: {
+            id: i.product.id,
+            name: i.product.name,
+            sku: i.product.sku,
+            barcode: i.product.barcode,
+            selling_price: i.product.selling_price,
+            image_url: i.product.image_url,
+            unit: i.product.unit,
+          },
+          quantity: i.quantity,
+          unit_price: i.unit_price,
+          subtotal: i.subtotal,
+        })),
+        subtotal: cartSubtotal,
+        tax: cartTax,
+        discount: (manualDiscount?.amount || 0) + (appliedCoupon?.discount_amount || 0) + (isRedeemingPoints ? pointsToRedeem / 100 : 0),
+        total: finalPayableTotal,
+        totalKhr: finalPayableTotalKhr,
+        isCheckoutOpen,
+        khqrData,
+        completedSuccess,
+        customer: selectedCustomer,
+      };
+
+      localStorage.setItem('smartpos_customer_display_state', JSON.stringify(payload));
+
+      if (typeof BroadcastChannel !== 'undefined') {
+        const channel = new BroadcastChannel('smartpos_customer_display');
+        channel.postMessage({ type: 'UPDATE_CART', payload });
+        channel.close();
+      }
+    } catch (err) {
+      console.error('Failed to sync Customer Display', err);
+    }
+  }, [
+    cart,
+    cartSubtotal,
+    cartTax,
+    finalPayableTotal,
+    finalPayableTotalKhr,
+    isCheckoutOpen,
+    khqrData,
+    completedSuccess,
+    selectedCustomer,
+    manualDiscount,
+    appliedCoupon,
+    isRedeemingPoints,
+    pointsToRedeem,
+  ]);
 
   // Handle applying coupon code
   const handleApplyCoupon = async () => {
@@ -705,9 +783,39 @@ export const POSTerminal: React.FC = () => {
         </div>
       )}
 
+      {/* Mobile Screen Tab Switcher (Ensures mobile cashiers see everything) */}
+      <div className="flex lg:hidden bg-white border-b border-gray-200 p-2 gap-2 shrink-0">
+        <button
+          type="button"
+          onClick={() => setMobileTab('catalog')}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            mobileTab === 'catalog'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          <Package className="w-4 h-4" />
+          <span>Catalog ({filteredProducts.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('cart')}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            mobileTab === 'cart'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          <ShoppingCart className="w-4 h-4" />
+          <span>Cart ({cart.length}) • ${finalPayableTotal.toFixed(2)}</span>
+        </button>
+      </div>
+
       <div className="flex-1 flex overflow-hidden">
         {/* Left: Products Catalog Panel */}
-        <div className="flex-1 flex flex-col p-4 bg-gray-50/50 overflow-hidden border-r border-gray-200">
+        <div className={`flex-1 flex flex-col p-3 sm:p-4 bg-gray-50/50 overflow-hidden border-r border-gray-200 ${
+          mobileTab === 'cart' ? 'hidden lg:flex' : 'flex'
+        }`}>
           {/* Search Header */}
           <div className="flex items-center space-x-3 mb-4">
             <div className="relative flex-1">
@@ -734,11 +842,24 @@ export const POSTerminal: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsBarcodeScannerModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition shrink-0 group"
+              className="flex items-center space-x-1.5 px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition shrink-0 group"
               title="Open Barcode Scanner & Camera Hub"
             >
               <Barcode className="w-4 h-4 text-emerald-200 group-hover:scale-110 transition" />
-              <span>Scan Barcode</span>
+              <span className="hidden sm:inline">Scan Barcode</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const url = window.location.origin + window.location.pathname + '?display=customer';
+                window.open(url, 'SmartPOS_CustomerDisplay', 'width=1024,height=768');
+              }}
+              className="flex items-center space-x-1.5 px-3 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold border border-indigo-200/80 transition shrink-0"
+              title="Open Dual-Screen Customer Facing Display"
+            >
+              <Monitor className="w-4 h-4 text-indigo-600" />
+              <span className="hidden md:inline">Customer Screen</span>
             </button>
             <div className="text-xs text-gray-500 font-semibold shrink-0 bg-white px-3 py-2.5 border border-gray-200 rounded-xl shadow-xs">
               {filteredProducts.length} Items
@@ -868,7 +989,9 @@ export const POSTerminal: React.FC = () => {
         </div>
 
         {/* Right: Cart & Checkout Panel */}
-        <div className="w-96 flex flex-col bg-white border-l border-gray-200">
+        <div className={`w-full lg:w-96 flex flex-col bg-white border-l border-gray-200 ${
+          mobileTab === 'catalog' ? 'hidden lg:flex' : 'flex'
+        }`}>
           {/* Customer Loyalty Banner */}
           <div className="p-3 border-b border-gray-100 bg-purple-50/40">
             {selectedCustomer ? (
@@ -1794,6 +1917,19 @@ export const POSTerminal: React.FC = () => {
         </div>
       )}
 
+      {/* Barcode Scanner & Hardware Hub Modal */}
+      <BarcodeScannerModal
+        isOpen={isBarcodeScannerModalOpen}
+        onClose={() => setIsBarcodeScannerModalOpen(false)}
+        products={products}
+        onScanProduct={(product, quantity = 1) => {
+          addToCart(product, quantity);
+          setScannedNotification(`Scanned: ${quantity > 1 ? `${quantity}x ` : ''}${product.name} (${product.barcode || product.sku})`);
+          setTimeout(() => setScannedNotification(null), 2500);
+        }}
+        playScanBeep={playScanBeep}
+      />
+
       {/* 80mm/58mm GDT Fiscal Thermal Slip Modal */}
       {showThermalReceipt && completedSuccess && (
         <ThermalReceiptModal
@@ -1801,6 +1937,27 @@ export const POSTerminal: React.FC = () => {
           exchangeRate={exchangeRate}
           onClose={() => setShowThermalReceipt(false)}
         />
+      )}
+      {/* Floating Mobile Cart Summary Button */}
+      {cart.length > 0 && mobileTab === 'catalog' && (
+        <div className="lg:hidden fixed bottom-4 inset-x-4 z-40 animate-in slide-in-from-bottom-2">
+          <button
+            type="button"
+            onClick={() => setMobileTab('cart')}
+            className="w-full bg-slate-900 text-white p-3.5 rounded-2xl shadow-2xl flex items-center justify-between font-bold text-xs"
+          >
+            <div className="flex items-center space-x-2">
+              <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-[11px] flex items-center justify-center">
+                {cart.reduce((s, it) => s + it.quantity, 0)}
+              </span>
+              <span>Items in Cart</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-emerald-400 font-mono text-sm">${finalPayableTotal.toFixed(2)}</span>
+              <span className="bg-emerald-600 px-3 py-1 rounded-xl text-white text-xs">View Cart & Pay &rarr;</span>
+            </div>
+          </button>
+        </div>
       )}
     </div>
   );

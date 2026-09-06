@@ -14,6 +14,13 @@ class Employee extends Model
     protected $table = 'employees';
     protected $guarded = ['id'];
 
+    protected $casts = [
+        'hourly_rate' => 'float',
+        'ot_hourly_rate' => 'float',
+        'ot_multiplier' => 'float',
+        'late_deduction_per_min' => 'float',
+    ];
+
     public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id');
@@ -22,5 +29,17 @@ class Employee extends Model
     public function user()
     {
         return $this->hasOne(User::class, 'employee_id');
+    }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class, 'employee_id');
+    }
+
+    public function todayAttendance()
+    {
+        return $this->hasOne(Attendance::class, 'employee_id')
+            ->where('date', now()->toDateString())
+            ->latest('id');
     }
 }

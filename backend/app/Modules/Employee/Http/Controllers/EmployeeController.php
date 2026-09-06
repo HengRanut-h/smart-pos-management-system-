@@ -52,7 +52,13 @@ class EmployeeController extends Controller
             'branch_id' => 'nullable|integer|exists:branches,id',
             'address' => 'nullable|string',
             'hire_date' => 'nullable|date',
+            'avatar_url' => 'nullable|string|max:500',
             'status_id' => 'nullable|integer|exists:sys_statuses,id',
+            'employment_type' => 'nullable|string|in:FULL_TIME,PART_TIME,CONTRACT',
+            'hourly_rate' => 'nullable|numeric|min:0',
+            'ot_hourly_rate' => 'nullable|numeric|min:0',
+            'ot_multiplier' => 'nullable|numeric|min:1',
+            'late_deduction_per_min' => 'nullable|numeric|min:0',
             // User account options
             'create_user' => 'nullable|boolean',
             'username' => 'nullable|required_if:create_user,true|string|max:100|unique:users,username',
@@ -73,6 +79,7 @@ class EmployeeController extends Controller
                 'branch_id' => $validated['branch_id'] ?? 1,
                 'address' => $validated['address'] ?? null,
                 'hire_date' => $validated['hire_date'] ?? now()->toDateString(),
+                'avatar_url' => $validated['avatar_url'] ?? null,
                 'status_id' => $statusId,
             ]);
 
@@ -130,7 +137,13 @@ class EmployeeController extends Controller
             'branch_id' => 'sometimes|integer|exists:branches,id',
             'address' => 'sometimes|nullable|string',
             'hire_date' => 'sometimes|nullable|date',
+            'avatar_url' => 'sometimes|nullable|string|max:500',
             'status_id' => 'sometimes|integer|exists:sys_statuses,id',
+            'employment_type' => 'sometimes|nullable|string|in:FULL_TIME,PART_TIME,CONTRACT',
+            'hourly_rate' => 'sometimes|nullable|numeric|min:0',
+            'ot_hourly_rate' => 'sometimes|nullable|numeric|min:0',
+            'ot_multiplier' => 'sometimes|nullable|numeric|min:1',
+            'late_deduction_per_min' => 'sometimes|nullable|numeric|min:0',
             'role_id' => 'sometimes|nullable|integer|exists:roles,id',
             'password' => 'sometimes|nullable|string|min:6',
         ]);
@@ -172,5 +185,42 @@ class EmployeeController extends Controller
             'success' => true,
             'message' => 'Employee deleted successfully',
         ]);
+    }
+
+    /**
+     * Upload employee avatar photo file from local machine
+     */
+    public function uploadAvatar(Request $request): JsonResponse
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp,svg|max:5120',
+        ]);
+
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_' . \Illuminate\Support\Str::random(10) . '.' . $file->getClientOriginalExtension();
+            
+            $destinationPath = public_path('storage/employees');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+
+            $file->move($destinationPath, $filename);
+            
+            $relativeUrl = '/storage/employees/' . $filename;
+            $fullUrl = url($relativeUrl);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Employee photo uploaded successfully',
+                'avatar_url' => $fullUrl,
+                'relative_url' => $relativeUrl,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'No image file provided',
+        ], 400);
     }
 }

@@ -112,4 +112,41 @@ class ProductController extends Controller
             'message' => 'Product deleted successfully',
         ]);
     }
+
+    /**
+     * Upload product image file from local machine
+     */
+    public function uploadImage(Request $request): JsonResponse
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp,svg|max:5120',
+        ]);
+
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_' . \Illuminate\Support\Str::random(10) . '.' . $file->getClientOriginalExtension();
+            
+            $destinationPath = public_path('storage/products');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+
+            $file->move($destinationPath, $filename);
+            
+            $relativeUrl = '/storage/products/' . $filename;
+            $fullUrl = url($relativeUrl);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product image uploaded successfully',
+                'image_url' => $fullUrl,
+                'relative_url' => $relativeUrl,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'No image file provided',
+        ], 400);
+    }
 }

@@ -5,7 +5,7 @@ import {
   ShoppingCart,
   Globe,
   Lock,
-  User,
+  Keyboard,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -29,6 +29,8 @@ export const Navbar: React.FC = () => {
     switch (activeTab) {
       case 'pos':
         return t.posTerminal;
+      case 'products':
+        return t.products || 'Product Catalog';
       case 'shifts':
         return t.shiftsAndDrawer || 'Shifts & Cash Drawer';
       case 'sales':
@@ -41,8 +43,12 @@ export const Navbar: React.FC = () => {
         return t.purchases;
       case 'dashboard':
         return t.dashboard;
+      case 'reports':
+        return 'Financial & Sales Reports Portal';
       case 'customers':
         return 'Customers & Loyalty';
+      case 'employees':
+        return 'Staff & Cashiers Directory';
       case 'notifications':
         return 'Notification Center';
       case 'security':
@@ -167,6 +173,17 @@ export const Navbar: React.FC = () => {
             </button>
           </div>
 
+          {/* Keyboard Shortcuts Guide Button */}
+          <button
+            onClick={() => {
+              window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
+            }}
+            className="p-2 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition flex items-center justify-center border border-gray-200/80 shadow-xs"
+            title="Keyboard Shortcuts (Press ?)"
+            aria-label="Keyboard Shortcuts"
+          >
+            <Keyboard className="w-4 h-4 text-emerald-600" />
+          </button>
           {/* Remaining Menu Toggle Button Fixed on Far Right */}
           <button
             onClick={() => {

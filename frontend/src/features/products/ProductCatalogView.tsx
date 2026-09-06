@@ -616,7 +616,7 @@ export const ProductCatalogView: React.FC = () => {
                 className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-md hover:border-emerald-300 transition group flex flex-col justify-between"
               >
                 {/* Product Image Header */}
-                <div className="relative aspect-4/3 bg-gray-100 overflow-hidden">
+                <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                   {p.image_url ? (
                     <img
                       src={p.image_url}

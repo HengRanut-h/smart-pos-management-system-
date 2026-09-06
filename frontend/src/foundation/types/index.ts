@@ -29,6 +29,8 @@ export interface CartItem {
 export interface Sale {
   id: number;
   sale_number: string;
+  customer_id?: number;
+  customer?: Customer;
   subtotal: string | number;
   discount_amount: string | number;
   tax_amount: string | number;
@@ -126,6 +128,9 @@ export interface DashboardMetrics {
 export interface Invoice {
   id: number;
   invoice_number: string;
+  sale_id?: number;
+  customer_id?: number;
+  customer?: Customer;
   subtotal: string | number;
   tax_amount: string | number;
   total_amount: string | number;
@@ -377,3 +382,88 @@ export interface UserProfile {
     today_sales_total: number;
   };
 }
+
+
+export interface RoleItem {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+}
+
+export interface Employee {
+  id: number;
+  employee_code: string;
+  first_name: string;
+  last_name: string;
+  gender?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  branch_id: number;
+  branch?: { id: number; name: string; code: string };
+  hire_date?: string;
+  status_id: number;
+  created_at?: string;
+  user?: {
+    id: number;
+    username: string;
+    email?: string;
+    roles?: RoleItem[];
+  };
+}
+
+export interface ReportSummaryResponse {
+  success: boolean;
+  period: {
+    preset: string;
+    start_date: string;
+    end_date: string;
+    formatted: string;
+  };
+  summary: {
+    total_orders: number;
+    subtotal: number;
+    total_discounts: number;
+    total_vat_tax: number;
+    net_sales: number;
+    cogs: number;
+    gross_profit: number;
+    gross_margin_pct: number;
+    average_basket: number;
+  };
+  tenders: {
+    cash: number;
+    khqr: number;
+    card: number;
+    total: number;
+  };
+  top_products: Array<{
+    product_id: number;
+    name: string;
+    sku: string;
+    category: string;
+    units_sold: number;
+    revenue: number;
+    cogs: number;
+    profit: number;
+    margin_pct: number;
+  }>;
+  cashiers: Array<{
+    cashier_id: number;
+    name: string;
+    code: string;
+    orders_count: number;
+    total_sales: number;
+    avg_ticket: number;
+  }>;
+  tax_statement: {
+    taxable_amount: number;
+    vat_rate_pct: number;
+    vat_collected: number;
+    total_invoiced: number;
+    currency: string;
+    riel_equivalent: number;
+  };
+}
+

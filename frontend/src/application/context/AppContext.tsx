@@ -6,6 +6,7 @@ import { getProducts, getCurrentShift, getUserProfile } from '../../data-access/
 export type NavTab =
   | 'pos'
   | 'dashboard'
+  | 'reports'
   | 'products'
   | 'sales'
   | 'invoices'
@@ -13,6 +14,7 @@ export type NavTab =
   | 'purchases'
   | 'shifts'
   | 'customers'
+  | 'employees'
   | 'notifications'
   | 'security'
   | 'backup'
@@ -30,6 +32,7 @@ interface AppContextType {
   removeFromCart: (productId: number) => void;
   updateQuantity: (productId: number, qty: number) => void;
   clearCart: () => void;
+  setCartItems: (items: CartItem[]) => void;
   cartSubtotal: number;
   cartTax: number;
   cartTotal: number;
@@ -182,6 +185,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const clearCart = () => setCart([]);
+  const setCartItems = (items: CartItem[]) => setCart(items);
 
   const cartSubtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
   const cartTax = cartSubtotal * 0.1; // 10% VAT
@@ -200,6 +204,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeFromCart,
         updateQuantity,
         clearCart,
+        setCartItems,
         cartSubtotal,
         cartTax,
         cartTotal,

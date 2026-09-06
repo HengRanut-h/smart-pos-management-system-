@@ -5,17 +5,21 @@ import { SidebarNav } from './presentation/components/SidebarNav';
 import { POSTerminal } from './features/pos/POSTerminal';
 import { ProductCatalogView } from './features/products/ProductCatalogView';
 import { DashboardView } from './features/dashboard/DashboardView';
+import { ReportsView } from './features/reports/ReportsView';
 import { SalesHistoryView } from './features/sales/SalesHistoryView';
 import { InvoiceListView } from './features/invoices/InvoiceListView';
 import { InventoryPortalView } from './features/inventory/InventoryPortalView';
 import { PurchasingPortalView } from './features/purchasing/PurchasingPortalView';
 import { ShiftManagementView } from './features/shifts/ShiftManagementView';
 import { CustomerManagementView } from './features/customers/CustomerManagementView';
+import { EmployeeManagementView } from './features/employees/EmployeeManagementView';
 import { NotificationsView } from './features/notifications/NotificationsView';
 import { SecurityAuditView } from './features/security/SecurityAuditView';
 import { BackupManagementView } from './features/backup/BackupManagementView';
 import { SettingsView } from './features/settings/SettingsView';
 import { UserProfileView } from './features/profile/UserProfileView';
+import { KeyboardShortcutsModal } from './presentation/components/KeyboardShortcutsModal';
+import { Keyboard } from 'lucide-react';
 
 const MainContent: React.FC = () => {
   const { activeTab, isSidebarCollapsed } = useApp();
@@ -29,12 +33,14 @@ const MainContent: React.FC = () => {
       {activeTab === 'pos' && <POSTerminal />}
       {activeTab === 'products' && <ProductCatalogView />}
       {activeTab === 'dashboard' && <DashboardView />}
+      {activeTab === 'reports' && <ReportsView />}
       {activeTab === 'sales' && <SalesHistoryView />}
       {activeTab === 'invoices' && <InvoiceListView />}
       {activeTab === 'inventory' && <InventoryPortalView />}
       {activeTab === 'purchases' && <PurchasingPortalView />}
       {activeTab === 'shifts' && <ShiftManagementView />}
       {activeTab === 'customers' && <CustomerManagementView />}
+      {activeTab === 'employees' && <EmployeeManagementView />}
       {activeTab === 'notifications' && <NotificationsView />}
       {activeTab === 'security' && <SecurityAuditView />}
       {activeTab === 'backup' && <BackupManagementView />}
@@ -45,14 +51,106 @@ const MainContent: React.FC = () => {
 };
 
 
+const AppShell: React.FC = () => {
+  const { setActiveTab } = useApp();
+  const [isShortcutsOpen, setIsShortcutsOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing inside input, textarea or select
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      const isInput = activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select';
+
+      if (!isInput && e.key === '?') {
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        setIsShortcutsOpen(false);
+        return;
+      }
+
+      // F1 - F12 keys
+      switch (e.key) {
+        case 'F1':
+          e.preventDefault();
+          setActiveTab('pos');
+          break;
+        case 'F2':
+          e.preventDefault();
+          setActiveTab('shifts');
+          break;
+        case 'F3':
+          e.preventDefault();
+          setActiveTab('sales');
+          break;
+        case 'F4':
+          e.preventDefault();
+          setActiveTab('invoices');
+          break;
+        case 'F5':
+          e.preventDefault();
+          setActiveTab('inventory');
+          break;
+        case 'F6':
+          e.preventDefault();
+          setActiveTab('purchases');
+          break;
+        case 'F7':
+          e.preventDefault();
+          setActiveTab('dashboard');
+          break;
+        case 'F8':
+          e.preventDefault();
+          setActiveTab('customers');
+          break;
+        case 'F9':
+          e.preventDefault();
+          setActiveTab('notifications');
+          break;
+        case 'F10':
+          e.preventDefault();
+          setActiveTab('security');
+          break;
+        case 'F11':
+          e.preventDefault();
+          setActiveTab('backup');
+          break;
+        case 'F12':
+          e.preventDefault();
+          setActiveTab('settings');
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setActiveTab]);
+
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col relative">
+      <SidebarNav />
+      <Navbar />
+      <MainContent />
+
+
+
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
+    </div>
+  );
+};
+
 export const App: React.FC = () => {
   return (
     <AppProvider>
-      <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
-        <SidebarNav />
-        <Navbar />
-        <MainContent />
-      </div>
+      <AppShell />
     </AppProvider>
   );
 };

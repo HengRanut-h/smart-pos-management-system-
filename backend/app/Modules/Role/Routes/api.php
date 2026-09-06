@@ -1,5 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Modules\Role\Http\Controllers\RoleController;
 
-// Routes for Role
+Route::prefix('roles')->group(function () {
+    Route::get('/', [RoleController::class, 'index']);
+});

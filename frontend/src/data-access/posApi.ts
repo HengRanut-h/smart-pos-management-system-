@@ -1,6 +1,8 @@
 import { apiClient } from './apiClient';
 import {
   Product,
+  Employee,
+  RoleItem,
   Sale,
   DashboardMetrics,
   Invoice,
@@ -18,6 +20,7 @@ import {
   BackupStatus,
   SystemSettings,
   UserProfile,
+  ReportSummaryResponse,
 } from '../foundation/types';
 
 export const getProducts = async (): Promise<Product[]> => {
@@ -300,3 +303,42 @@ export const getUnits = async (): Promise<Array<{ id: number; name: string; symb
   const res = await apiClient.get('/units');
   return res.data?.data || [];
 };
+
+
+// Employee & Staff APIs
+export const getEmployees = async (search?: string): Promise<Employee[]> => {
+  const params = search ? { search } : {};
+  const res = await apiClient.get('/employees', { params });
+  return res.data?.data?.data || res.data?.data || [];
+};
+
+export const createEmployee = async (payload: any): Promise<Employee> => {
+  const res = await apiClient.post('/employees', payload);
+  return res.data.data;
+};
+
+export const updateEmployee = async (id: number, payload: any): Promise<Employee> => {
+  const res = await apiClient.put(`/employees/${id}`, payload);
+  return res.data.data;
+};
+
+export const deleteEmployee = async (id: number): Promise<void> => {
+  await apiClient.delete(`/employees/${id}`);
+};
+
+export const getRoles = async (): Promise<RoleItem[]> => {
+  const res = await apiClient.get('/roles');
+  return res.data?.data || [];
+};
+
+// Reporting & Analytics APIs
+export const getReportsSummary = async (params?: {
+  preset?: string;
+  start_date?: string;
+  end_date?: string;
+  branch_id?: number;
+}): Promise<ReportSummaryResponse> => {
+  const res = await apiClient.get('/reports/summary', { params });
+  return res.data;
+};
+

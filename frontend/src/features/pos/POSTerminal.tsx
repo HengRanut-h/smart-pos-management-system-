@@ -1,5 +1,5 @@
 import { SmartPosLogo } from '../../presentation/components/SmartPosLogo';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '../../application/context/AppContext';
 import {
   Search,
@@ -22,8 +22,14 @@ import {
   Tag,
   Barcode,
   Volume2,
+  PauseCircle,
+  PlayCircle,
+  Clock,
+  CreditCard,
+  Percent,
+  Layers,
 } from 'lucide-react';
-import { Customer } from '../../foundation/types';
+import { Customer, Product } from '../../foundation/types';
 import {
   completeSale,
   generateKHQR,
@@ -32,6 +38,7 @@ import {
   validateCoupon,
 } from '../../data-access/posApi';
 import { ThermalReceiptModal } from '../../presentation/components/ThermalReceiptModal';
+import { BarcodeScannerModal } from './BarcodeScannerModal';
 
 export const POSTerminal: React.FC = () => {
   const {
@@ -44,6 +51,7 @@ export const POSTerminal: React.FC = () => {
     updateQuantity,
     removeFromCart,
     clearCart,
+    setCartItems,
     cartSubtotal,
     cartTax,
     cartTotal,
@@ -62,9 +70,50 @@ export const POSTerminal: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedSuccess, setCompletedSuccess] = useState<any>(null);
   const [showThermalReceipt, setShowThermalReceipt] = useState(false);
+  // Held Orders / Parked Carts State
+  const [heldOrders, setHeldOrders] = useState<Array<{
+    id: string;
+    timestamp: number;
+    items: typeof cart;
+    customer: Customer | null;
+    notes?: string;
+    total: number;
+  }>>(() => {
+    try {
+      const saved = localStorage.getItem('smartpos_held_orders');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isHeldOrdersModalOpen, setIsHeldOrdersModalOpen] = useState(false);
+  const [isHoldConfirmOpen, setIsHoldConfirmOpen] = useState(false);
+  const [holdOrderNote, setHoldOrderNote] = useState('');
+
+  // Manual Discount State
+  const [manualDiscount, setManualDiscount] = useState<{
+    type: 'PERCENT' | 'FIXED';
+    value: number;
+    amount: number;
+    reason: string;
+  } | null>(null);
+  const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
+  const [discountInputVal, setDiscountInputVal] = useState<number>(10);
+  const [discountInputType, setDiscountInputType] = useState<'PERCENT' | 'FIXED'>('PERCENT');
+  const [discountReason, setDiscountReason] = useState<string>('Manager Approval');
+
+  // Split Payment (Multi-Tender) State
+  const [checkoutMode, setCheckoutMode] = useState<'SINGLE' | 'SPLIT'>('SINGLE');
+  const [splitCashUsd, setSplitCashUsd] = useState<number>(0);
+  const [splitCashKhr, setSplitCashKhr] = useState<number>(0);
+  const [splitKhqr, setSplitKhqr] = useState<number>(0);
+  const [splitCard, setSplitCard] = useState<number>(0);
+  const [splitKhqrData, setSplitKhqrData] = useState<{ qr_string: string; md5: string } | null>(null);
+
 
   // Barcode Scanner & Notification State
   const [scannedNotification, setScannedNotification] = useState<string | null>(null);
+  const [isBarcodeScannerModalOpen, setIsBarcodeScannerModalOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Customer Loyalty State
@@ -103,12 +152,69 @@ export const POSTerminal: React.FC = () => {
   });
   const [isSyncingOffline, setIsSyncingOffline] = useState(false);
 
-  const filteredProducts = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase()) ||
-      (p.barcode && p.barcode.includes(search))
-  );
+  const [selectedPosCategory, setSelectedPosCategory] = useState<string>('ALL');
+
+  // Compute unique categories from products
+  const uniqueCategories = useMemo(() => {
+    const map = new Map<number, string>();
+    products.forEach((p) => {
+      if (p.category?.id && p.category?.name) {
+        map.set(p.category.id, p.category.name);
+      }
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      const matchesCat =
+        selectedPosCategory === 'ALL' || String(p.category?.id) === selectedPosCategory;
+      const term = search.toLowerCase();
+      const matchesSearch =
+        !term ||
+        p.name.toLowerCase().includes(term) ||
+        p.sku.toLowerCase().includes(term) ||
+        (p.barcode && p.barcode.toLowerCase().includes(term));
+      return matchesCat && matchesSearch;
+    });
+  }, [products, selectedPosCategory, search]);
+
+
+  // Cash Register / Success Chime Sound
+  const playRegisterChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      
+      const now = ctx.currentTime;
+      // High bell tone
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(880, now);
+      osc1.frequency.exponentialRampToValueAtTime(1760, now + 0.15);
+      gain1.gain.setValueAtTime(0.2, now);
+      gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.3);
+
+      // Secondary chime
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(1320, now + 0.08);
+      osc2.frequency.exponentialRampToValueAtTime(2640, now + 0.35);
+      gain2.gain.setValueAtTime(0.25, now + 0.08);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.08);
+      osc2.stop(now + 0.45);
+    } catch (e) {}
+  };
 
   // Audio Beep for Barcode Scanning
   const playScanBeep = () => {
@@ -194,6 +300,84 @@ export const POSTerminal: React.FC = () => {
     }
   }, [isCustomerModalOpen, customerSearch]);
 
+
+  // Save held orders to localStorage
+  const saveHeldOrders = (list: typeof heldOrders) => {
+    setHeldOrders(list);
+    try {
+      localStorage.setItem('smartpos_held_orders', JSON.stringify(list));
+    } catch {}
+  };
+
+  const handleHoldOrder = () => {
+    if (cart.length === 0) return;
+    const newHold = {
+      id: `HOLD-${Date.now().toString().slice(-6)}`,
+      timestamp: Date.now(),
+      items: [...cart],
+      customer: selectedCustomer,
+      notes: holdOrderNote.trim() || 'Held Customer Cart',
+      total: finalPayableTotal,
+    };
+    const updated = [newHold, ...heldOrders];
+    saveHeldOrders(updated);
+    clearCart();
+    setSelectedCustomer(null);
+    setHoldOrderNote('');
+    setIsHoldConfirmOpen(false);
+    playScanBeep();
+    setScannedNotification(`Order #${newHold.id} parked safely`);
+    setTimeout(() => setScannedNotification(null), 2500);
+  };
+
+  const handleResumeHeldOrder = (held: typeof heldOrders[0]) => {
+    if (cart.length > 0) {
+      if (!confirm('Current active cart has items. Replace with this held order?')) {
+        return;
+      }
+    }
+    setCartItems(held.items);
+    setSelectedCustomer(held.customer);
+    const remaining = heldOrders.filter((h) => h.id !== held.id);
+    saveHeldOrders(remaining);
+    setIsHeldOrdersModalOpen(false);
+    playScanBeep();
+    setScannedNotification(`Order #${held.id} resumed!`);
+    setTimeout(() => setScannedNotification(null), 2500);
+  };
+
+  const handleDiscardHeldOrder = (heldId: string) => {
+    if (confirm('Are you sure you want to discard this parked order?')) {
+      const remaining = heldOrders.filter((h) => h.id !== heldId);
+      saveHeldOrders(remaining);
+    }
+  };
+
+  // Manual Discount Calculator
+  const manualDiscountAmount = useMemo(() => {
+    if (!manualDiscount) return 0;
+    if (manualDiscount.type === 'PERCENT') {
+      return Math.round((cartSubtotal * (manualDiscount.value / 100)) * 100) / 100;
+    }
+    return Math.min(cartSubtotal, manualDiscount.value);
+  }, [manualDiscount, cartSubtotal]);
+
+  const handleApplyManualDiscount = () => {
+    const val = Number(discountInputVal) || 0;
+    if (val <= 0) return;
+    const calculated = discountInputType === 'PERCENT'
+      ? Math.round((cartSubtotal * (val / 100)) * 100) / 100
+      : Math.min(cartSubtotal, val);
+
+    setManualDiscount({
+      type: discountInputType,
+      value: val,
+      amount: calculated,
+      reason: discountReason,
+    });
+    setIsDiscountModalOpen(false);
+  };
+
   const getTier = (points: number | string) => {
     const pts = Number(points) || 0;
     if (pts >= 2000) return { name: 'Platinum', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: '💎' };
@@ -212,7 +396,7 @@ export const POSTerminal: React.FC = () => {
 
   const pointsDiscount = isRedeemingPoints ? Math.round(pointsToRedeem) / 100 : 0;
   const couponDiscount = appliedCoupon ? appliedCoupon.discount_amount : 0;
-  const finalPayableTotal = Math.max(0, cartTotal - pointsDiscount - couponDiscount);
+  const finalPayableTotal = Math.max(0, cartTotal - pointsDiscount - couponDiscount - manualDiscountAmount);
   const finalPayableTotalKhr = Math.round(finalPayableTotal * exchangeRate);
 
   // Handle applying coupon code
@@ -287,6 +471,12 @@ export const POSTerminal: React.FC = () => {
     setCashCurrency('USD');
     setCashReceived(Math.ceil(finalPayableTotal));
     setCashReceivedKhr(Math.ceil(finalPayableTotalKhr / 1000) * 1000);
+    setCheckoutMode('SINGLE');
+    setSplitCashUsd(0);
+    setSplitCashKhr(0);
+    setSplitKhqr(0);
+    setSplitCard(0);
+    setSplitKhqrData(null);
     setIsCheckoutOpen(true);
     setCompletedSuccess(null);
 
@@ -346,8 +536,22 @@ export const POSTerminal: React.FC = () => {
     if (cart.length === 0) return;
     setIsSubmitting(true);
 
-    const paidAmountUsd = paymentMethod === 'CASH' ? effectiveCashReceivedUsd : finalPayableTotal;
-    const changeUsd = Math.max(0, paidAmountUsd - finalPayableTotal);
+    let paidAmountUsd = finalPayableTotal;
+    let changeUsd = 0;
+    let paymentMethodId = 1; // Cash default
+    let paymentNotes = '';
+
+    if (checkoutMode === 'SPLIT') {
+      const splitTotal = splitCashUsd + (splitCashKhr / exchangeRate) + splitKhqr + splitCard;
+      paidAmountUsd = splitTotal;
+      changeUsd = Math.max(0, splitTotal - finalPayableTotal);
+      paymentMethodId = splitKhqr > 0 ? 3 : (splitCard > 0 ? 2 : 1);
+      paymentNotes = `Split Tender: Cash $${(splitCashUsd + (splitCashKhr / exchangeRate)).toFixed(2)}, KHQR $${splitKhqr.toFixed(2)}, Card $${splitCard.toFixed(2)}`;
+    } else {
+      paidAmountUsd = paymentMethod === 'CASH' ? effectiveCashReceivedUsd : finalPayableTotal;
+      changeUsd = Math.max(0, paidAmountUsd - finalPayableTotal);
+      paymentMethodId = paymentMethod === 'KHQR' ? 3 : 1;
+    }
 
     const payload = {
       branch_id: 1,
@@ -527,9 +731,56 @@ export const POSTerminal: React.FC = () => {
               />
               <Barcode className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
             </div>
-            <div className="text-xs text-gray-500 font-semibold shrink-0 bg-white px-3 py-2 border border-gray-200 rounded-xl shadow-xs">
-              {filteredProducts.length} Items Available
+            <button
+              type="button"
+              onClick={() => setIsBarcodeScannerModalOpen(true)}
+              className="flex items-center space-x-1.5 px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition shrink-0 group"
+              title="Open Barcode Scanner & Camera Hub"
+            >
+              <Barcode className="w-4 h-4 text-emerald-200 group-hover:scale-110 transition" />
+              <span>Scan Barcode</span>
+            </button>
+            <div className="text-xs text-gray-500 font-semibold shrink-0 bg-white px-3 py-2.5 border border-gray-200 rounded-xl shadow-xs">
+              {filteredProducts.length} Items
             </div>
+          </div>
+
+          {/* Category Filter Pills */}
+          <div className="flex items-center space-x-1.5 overflow-x-auto pb-2 mb-3 text-xs shrink-0 select-none">
+            <button
+              onClick={() => setSelectedPosCategory('ALL')}
+              className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition ${
+                selectedPosCategory === 'ALL'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              All Items ({products.length})
+            </button>
+            {uniqueCategories.map((cat: { id: number; name: string }) => {
+              const catCount = products.filter((p: Product) => p.category?.id === cat.id).length;
+              const isSelected = selectedPosCategory === String(cat.id);
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedPosCategory(String(cat.id))}
+                  className={`px-3 py-1.5 rounded-xl font-semibold whitespace-nowrap transition flex items-center space-x-1.5 ${
+                    isSelected
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                >
+                  <span>{cat.name}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                      isSelected ? 'bg-emerald-800 text-white' : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {catCount}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Product Grid */}
@@ -576,13 +827,24 @@ export const POSTerminal: React.FC = () => {
                         <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-black/60 backdrop-blur-xs text-[9px] font-bold font-mono text-white rounded-md">
                           {p.sku}
                         </span>
+                        {p.category && (
+                          <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-white/90 backdrop-blur-xs text-[9px] font-bold text-gray-700 rounded-md">
+                            {p.category.name}
+                          </span>
+                        )}
                       </div>
 
                       {/* Product Meta */}
                       <div className="flex-1 flex flex-col justify-between">
-                        <span className="font-bold text-xs text-gray-900 line-clamp-2 leading-tight group-hover:text-emerald-600 transition">
-                          {p.name}
-                        </span>
+                        <div>
+                          <span className="font-bold text-xs text-gray-900 line-clamp-2 leading-tight group-hover:text-emerald-600 transition">
+                            {p.name}
+                          </span>
+                          <span className="font-mono text-[10px] text-gray-400 block mt-0.5 flex items-center gap-1">
+                            <Barcode className="w-3 h-3 text-slate-400" />
+                            {p.barcode || p.sku}
+                          </span>
+                        </div>
                         <div className="flex items-baseline justify-between mt-2 pt-2 border-t border-gray-100">
                           <div>
                             <span className="text-emerald-600 font-extrabold text-sm font-mono block">
@@ -663,20 +925,46 @@ export const POSTerminal: React.FC = () => {
 
           {/* Cart Header */}
           <div className="p-3 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="font-bold text-sm text-gray-900 flex items-center space-x-1.5">
-              <span>{t.cart}</span>
-              <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-md text-[10px] font-mono font-bold">
-                {cart.length}
-              </span>
-            </h2>
-            {cart.length > 0 && (
-              <button
-                onClick={clearCart}
-                className="text-xs font-semibold text-rose-500 hover:text-rose-600 transition"
-              >
-                Clear All
-              </button>
-            )}
+            <div className="flex items-center space-x-2">
+              <h2 className="font-bold text-sm text-gray-900 flex items-center space-x-1.5">
+                <span>{t.cart}</span>
+                <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-md text-[10px] font-mono font-bold">
+                  {cart.length}
+                </span>
+              </h2>
+              {heldOrders.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsHeldOrdersModalOpen(true)}
+                  className="flex items-center space-x-1 px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-[10px] font-bold shadow-xs transition"
+                >
+                  <PauseCircle className="w-3 h-3 text-amber-600" />
+                  <span>Held ({heldOrders.length})</span>
+                </button>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {cart.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsHoldConfirmOpen(true)}
+                    className="flex items-center space-x-1 text-xs font-semibold text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded-lg transition"
+                    title="Park this order and serve next customer"
+                  >
+                    <PauseCircle className="w-3.5 h-3.5" />
+                    <span>Hold</span>
+                  </button>
+                  <button
+                    onClick={clearCart}
+                    className="text-xs font-semibold text-rose-500 hover:text-rose-600 transition px-1 py-0.5"
+                  >
+                    Clear All
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Cart Items List */}
@@ -811,6 +1099,33 @@ export const POSTerminal: React.FC = () => {
                 <span className="font-mono">-${couponDiscount.toFixed(2)}</span>
               </div>
             )}
+            {manualDiscount && manualDiscountAmount > 0 && (
+              <div className="flex justify-between items-center text-xs text-indigo-600 font-medium bg-indigo-50/60 px-2 py-1 rounded-lg border border-indigo-100">
+                <div className="flex items-center space-x-1">
+                  <Percent className="w-3 h-3" />
+                  <span>Discount ({manualDiscount.reason})</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <span className="font-mono font-bold">-${manualDiscountAmount.toFixed(2)}</span>
+                  <button
+                    onClick={() => setManualDiscount(null)}
+                    className="text-gray-400 hover:text-rose-500 transition ml-1"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                onClick={() => setIsDiscountModalOpen(true)}
+                className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg transition flex items-center space-x-1 border border-indigo-200"
+              >
+                <Percent className="w-3 h-3" />
+                <span>{manualDiscount ? 'Change Discount' : '+ Add Discount'}</span>
+              </button>
+            </div>
 
             <div className="flex justify-between items-baseline pt-2 border-t border-gray-200">
               <span className="text-base font-extrabold text-gray-900">{t.total}</span>
@@ -1029,8 +1344,189 @@ export const POSTerminal: React.FC = () => {
               </div>
             )}
 
+            {/* Checkout Tender Mode Tabs */}
+            <div className="flex bg-gray-100 p-1 rounded-xl text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setCheckoutMode('SINGLE')}
+                className={`flex-1 py-1.5 rounded-lg transition ${
+                  checkoutMode === 'SINGLE'
+                    ? 'bg-white text-gray-900 shadow-xs'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Single Tender
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckoutMode('SPLIT');
+                  setSplitCashUsd(0);
+                  setSplitCashKhr(0);
+                  setSplitKhqr(0);
+                  setSplitCard(0);
+                }}
+                className={`flex-1 py-1.5 rounded-lg transition flex items-center justify-center space-x-1 ${
+                  checkoutMode === 'SPLIT'
+                    ? 'bg-white text-indigo-700 shadow-xs'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Split Tender</span>
+              </button>
+            </div>
+
+            {checkoutMode === 'SPLIT' ? (
+              /* SPLIT TENDER CONTROLS */
+              <div className="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-slate-600 uppercase">Allocated Breakdown</span>
+                  {(() => {
+                    const allocated = splitCashUsd + (splitCashKhr / exchangeRate) + splitKhqr + splitCard;
+                    const remaining = Math.max(0, finalPayableTotal - allocated);
+                    return (
+                      <span className={`font-mono font-bold ${remaining <= 0.001 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        {remaining <= 0.001 ? '✓ Fully Allocated' : `Due: $${remaining.toFixed(2)}`}
+                      </span>
+                    );
+                  })()}
+                </div>
+
+                {/* Cash USD */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px] font-semibold text-gray-600">
+                    <span className="flex items-center gap-1"><DollarSign className="w-3 h-3 text-emerald-600" /> Cash USD ($)</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const otherAlloc = (splitCashKhr / exchangeRate) + splitKhqr + splitCard;
+                        setSplitCashUsd(Math.max(0, Number((finalPayableTotal - otherAlloc).toFixed(2))));
+                      }}
+                      className="text-[10px] text-emerald-600 hover:underline font-bold"
+                    >
+                      Fill Remaining
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min={0}
+                    value={splitCashUsd || ''}
+                    onChange={(e) => setSplitCashUsd(Number(e.target.value))}
+                    placeholder="$0.00"
+                    className="w-full px-2.5 py-1.5 text-xs font-bold font-mono border border-gray-200 rounded-lg bg-white"
+                  />
+                </div>
+
+                {/* Cash KHR */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px] font-semibold text-gray-600">
+                    <span className="flex items-center gap-1"><Coins className="w-3 h-3 text-emerald-600" /> Cash KHR (៛)</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const otherAlloc = splitCashUsd + splitKhqr + splitCard;
+                        const remUsd = Math.max(0, finalPayableTotal - otherAlloc);
+                        setSplitCashKhr(Math.round(remUsd * exchangeRate));
+                      }}
+                      className="text-[10px] text-emerald-600 hover:underline font-bold"
+                    >
+                      Fill Remaining
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    step="500"
+                    min={0}
+                    value={splitCashKhr || ''}
+                    onChange={(e) => setSplitCashKhr(Number(e.target.value))}
+                    placeholder="0 ៛"
+                    className="w-full px-2.5 py-1.5 text-xs font-bold font-mono border border-gray-200 rounded-lg bg-white"
+                  />
+                </div>
+
+                {/* Bakong KHQR */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px] font-semibold text-gray-600">
+                    <span className="flex items-center gap-1"><QrCode className="w-3 h-3 text-red-600" /> Bakong KHQR ($)</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const otherAlloc = splitCashUsd + (splitCashKhr / exchangeRate) + splitCard;
+                        const rem = Math.max(0, Number((finalPayableTotal - otherAlloc).toFixed(2)));
+                        setSplitKhqr(rem);
+                        if (rem > 0) {
+                          generateKHQR('SPLIT-' + Date.now(), rem).then(setSplitKhqrData);
+                        }
+                      }}
+                      className="text-[10px] text-red-600 hover:underline font-bold"
+                    >
+                      Fill Remaining
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      step="0.5"
+                      min={0}
+                      value={splitKhqr || ''}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setSplitKhqr(val);
+                        if (val > 0) {
+                          generateKHQR('SPLIT-' + Date.now(), val).then(setSplitKhqrData);
+                        } else {
+                          setSplitKhqrData(null);
+                        }
+                      }}
+                      placeholder="$0.00"
+                      className="flex-1 px-2.5 py-1.5 text-xs font-bold font-mono border border-gray-200 rounded-lg bg-white"
+                    />
+                    {splitKhqr > 0 && splitKhqrData && (
+                      <button
+                        type="button"
+                        onClick={() => alert(`Bakong KHQR for $${splitKhqr.toFixed(2)} active!`)}
+                        className="px-2 py-1 bg-red-100 text-red-700 rounded-lg text-[10px] font-bold shrink-0"
+                      >
+                        View QR
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Credit / Debit Card */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px] font-semibold text-gray-600">
+                    <span className="flex items-center gap-1"><CreditCard className="w-3 h-3 text-blue-600" /> Card ($)</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const otherAlloc = splitCashUsd + (splitCashKhr / exchangeRate) + splitKhqr;
+                        setSplitCard(Math.max(0, Number((finalPayableTotal - otherAlloc).toFixed(2))));
+                      }}
+                      className="text-[10px] text-blue-600 hover:underline font-bold"
+                    >
+                      Fill Remaining
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min={0}
+                    value={splitCard || ''}
+                    onChange={(e) => setSplitCard(Number(e.target.value))}
+                    placeholder="$0.00"
+                    className="w-full px-2.5 py-1.5 text-xs font-bold font-mono border border-gray-200 rounded-lg bg-white"
+                  />
+                </div>
+              </div>
+            ) : null}
+
             {/* Payment Method Selector */}
-            <div className="grid grid-cols-2 gap-2">
+            {checkoutMode === 'SINGLE' && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setPaymentMethod('CASH')}
@@ -1182,6 +1678,8 @@ export const POSTerminal: React.FC = () => {
                 )}
               </div>
             )}
+              </>
+            )}
 
             {/* Action Buttons */}
             <div className="flex items-center justify-end space-x-3 pt-3 border-t border-gray-100">
@@ -1197,7 +1695,8 @@ export const POSTerminal: React.FC = () => {
                 onClick={handleCompleteSale}
                 disabled={
                   isSubmitting ||
-                  (paymentMethod === 'CASH' && effectiveCashReceivedUsd < finalPayableTotal)
+                  (checkoutMode === 'SINGLE' && paymentMethod === 'CASH' && effectiveCashReceivedUsd < finalPayableTotal) ||
+                  (checkoutMode === 'SPLIT' && (splitCashUsd + (splitCashKhr / exchangeRate) + splitKhqr + splitCard) < (finalPayableTotal - 0.001))
                 }
                 className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-sm transition"
               >

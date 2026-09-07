@@ -73,19 +73,23 @@ import { SerialNumberModal } from './SerialNumberModal';
 import { BundleBomModal } from './BundleBomModal';
 import { BarcodeLabelModal } from './BarcodeLabelModal';
 
-type SubView =
+export type SubView =
   | 'dashboard'
   | 'catalog'
-  | 'types'
+  | 'attributes'
   | 'variants'
+  | 'pricing'
+  | 'tracking'
+  | 'manufacturing'
+  | 'barcodes'
+  | 'data'
+  | 'types'
   | 'categories'
   | 'brands'
   | 'units'
-  | 'pricing'
   | 'landed_cost'
   | 'inventory'
   | 'warehouse'
-  | 'barcodes'
   | 'suppliers'
   | 'batches'
   | 'serials'
@@ -108,9 +112,51 @@ export const ProductManagementHub: React.FC = () => {
     (productSubTab as SubView) || 'dashboard'
   );
 
+  // Inner sub-tabs for consolidated modules
+  const [attributesTab, setAttributesTab] = useState<'categories' | 'brands' | 'units'>('categories');
+  const [variantsTab, setVariantsTab] = useState<'variants' | 'types'>('variants');
+  const [pricingTab, setPricingTab] = useState<'pricing' | 'landed_cost' | 'promotions'>('pricing');
+  const [trackingTab, setTrackingTab] = useState<'batches' | 'serials' | 'warranties'>('batches');
+  const [manufacturingTab, setManufacturingTab] = useState<'bom' | 'bundles' | 'qc'>('bom');
+  const [dataTab, setDataTab] = useState<'import_export' | 'templates' | 'audit_logs' | 'returns' | 'reviews'>('import_export');
+
+  // Sync external navigation (from sidebar) with inner tabs
   useEffect(() => {
-    if (productSubTab && productSubTab !== activeSubView) {
-      setActiveSubView(productSubTab as SubView);
+    if (!productSubTab) return;
+    const tab = productSubTab as string;
+    if (['attributes', 'categories', 'brands', 'units'].includes(tab)) {
+      setActiveSubView('attributes');
+      if (tab === 'brands') setAttributesTab('brands');
+      else if (tab === 'units') setAttributesTab('units');
+      else setAttributesTab('categories');
+    } else if (['variants', 'types'].includes(tab)) {
+      setActiveSubView('variants');
+      if (tab === 'types') setVariantsTab('types');
+      else setVariantsTab('variants');
+    } else if (['pricing', 'landed_cost', 'promotions'].includes(tab)) {
+      setActiveSubView('pricing');
+      if (tab === 'landed_cost') setPricingTab('landed_cost');
+      else if (tab === 'promotions') setPricingTab('promotions');
+      else setPricingTab('pricing');
+    } else if (['tracking', 'batches', 'serials', 'warranties'].includes(tab)) {
+      setActiveSubView('tracking');
+      if (tab === 'serials') setTrackingTab('serials');
+      else if (tab === 'warranties') setTrackingTab('warranties');
+      else setTrackingTab('batches');
+    } else if (['manufacturing', 'bom', 'bundles', 'qc'].includes(tab)) {
+      setActiveSubView('manufacturing');
+      if (tab === 'bundles') setManufacturingTab('bundles');
+      else if (tab === 'qc') setManufacturingTab('qc');
+      else setManufacturingTab('bom');
+    } else if (['data', 'import_export', 'templates', 'audit_logs', 'returns', 'reviews'].includes(tab)) {
+      setActiveSubView('data');
+      if (tab === 'templates') setDataTab('templates');
+      else if (tab === 'audit_logs') setDataTab('audit_logs');
+      else if (tab === 'returns') setDataTab('returns');
+      else if (tab === 'reviews') setDataTab('reviews');
+      else setDataTab('import_export');
+    } else {
+      setActiveSubView(tab as SubView);
     }
   }, [productSubTab]);
 
@@ -205,18 +251,22 @@ export const ProductManagementHub: React.FC = () => {
 
   // Load secondary tab data when switching subviews
   useEffect(() => {
-    if (activeSubView === 'batches' && batches.length === 0) {
+    if ((activeSubView === 'tracking' || activeSubView === 'batches' || trackingTab === 'batches') && batches.length === 0) {
       productEnterpriseApi.getBatches().then(r => setBatches(r.data || [])).catch(console.error);
-    } else if (activeSubView === 'serials' && serialNumbers.length === 0) {
+    }
+    if ((activeSubView === 'tracking' || activeSubView === 'serials' || trackingTab === 'serials') && serialNumbers.length === 0) {
       productEnterpriseApi.getSerialNumbers().then(r => setSerialNumbers(r.data || [])).catch(console.error);
-    } else if (activeSubView === 'qc' && qcInspections.length === 0) {
+    }
+    if ((activeSubView === 'manufacturing' || activeSubView === 'qc' || manufacturingTab === 'qc') && qcInspections.length === 0) {
       productEnterpriseApi.getQcInspections().then(r => setQcInspections(r.data || [])).catch(console.error);
-    } else if (activeSubView === 'reviews' && reviews.length === 0) {
+    }
+    if ((activeSubView === 'data' || activeSubView === 'reviews' || dataTab === 'reviews') && reviews.length === 0) {
       productEnterpriseApi.getReviews().then(r => setReviews(r.data || [])).catch(console.error);
-    } else if (activeSubView === 'audit_logs' && auditLogs.length === 0) {
+    }
+    if ((activeSubView === 'data' || activeSubView === 'audit_logs' || dataTab === 'audit_logs') && auditLogs.length === 0) {
       productEnterpriseApi.getAuditLogs().then(r => setAuditLogs(r.data || [])).catch(console.error);
     }
-  }, [activeSubView]);
+  }, [activeSubView, trackingTab, manufacturingTab, dataTab]);
 
   // Filtered & Sorted Products
   const filteredProducts = useMemo(() => {
@@ -274,32 +324,38 @@ export const ProductManagementHub: React.FC = () => {
     loadAllData();
   };
 
-  // Sub-Navigation Tabs Configuration
+  // Consolidated Navigation Modules Configuration
   const navItems = [
-    { id: 'dashboard', category: 'CATALOG', label: '01. Dashboard', icon: LayoutDashboard },
-    { id: 'catalog', category: 'CATALOG', label: '02. Catalog', count: products.length, icon: Package },
-    { id: 'types', category: 'CATALOG', label: '03. 10 Product Types', count: 10, icon: Layers },
-    { id: 'variants', category: 'CATALOG', label: '04. Variant Matrix', icon: Sparkles },
-    { id: 'categories', category: 'CATALOG', label: '05. Categories', count: categories.length, icon: FolderTree },
-    { id: 'brands', category: 'CATALOG', label: '06. Brands', count: brands.length, icon: Award },
-    { id: 'units', category: 'CATALOG', label: '07. Unit Conversions', count: units.length, icon: Scale },
-    { id: 'pricing', category: 'PRICING', label: '08. Multi-Tier Pricing', icon: DollarSign },
-    { id: 'landed_cost', category: 'PRICING', label: '09. Landed Cost', icon: Calculator },
-    { id: 'inventory', category: 'WAREHOUSE', label: '10. Stock & Reorders', count: dashboardData?.overview.low_stock || 0, icon: Boxes },
-    { id: 'warehouse', category: 'WAREHOUSE', label: '11. Warehouse Bins', icon: MapPin },
-    { id: 'barcodes', category: 'WAREHOUSE', label: '12. Barcode & Auto-SKU', icon: Barcode },
-    { id: 'suppliers', category: 'WAREHOUSE', label: '13. Suppliers', icon: Truck },
-    { id: 'batches', category: 'WAREHOUSE', label: '14. Batches & Expiry', count: batches.length, icon: Calendar },
-    { id: 'serials', category: 'WAREHOUSE', label: '15. Serial & IMEI', count: serialNumbers.length, icon: Hash },
-    { id: 'warranties', category: 'MANUFACTURING', label: '16. Warranties', icon: ShieldCheck },
-    { id: 'bundles', category: 'MANUFACTURING', label: '17. Bundles & Kits', icon: PackagePlus },
-    { id: 'bom', category: 'MANUFACTURING', label: '18. BOM Manufacturing', icon: Wrench },
-    { id: 'qc', category: 'MANUFACTURING', label: '19. Quality Control', count: qcInspections.length, icon: CheckCircle2 },
-    { id: 'promotions', category: 'PRICING', label: '20. Promotions & Rules', icon: Tag },
-    { id: 'reviews', category: 'AUDIT', label: '21. Reviews & Ratings', count: reviews.length, icon: Star },
-    { id: 'returns', category: 'MANUFACTURING', label: '22. Returns & Quarantine', icon: RotateCcw },
-    { id: 'import_export', category: 'AUDIT', label: '23. Import / Export', icon: FileSpreadsheet },
-    { id: 'templates', category: 'AUDIT', label: '24. Templates & Audits', count: auditLogs.length, icon: History },
+    { id: 'dashboard', label: '01. Product Dashboard', icon: LayoutDashboard },
+    { id: 'catalog', label: '02. Product Catalog', count: products.length, icon: Package },
+    { id: 'attributes', label: '03. Categories, Brands & Units', icon: FolderTree },
+    { id: 'variants', label: '04. Variant Matrix', icon: Sparkles },
+    { id: 'pricing', label: '05. Pricing & Cost Studio', icon: DollarSign },
+    { id: 'tracking', label: '06. Batches, Serials & Warranties', icon: Calendar },
+    { id: 'manufacturing', label: '07. Manufacturing & Bundles', icon: Wrench },
+    { id: 'barcodes', label: '08. Barcode & Print Studio', icon: Barcode },
+    { id: 'data', label: '09. Data & Operations', icon: FileSpreadsheet },
+    // Aliases for backward compatibility
+    { id: 'types', label: '04. Variant Matrix', icon: Sparkles },
+    { id: 'categories', label: '03. Categories, Brands & Units', icon: FolderTree },
+    { id: 'brands', label: '03. Categories, Brands & Units', icon: Award },
+    { id: 'units', label: '03. Categories, Brands & Units', icon: Scale },
+    { id: 'landed_cost', label: '05. Pricing & Cost Studio', icon: Calculator },
+    { id: 'inventory', label: '10. Stock & Reorders', icon: Boxes },
+    { id: 'warehouse', label: '11. Warehouse Bins', icon: MapPin },
+    { id: 'suppliers', label: '13. Suppliers', icon: Truck },
+    { id: 'batches', label: '06. Batches, Serials & Warranties', icon: Calendar },
+    { id: 'serials', label: '06. Batches, Serials & Warranties', icon: Hash },
+    { id: 'warranties', label: '06. Batches, Serials & Warranties', icon: ShieldCheck },
+    { id: 'bundles', label: '07. Manufacturing & Bundles', icon: PackagePlus },
+    { id: 'bom', label: '07. Manufacturing & Bundles', icon: Wrench },
+    { id: 'qc', label: '07. Manufacturing & Bundles', icon: CheckCircle2 },
+    { id: 'promotions', label: '05. Pricing & Cost Studio', icon: Tag },
+    { id: 'reviews', label: '09. Data & Operations', icon: Star },
+    { id: 'returns', label: '09. Data & Operations', icon: RotateCcw },
+    { id: 'import_export', label: '09. Data & Operations', icon: FileSpreadsheet },
+    { id: 'templates', label: '09. Data & Operations', icon: History },
+    { id: 'audit_logs', label: '09. Data & Operations', icon: History },
   ];
 
   const currentModule = navItems.find((item) => item.id === activeSubView) || navItems[0];
@@ -1104,7 +1160,88 @@ export const ProductManagementHub: React.FC = () => {
         )}
 
         {/* VIEW 3: 10 PRODUCT TYPES */}
-        {activeSubView === 'types' && (
+                {/* VIEW: VARIANTS & MATRIX */}
+        {(activeSubView === 'variants' || activeSubView === 'types') && (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+              <button
+                onClick={() => setVariantsTab('variants')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  variantsTab === 'variants'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Variant Matrix Generator</span>
+              </button>
+              <button
+                onClick={() => setVariantsTab('types')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  variantsTab === 'types'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Layers className="w-4 h-4" />
+                <span>10 Product Types Guide</span>
+              </button>
+            </div>
+
+            {variantsTab === 'variants' && (
+
+          <div className="space-y-4">
+            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-black text-gray-900">Variant Matrix Generator</h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Generate cross-product attribute combinations (Size × Color × Material) with custom SKUs and prices.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {products
+                .filter(p => p.product_type === 'VARIABLE')
+                .map(product => (
+                  <div key={product.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-extrabold text-gray-900 text-sm">{product.name}</h4>
+                        <p className="text-xs text-gray-500 font-mono mt-0.5">SKU: {product.sku}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setVariantProduct(product);
+                          setIsVariantModalOpen(true);
+                        }}
+                        className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center space-x-1 cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Manage Matrix</span>
+                      </button>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between text-xs">
+                      <span className="text-gray-500">Configured Variants:</span>
+                      <span className="font-extrabold text-purple-700">
+                        {product.variants?.length || 'Ready to generate'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              {products.filter(p => p.product_type === 'VARIABLE').length === 0 && (
+                <div className="col-span-2 bg-white p-12 rounded-3xl border border-gray-200 text-center text-gray-400">
+                  <Layers className="w-12 h-12 mx-auto text-gray-300 mb-2" />
+                  <p className="text-sm font-bold">No Variable Products Configured</p>
+                  <p className="text-xs text-gray-500 mt-1">Create a product with type "VARIABLE" to build an attribute matrix.</p>
+                </div>
+              )}
+            </div>
+          </div>
+            )}
+
+            {variantsTab === 'types' && (
+
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
@@ -1171,62 +1308,52 @@ export const ProductManagementHub: React.FC = () => {
               })}
             </div>
           </div>
-        )}
-
-        {/* VIEW 4: VARIANTS */}
-        {activeSubView === 'variants' && (
-          <div className="space-y-4">
-            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs flex justify-between items-center">
-              <div>
-                <h3 className="text-xl font-black text-gray-900">Variant Matrix Generator</h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Generate cross-product attribute combinations (Size × Color × Material) with custom SKUs and prices.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {products
-                .filter(p => p.product_type === 'VARIABLE')
-                .map(product => (
-                  <div key={product.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-extrabold text-gray-900 text-sm">{product.name}</h4>
-                        <p className="text-xs text-gray-500 font-mono mt-0.5">SKU: {product.sku}</p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setVariantProduct(product);
-                          setIsVariantModalOpen(true);
-                        }}
-                        className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center space-x-1 cursor-pointer"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Manage Matrix</span>
-                      </button>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between text-xs">
-                      <span className="text-gray-500">Configured Variants:</span>
-                      <span className="font-extrabold text-purple-700">
-                        {product.variants?.length || 'Ready to generate'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              {products.filter(p => p.product_type === 'VARIABLE').length === 0 && (
-                <div className="col-span-2 bg-white p-12 rounded-3xl border border-gray-200 text-center text-gray-400">
-                  <Layers className="w-12 h-12 mx-auto text-gray-300 mb-2" />
-                  <p className="text-sm font-bold">No Variable Products Configured</p>
-                  <p className="text-xs text-gray-500 mt-1">Create a product with type "VARIABLE" to build an attribute matrix.</p>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         )}
 
         {/* VIEW 5: CATEGORIES */}
-        {activeSubView === 'categories' && (
+                {/* VIEW: ATTRIBUTES & TAXONOMY (CATEGORIES, BRANDS, UNITS) */}
+        {(activeSubView === 'attributes' || activeSubView === 'categories' || activeSubView === 'brands' || activeSubView === 'units') && (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+              <button
+                onClick={() => setAttributesTab('categories')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  attributesTab === 'categories'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <FolderTree className="w-4 h-4" />
+                <span>Categories Tree ({categories.length})</span>
+              </button>
+              <button
+                onClick={() => setAttributesTab('brands')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  attributesTab === 'brands'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Award className="w-4 h-4" />
+                <span>Brands Portfolio ({brands.length})</span>
+              </button>
+              <button
+                onClick={() => setAttributesTab('units')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  attributesTab === 'units'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Scale className="w-4 h-4" />
+                <span>Unit Conversions ({units.length})</span>
+              </button>
+            </div>
+
+            {attributesTab === 'categories' && (
+
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs flex justify-between items-center">
               <div>
@@ -1257,10 +1384,10 @@ export const ProductManagementHub: React.FC = () => {
               })}
             </div>
           </div>
-        )}
+            )}
 
-        {/* VIEW 6: BRANDS */}
-        {activeSubView === 'brands' && (
+            {attributesTab === 'brands' && (
+
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs flex justify-between items-center">
               <div>
@@ -1293,10 +1420,10 @@ export const ProductManagementHub: React.FC = () => {
               )}
             </div>
           </div>
-        )}
+            )}
 
-        {/* VIEW 7: UNITS & CONVERSIONS */}
-        {activeSubView === 'units' && (
+            {attributesTab === 'units' && (
+
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
               <h3 className="text-xl font-black text-gray-900">Units of Measure & Multi-Tier Conversions</h3>
@@ -1322,10 +1449,41 @@ export const ProductManagementHub: React.FC = () => {
               </div>
             </div>
           </div>
+            )}
+          </div>
         )}
 
         {/* VIEW 8: MULTI-TIER PRICING */}
-        {activeSubView === 'pricing' && (
+                {/* VIEW: PRICING & COST STUDIO */}
+        {(activeSubView === 'pricing' || activeSubView === 'landed_cost' || activeSubView === 'promotions') && (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+              <button
+                onClick={() => setPricingTab('pricing')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  pricingTab === 'pricing'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <DollarSign className="w-4 h-4" />
+                <span>Multi-Tier Pricing Matrix</span>
+              </button>
+              <button
+                onClick={() => setPricingTab('landed_cost')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  pricingTab === 'landed_cost'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Calculator className="w-4 h-4" />
+                <span>Landed Cost & Margins Studio</span>
+              </button>
+            </div>
+
+            {pricingTab === 'pricing' && (
+
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs flex justify-between items-center">
               <div>
@@ -1377,10 +1535,10 @@ export const ProductManagementHub: React.FC = () => {
               </div>
             </div>
           </div>
-        )}
+            )}
 
-        {/* VIEW 9: LANDED COST */}
-        {activeSubView === 'landed_cost' && (
+            {pricingTab === 'landed_cost' && (
+
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
               <h3 className="text-xl font-black text-gray-900">Landed Cost & Tariff Studio</h3>
@@ -1409,6 +1567,8 @@ export const ProductManagementHub: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
+            )}
           </div>
         )}
 
@@ -1546,7 +1706,36 @@ export const ProductManagementHub: React.FC = () => {
         )}
 
         {/* VIEW 14: BATCHES & EXPIRY */}
-        {activeSubView === 'batches' && (
+                {/* VIEW: TRACKING & TRACEABILITY */}
+        {(activeSubView === 'tracking' || activeSubView === 'batches' || activeSubView === 'serials' || activeSubView === 'warranties') && (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+              <button
+                onClick={() => setTrackingTab('batches')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  trackingTab === 'batches'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Batches & Expiry (FEFO) ({batches.length})</span>
+              </button>
+              <button
+                onClick={() => setTrackingTab('serials')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  trackingTab === 'serials'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Hash className="w-4 h-4" />
+                <span>Serial & IMEI Registry ({serialNumbers.length})</span>
+              </button>
+            </div>
+
+            {trackingTab === 'batches' && (
+
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs flex justify-between items-center">
               <div>
@@ -1605,10 +1794,10 @@ export const ProductManagementHub: React.FC = () => {
               </div>
             </div>
           </div>
-        )}
+            )}
 
-        {/* VIEW 15: SERIAL & IMEI */}
-        {activeSubView === 'serials' && (
+            {trackingTab === 'serials' && (
+
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs flex justify-between items-center">
               <div>
@@ -1665,43 +1854,52 @@ export const ProductManagementHub: React.FC = () => {
               </div>
             </div>
           </div>
-        )}
-
-        {/* VIEW 17: BUNDLES */}
-        {activeSubView === 'bundles' && (
-          <div className="space-y-4">
-            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
-              <h3 className="text-xl font-black text-gray-900">Combo Kits & Bundled Items</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Bundle multiple parent and child products into promotional sales packages.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {products
-                .filter(p => p.product_type === 'BUNDLE')
-                .map(p => (
-                  <div key={p.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex justify-between items-center">
-                    <div>
-                      <h4 className="font-extrabold text-gray-900 text-sm">{p.name}</h4>
-                      <p className="text-xs text-gray-500 mt-1">Package Price: ${(p.selling_price || 0).toFixed(2)}</p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setBundleBomProduct(p);
-                        setBundleBomMode('BUNDLE');
-                        setIsBundleBomModalOpen(true);
-                      }}
-                      className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"
-                    >
-                      Configure Bundle
-                    </button>
-                  </div>
-                ))}
-            </div>
+            )}
           </div>
         )}
 
-        {/* VIEW 18: BOM MANUFACTURING */}
-        {activeSubView === 'bom' && (
+        {/* VIEW 17: BUNDLES */}
+                {/* VIEW: MANUFACTURING & BUNDLES */}
+        {(activeSubView === 'manufacturing' || activeSubView === 'bom' || activeSubView === 'bundles' || activeSubView === 'qc') && (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+              <button
+                onClick={() => setManufacturingTab('bom')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  manufacturingTab === 'bom'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Wrench className="w-4 h-4" />
+                <span>Bill of Materials (BOM) Recipes</span>
+              </button>
+              <button
+                onClick={() => setManufacturingTab('bundles')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  manufacturingTab === 'bundles'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <PackagePlus className="w-4 h-4" />
+                <span>Bundles & Combo Kits</span>
+              </button>
+              <button
+                onClick={() => setManufacturingTab('qc')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  manufacturingTab === 'qc'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Quality Control Inspections ({qcInspections.length})</span>
+              </button>
+            </div>
+
+            {manufacturingTab === 'bom' && (
+
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
               <h3 className="text-xl font-black text-gray-900">Bill of Materials (BOM) & Manufacturing Recipes</h3>
@@ -1731,10 +1929,43 @@ export const ProductManagementHub: React.FC = () => {
                 ))}
             </div>
           </div>
-        )}
+            )}
 
-        {/* VIEW 19: QC INSPECTIONS */}
-        {activeSubView === 'qc' && (
+            {manufacturingTab === 'bundles' && (
+
+          <div className="space-y-4">
+            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
+              <h3 className="text-xl font-black text-gray-900">Combo Kits & Bundled Items</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Bundle multiple parent and child products into promotional sales packages.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {products
+                .filter(p => p.product_type === 'BUNDLE')
+                .map(p => (
+                  <div key={p.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex justify-between items-center">
+                    <div>
+                      <h4 className="font-extrabold text-gray-900 text-sm">{p.name}</h4>
+                      <p className="text-xs text-gray-500 mt-1">Package Price: ${(p.selling_price || 0).toFixed(2)}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setBundleBomProduct(p);
+                        setBundleBomMode('BUNDLE');
+                        setIsBundleBomModalOpen(true);
+                      }}
+                      className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"
+                    >
+                      Configure Bundle
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
+            )}
+
+            {manufacturingTab === 'qc' && (
+
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
               <h3 className="text-xl font-black text-gray-900">Quality Control (QC) & Inspection Logs</h3>
@@ -1781,41 +2012,52 @@ export const ProductManagementHub: React.FC = () => {
               </div>
             </div>
           </div>
-        )}
-
-        {/* VIEW 21: REVIEWS & RATINGS */}
-        {activeSubView === 'reviews' && (
-          <div className="space-y-4">
-            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
-              <h3 className="text-xl font-black text-gray-900">Customer Reviews & Rating Moderation</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Moderate customer star ratings and feedback for store products.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {reviews.map(r => (
-                <div key={r.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-extrabold text-gray-900 text-xs">{r.customer_name}</span>
-                    <div className="flex text-amber-400">
-                      {'★'.repeat(r.rating)}
-                      {'☆'.repeat(5 - r.rating)}
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-600 italic">"{r.review_text}"</p>
-                  <div className="text-[10px] text-gray-400 font-mono">{r.created_at}</div>
-                </div>
-              ))}
-              {reviews.length === 0 && (
-                <div className="col-span-2 text-center py-12 bg-white rounded-3xl border border-gray-200 text-gray-400 italic">
-                  No customer reviews submitted yet.
-                </div>
-              )}
-            </div>
+            )}
           </div>
         )}
 
-        {/* VIEW 23: IMPORT / EXPORT */}
-        {activeSubView === 'import_export' && (
+        {/* VIEW 21: REVIEWS & RATINGS */}
+                {/* VIEW: DATA & OPERATIONS */}
+        {(activeSubView === 'data' || activeSubView === 'import_export' || activeSubView === 'templates' || activeSubView === 'audit_logs' || activeSubView === 'returns' || activeSubView === 'reviews') && (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+              <button
+                onClick={() => setDataTab('import_export')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  dataTab === 'import_export'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Catalog Import & Export</span>
+              </button>
+              <button
+                onClick={() => setDataTab('templates')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  dataTab === 'templates'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <History className="w-4 h-4" />
+                <span>Templates & Audit Trail ({auditLogs.length})</span>
+              </button>
+              <button
+                onClick={() => setDataTab('reviews')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  dataTab === 'reviews'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Star className="w-4 h-4" />
+                <span>Customer Reviews ({reviews.length})</span>
+              </button>
+            </div>
+
+            {dataTab === 'import_export' && (
+
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
               <h3 className="text-xl font-black text-gray-900">Bulk Product Import & Export Studio</h3>
@@ -1860,10 +2102,10 @@ export const ProductManagementHub: React.FC = () => {
               </div>
             </div>
           </div>
-        )}
+            )}
 
-        {/* VIEW 24: TEMPLATES & AUDIT LOGS */}
-        {(activeSubView === 'templates' || activeSubView === 'audit_logs') && (
+            {dataTab === 'templates' && (
+
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
               <h3 className="text-xl font-black text-gray-900">Product Lifecycle Audit Logs & Price History</h3>
@@ -1901,6 +2143,39 @@ export const ProductManagementHub: React.FC = () => {
                 </table>
               </div>
             </div>
+          </div>
+            )}
+
+            {dataTab === 'reviews' && (
+
+          <div className="space-y-4">
+            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
+              <h3 className="text-xl font-black text-gray-900">Customer Reviews & Rating Moderation</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Moderate customer star ratings and feedback for store products.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {reviews.map(r => (
+                <div key={r.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-extrabold text-gray-900 text-xs">{r.customer_name}</span>
+                    <div className="flex text-amber-400">
+                      {'★'.repeat(r.rating)}
+                      {'☆'.repeat(5 - r.rating)}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600 italic">"{r.review_text}"</p>
+                  <div className="text-[10px] text-gray-400 font-mono">{r.created_at}</div>
+                </div>
+              ))}
+              {reviews.length === 0 && (
+                <div className="col-span-2 text-center py-12 bg-white rounded-3xl border border-gray-200 text-gray-400 italic">
+                  No customer reviews submitted yet.
+                </div>
+              )}
+            </div>
+          </div>
+            )}
           </div>
         )}
       </div>

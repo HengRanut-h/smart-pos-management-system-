@@ -93,10 +93,24 @@ type SubView =
   | 'audit_logs';
 
 export const ProductManagementHub: React.FC = () => {
-  const { lang, t } = useApp();
+  const { lang, t, productSubTab, setProductSubTab } = useApp();
 
   // Navigation State
-  const [activeSubView, setActiveSubView] = useState<SubView>('dashboard');
+  const [activeSubView, setActiveSubView] = useState<SubView>(
+    (productSubTab as SubView) || 'dashboard'
+  );
+  const [sectionCategory, setSectionCategory] = useState<'ALL' | 'CATALOG' | 'PRICING' | 'WAREHOUSE' | 'MANUFACTURING' | 'AUDIT'>('ALL');
+
+  useEffect(() => {
+    if (productSubTab && productSubTab !== activeSubView) {
+      setActiveSubView(productSubTab as SubView);
+    }
+  }, [productSubTab]);
+
+  const handleSelectSubView = (subView: SubView) => {
+    setActiveSubView(subView);
+    setProductSubTab(subView);
+  };
 
   // Core Data
   const [products, setProducts] = useState<EnterpriseProduct[]>([]);
@@ -240,30 +254,30 @@ export const ProductManagementHub: React.FC = () => {
 
   // Sub-Navigation Tabs Configuration
   const navItems = [
-    { id: 'dashboard', label: '01. Dashboard', icon: LayoutDashboard },
-    { id: 'catalog', label: '02. Catalog', icon: Package },
-    { id: 'types', label: '03. 10 Product Types', icon: Layers },
-    { id: 'variants', label: '04. Variant Matrix', icon: Sparkles },
-    { id: 'categories', label: '05. Categories', icon: FolderTree },
-    { id: 'brands', label: '06. Brands', icon: Award },
-    { id: 'units', label: '07. Unit Conversions', icon: Scale },
-    { id: 'pricing', label: '08. Multi-Tier Pricing', icon: DollarSign },
-    { id: 'landed_cost', label: '09. Landed Cost', icon: Calculator },
-    { id: 'inventory', label: '10. Stock & Reorders', icon: Boxes },
-    { id: 'warehouse', label: '11. Warehouse Bins', icon: MapPin },
-    { id: 'barcodes', label: '12. Barcode & Auto-SKU', icon: Barcode },
-    { id: 'suppliers', label: '13. Suppliers', icon: Truck },
-    { id: 'batches', label: '14. Batches & Expiry', icon: Calendar },
-    { id: 'serials', label: '15. Serial & IMEI', icon: Hash },
-    { id: 'warranties', label: '16. Warranties', icon: ShieldCheck },
-    { id: 'bundles', label: '17. Bundles & Kits', icon: PackagePlus },
-    { id: 'bom', label: '18. BOM Manufacturing', icon: Wrench },
-    { id: 'qc', label: '19. Quality Control', icon: CheckCircle2 },
-    { id: 'promotions', label: '20. Promotions & Rules', icon: Tag },
-    { id: 'reviews', label: '21. Reviews & Ratings', icon: Star },
-    { id: 'returns', label: '22. Returns & Quarantine', icon: RotateCcw },
-    { id: 'import_export', label: '23. Import / Export', icon: FileSpreadsheet },
-    { id: 'templates', label: '24. Templates & Audits', icon: History },
+    { id: 'dashboard', category: 'CATALOG', label: '01. Dashboard', icon: LayoutDashboard },
+    { id: 'catalog', category: 'CATALOG', label: '02. Catalog', icon: Package },
+    { id: 'types', category: 'CATALOG', label: '03. 10 Product Types', icon: Layers },
+    { id: 'variants', category: 'CATALOG', label: '04. Variant Matrix', icon: Sparkles },
+    { id: 'categories', category: 'CATALOG', label: '05. Categories', icon: FolderTree },
+    { id: 'brands', category: 'CATALOG', label: '06. Brands', icon: Award },
+    { id: 'units', category: 'CATALOG', label: '07. Unit Conversions', icon: Scale },
+    { id: 'pricing', category: 'PRICING', label: '08. Multi-Tier Pricing', icon: DollarSign },
+    { id: 'landed_cost', category: 'PRICING', label: '09. Landed Cost', icon: Calculator },
+    { id: 'inventory', category: 'WAREHOUSE', label: '10. Stock & Reorders', icon: Boxes },
+    { id: 'warehouse', category: 'WAREHOUSE', label: '11. Warehouse Bins', icon: MapPin },
+    { id: 'barcodes', category: 'WAREHOUSE', label: '12. Barcode & Auto-SKU', icon: Barcode },
+    { id: 'suppliers', category: 'WAREHOUSE', label: '13. Suppliers', icon: Truck },
+    { id: 'batches', category: 'WAREHOUSE', label: '14. Batches & Expiry', icon: Calendar },
+    { id: 'serials', category: 'WAREHOUSE', label: '15. Serial & IMEI', icon: Hash },
+    { id: 'warranties', category: 'MANUFACTURING', label: '16. Warranties', icon: ShieldCheck },
+    { id: 'bundles', category: 'MANUFACTURING', label: '17. Bundles & Kits', icon: PackagePlus },
+    { id: 'bom', category: 'MANUFACTURING', label: '18. BOM Manufacturing', icon: Wrench },
+    { id: 'qc', category: 'MANUFACTURING', label: '19. Quality Control', icon: CheckCircle2 },
+    { id: 'promotions', category: 'PRICING', label: '20. Promotions & Rules', icon: Tag },
+    { id: 'reviews', category: 'AUDIT', label: '21. Reviews & Ratings', icon: Star },
+    { id: 'returns', category: 'MANUFACTURING', label: '22. Returns & Quarantine', icon: RotateCcw },
+    { id: 'import_export', category: 'AUDIT', label: '23. Import / Export', icon: FileSpreadsheet },
+    { id: 'templates', category: 'AUDIT', label: '24. Templates & Audits', icon: History },
   ];
 
   return (
@@ -311,27 +325,64 @@ export const ProductManagementHub: React.FC = () => {
           </div>
         </div>
 
-        {/* 24-Tab Scrollable Sub-Navigation */}
-        <div className="border-t border-gray-100 bg-gray-50/60 overflow-x-auto scrollbar-thin">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex space-x-1 py-1.5 min-w-max">
-            {navItems.map(item => {
-              const Icon = item.icon;
-              const isActive = activeSubView === item.id;
-              return (
+        {/* Categorized Sticky Sub-Navigation Bar */}
+        <div className="border-t border-gray-100 bg-gray-50/80 px-4 sm:px-6 py-2 space-y-2">
+          {/* Section Filter Pills */}
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 overflow-x-auto scrollbar-none pb-1">
+            <div className="flex items-center space-x-1.5 min-w-max text-xs font-bold">
+              <span className="text-gray-400 uppercase tracking-wider text-[10px] mr-1">Section:</span>
+              {[
+                { id: 'ALL', label: 'All Modules (24)' },
+                { id: 'CATALOG', label: '📦 Catalog & Hierarchy' },
+                { id: 'PRICING', label: '💵 Pricing & Costs' },
+                { id: 'WAREHOUSE', label: '🏭 Warehouse & Stock' },
+                { id: 'MANUFACTURING', label: '⚙️ Manufacturing & QC' },
+                { id: 'AUDIT', label: '📊 Data & Audits' },
+              ].map((cat) => (
                 <button
-                  key={item.id}
-                  onClick={() => setActiveSubView(item.id as SubView)}
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-sm font-bold'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                  key={cat.id}
+                  onClick={() => setSectionCategory(cat.id as any)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                    sectionCategory === cat.id
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-white text-gray-600 hover:bg-gray-200 border border-gray-200'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{item.label}</span>
+                  {cat.label}
                 </button>
-              );
-            })}
+              ))}
+            </div>
+
+            <div className="hidden sm:flex items-center space-x-2 text-[11px] text-gray-400 font-medium">
+              <span>Sub-module:</span>
+              <span className="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 uppercase">
+                {activeSubView}
+              </span>
+            </div>
+          </div>
+
+          {/* Sub-Tabs */}
+          <div className="max-w-7xl mx-auto flex space-x-1 overflow-x-auto scrollbar-thin py-0.5 min-w-max">
+            {navItems
+              .filter(item => sectionCategory === 'ALL' || item.category === sectionCategory)
+              .map(item => {
+                const Icon = item.icon;
+                const isActive = activeSubView === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSelectSubView(item.id as SubView)}
+                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-sm font-bold'
+                        : 'bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-200/70'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
           </div>
         </div>
       </div>

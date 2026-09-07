@@ -33,8 +33,13 @@ import {
   Package,
   ShoppingCart,
   Coins,
+  Truck,
+  MapPin,
+  Calendar,
+  Navigation,
 } from 'lucide-react';
 import { Customer, Product } from '../../foundation/types';
+import { DeliveryZone, DeliveryTimeSlot } from '../../foundation/types/delivery';
 import {
   completeSale,
   generateKHQR,
@@ -42,6 +47,11 @@ import {
   createCustomer,
   validateCoupon,
 } from '../../data-access/posApi';
+import {
+  getDeliveryZones,
+  getDeliveryTimeSlots,
+  generateDeliveryFromSale,
+} from '../../data-access/deliveryApi';
 import { ThermalReceiptModal } from '../../presentation/components/ThermalReceiptModal';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 
@@ -158,6 +168,48 @@ export const POSTerminal: React.FC = () => {
   });
   const [isSyncingOffline, setIsSyncingOffline] = useState(false);
   const [mobileTab, setMobileTab] = useState<'catalog' | 'cart'>('catalog');
+
+  // Delivery Dispatch State
+  const [isDeliveryRequested, setIsDeliveryRequested] = useState<boolean>(false);
+  const [deliveryRecipientName, setDeliveryRecipientName] = useState<string>('');
+  const [deliveryRecipientPhone, setDeliveryRecipientPhone] = useState<string>('');
+  const [deliveryAddress, setDeliveryAddress] = useState<string>('');
+  const [deliveryZoneId, setDeliveryZoneId] = useState<number | undefined>(undefined);
+  const [deliveryTimeSlotId, setDeliveryTimeSlotId] = useState<number | undefined>(undefined);
+  const [deliveryPriority, setDeliveryPriority] = useState<'STANDARD' | 'EXPRESS' | 'URGENT'>('STANDARD');
+  const [deliveryNotes, setDeliveryNotes] = useState<string>('');
+  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [deliveryTimeSlots, setDeliveryTimeSlots] = useState<DeliveryTimeSlot[]>([]);
+
+  // Load Delivery Zones & Time Slots
+  useEffect(() => {
+    getDeliveryZones().then((res) => {
+      if (res.success && res.zones) {
+        setDeliveryZones(res.zones);
+        if (res.zones.length > 0) {
+          setDeliveryZoneId((prev) => prev ?? res.zones[0].id);
+        }
+      }
+    }).catch((err) => console.error('Failed to load delivery zones', err));
+
+    getDeliveryTimeSlots().then((res) => {
+      if (res.success && res.data) {
+        setDeliveryTimeSlots(res.data);
+        if (res.data.length > 0) {
+          setDeliveryTimeSlotId((prev) => prev ?? res.data[0].id);
+        }
+      }
+    }).catch((err) => console.error('Failed to load time slots', err));
+  }, []);
+
+  // Prefill delivery info when customer is selected
+  useEffect(() => {
+    if (selectedCustomer) {
+      setDeliveryRecipientName(selectedCustomer.name || '');
+      if (selectedCustomer.phone) setDeliveryRecipientPhone(selectedCustomer.phone);
+      if (selectedCustomer.address) setDeliveryAddress(selectedCustomer.address);
+    }
+  }, [selectedCustomer]);
 
   const [selectedPosCategory, setSelectedPosCategory] = useState<string>('ALL');
 
@@ -423,7 +475,21 @@ export const POSTerminal: React.FC = () => {
 
   const pointsDiscount = isRedeemingPoints ? Math.round(pointsToRedeem) / 100 : 0;
   const couponDiscount = appliedCoupon ? appliedCoupon.discount_amount : 0;
-  const finalPayableTotal = Math.max(0, cartTotal - pointsDiscount - couponDiscount - manualDiscountAmount);
+
+  // Calculate delivery fee
+  const currentDeliveryFee = useMemo(() => {
+    if (!isDeliveryRequested) return 0;
+    const zone = deliveryZones.find((z) => z.id === deliveryZoneId);
+    let fee = zone ? Number(zone.base_delivery_fee) : 1.5;
+    if (deliveryPriority === 'EXPRESS') fee += 1.0;
+    if (deliveryPriority === 'URGENT') fee += 2.5;
+    return Math.round(fee * 100) / 100;
+  }, [isDeliveryRequested, deliveryZoneId, deliveryZones, deliveryPriority]);
+
+  const finalPayableTotal = Math.max(
+    0,
+    cartTotal - pointsDiscount - couponDiscount - manualDiscountAmount + currentDeliveryFee
+  );
   const finalPayableTotalKhr = Math.round(finalPayableTotal * exchangeRate);
 
   // Customer-Facing Display Sync (BroadcastChannel & localStorage)
@@ -447,6 +513,8 @@ export const POSTerminal: React.FC = () => {
         subtotal: cartSubtotal,
         tax: cartTax,
         discount: (manualDiscount?.amount || 0) + (appliedCoupon?.discount_amount || 0) + (isRedeemingPoints ? pointsToRedeem / 100 : 0),
+        deliveryFee: currentDeliveryFee,
+        isDeliveryRequested,
         total: finalPayableTotal,
         totalKhr: finalPayableTotalKhr,
         isCheckoutOpen,
@@ -469,6 +537,8 @@ export const POSTerminal: React.FC = () => {
     cart,
     cartSubtotal,
     cartTax,
+    currentDeliveryFee,
+    isDeliveryRequested,
     finalPayableTotal,
     finalPayableTotalKhr,
     isCheckoutOpen,
@@ -662,6 +732,28 @@ export const POSTerminal: React.FC = () => {
     try {
       const sale = await completeSale(payload);
       setLastCompletedSale(sale);
+
+      let createdDelivery = null;
+      if (isDeliveryRequested && sale?.id) {
+        try {
+          const delRes = await generateDeliveryFromSale({
+            sale_id: sale.id,
+            recipient_name: deliveryRecipientName || selectedCustomer?.name || 'Walk-in Customer',
+            recipient_phone: deliveryRecipientPhone || selectedCustomer?.phone || '012345678',
+            delivery_address: deliveryAddress || 'Store Pickup / Address to be confirmed',
+            zone_id: deliveryZoneId,
+            time_slot_id: deliveryTimeSlotId,
+            delivery_fee: currentDeliveryFee,
+            priority: deliveryPriority,
+            notes: deliveryNotes,
+            payment_type: paymentMethod === 'CASH' ? 'COD' : 'PREPAID',
+          });
+          createdDelivery = delRes?.delivery || null;
+        } catch (delErr) {
+          console.error('Failed to auto-generate delivery from sale', delErr);
+        }
+      }
+
       setCompletedSuccess({
         ...sale,
         items: cart.map((i) => ({
@@ -679,11 +771,19 @@ export const POSTerminal: React.FC = () => {
         cashCurrency,
         paid_amount: paidAmountUsd,
         change_amount: changeUsd,
+        delivery: createdDelivery,
+        isDeliveryRequested,
+        deliveryFee: currentDeliveryFee,
       });
       clearCart();
       setSelectedCustomer(null);
       setAppliedCoupon(null);
       setIsCheckoutOpen(false);
+      setIsDeliveryRequested(false);
+      setDeliveryRecipientName('');
+      setDeliveryRecipientPhone('');
+      setDeliveryAddress('');
+      setDeliveryNotes('');
     } catch (err: any) {
       // Offline fallback: Queue sale in local storage
       const queuedSale = {
@@ -698,6 +798,11 @@ export const POSTerminal: React.FC = () => {
         })),
         queued_at: new Date().toISOString(),
         local_id: 'OFFLINE-' + Date.now(),
+        isDeliveryRequested,
+        deliveryFee: currentDeliveryFee,
+        deliveryRecipientName,
+        deliveryRecipientPhone,
+        deliveryAddress,
       };
       const updatedQueue = [...offlineQueue, queuedSale];
       setOfflineQueue(updatedQueue);
@@ -718,11 +823,26 @@ export const POSTerminal: React.FC = () => {
         customer: selectedCustomer,
         coupon: appliedCoupon,
         cashCurrency,
+        delivery: isDeliveryRequested ? {
+          delivery_number: 'DEL-OFFLINE-' + Date.now().toString().slice(-4),
+          recipient_name: deliveryRecipientName || selectedCustomer?.name || 'Customer',
+          recipient_phone: deliveryRecipientPhone || selectedCustomer?.phone || '',
+          delivery_address: deliveryAddress || 'Offline Delivery',
+          status: 'PENDING_OFFLINE',
+          priority: deliveryPriority,
+        } : null,
+        isDeliveryRequested,
+        deliveryFee: currentDeliveryFee,
       });
       clearCart();
       setSelectedCustomer(null);
       setAppliedCoupon(null);
       setIsCheckoutOpen(false);
+      setIsDeliveryRequested(false);
+      setDeliveryRecipientName('');
+      setDeliveryRecipientPhone('');
+      setDeliveryAddress('');
+      setDeliveryNotes('');
     } finally {
       setIsSubmitting(false);
     }
@@ -1278,14 +1398,44 @@ export const POSTerminal: React.FC = () => {
                 </div>
               </div>
             )}
-            <div className="flex items-center justify-between pt-1">
+            {isDeliveryRequested && (
+              <div className="flex justify-between items-center text-xs text-amber-800 font-medium bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-200">
+                <div className="flex items-center space-x-1.5">
+                  <Truck className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Delivery ({deliveryPriority})</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <span className="font-mono font-bold text-amber-900">+${currentDeliveryFee.toFixed(2)}</span>
+                  <button
+                    onClick={() => setIsDeliveryRequested(false)}
+                    className="text-amber-500 hover:text-rose-600 transition ml-1"
+                    title="Cancel Delivery"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center justify-between pt-1 gap-2">
               <button
                 type="button"
                 onClick={() => setIsDiscountModalOpen(true)}
-                className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg transition flex items-center space-x-1 border border-indigo-200"
+                className="flex-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-lg transition flex items-center justify-center space-x-1 border border-indigo-200"
               >
                 <Percent className="w-3 h-3" />
-                <span>{manualDiscount ? 'Change Discount' : '+ Add Discount'}</span>
+                <span>{manualDiscount ? 'Discount' : '+ Discount'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsDeliveryRequested(!isDeliveryRequested)}
+                className={`flex-1 text-[11px] font-bold px-2 py-1 rounded-lg transition flex items-center justify-center space-x-1 border ${
+                  isDeliveryRequested
+                    ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
+                    : 'text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-200'
+                }`}
+              >
+                <Truck className="w-3.5 h-3.5" />
+                <span>{isDeliveryRequested ? '🚚 Delivery (On)' : '+ Delivery'}</span>
               </button>
             </div>
 
@@ -1444,7 +1594,7 @@ export const POSTerminal: React.FC = () => {
       {/* Checkout Modal with Dual-Currency Payment */}
       {isCheckoutOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-6 shadow-2xl border border-gray-100 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h3 className="font-bold text-gray-900 text-base">Complete Payment</h3>
               <button
@@ -1505,6 +1655,121 @@ export const POSTerminal: React.FC = () => {
                 )}
               </div>
             )}
+
+            {/* Delivery Order Dispatch Details */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-gray-800 flex items-center space-x-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isDeliveryRequested}
+                    onChange={(e) => setIsDeliveryRequested(e.target.checked)}
+                    className="rounded text-amber-600 focus:ring-amber-500 w-3.5 h-3.5"
+                  />
+                  <div className="flex items-center space-x-1.5">
+                    <Truck className={`w-3.5 h-3.5 ${isDeliveryRequested ? 'text-amber-600' : 'text-gray-400'}`} />
+                    <span>Ship via Delivery Dispatch</span>
+                  </div>
+                </label>
+                {isDeliveryRequested && (
+                  <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full font-mono">
+                    Fee: +${currentDeliveryFee.toFixed(2)}
+                  </span>
+                )}
+              </div>
+
+              {isDeliveryRequested && (
+                <div className="space-y-2 pt-1 border-t border-slate-200/80">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Recipient Name</label>
+                      <input
+                        type="text"
+                        value={deliveryRecipientName}
+                        onChange={(e) => setDeliveryRecipientName(e.target.value)}
+                        placeholder="Customer name"
+                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-amber-500 font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Recipient Phone</label>
+                      <input
+                        type="text"
+                        value={deliveryRecipientPhone}
+                        onChange={(e) => setDeliveryRecipientPhone(e.target.value)}
+                        placeholder="Phone number"
+                        className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-amber-500 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Delivery Address</label>
+                    <input
+                      type="text"
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      placeholder="Street address / House # / Sangkat"
+                      className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-amber-500 font-medium"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Zone</label>
+                      <select
+                        value={deliveryZoneId || ''}
+                        onChange={(e) => setDeliveryZoneId(Number(e.target.value))}
+                        className="w-full px-2 py-1.5 text-xs bg-white border border-gray-200 rounded-lg font-medium text-gray-800"
+                      >
+                        {deliveryZones.map((z) => (
+                          <option key={z.id} value={z.id}>
+                            {z.name} (${Number(z.base_delivery_fee).toFixed(2)})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Time Slot</label>
+                      <select
+                        value={deliveryTimeSlotId || ''}
+                        onChange={(e) => setDeliveryTimeSlotId(Number(e.target.value))}
+                        className="w-full px-2 py-1.5 text-xs bg-white border border-gray-200 rounded-lg font-medium text-gray-800"
+                      >
+                        <option value="">Immediate</option>
+                        {deliveryTimeSlots.map((slot) => (
+                          <option key={slot.id} value={slot.id}>
+                            {slot.label} ({slot.start_time}-{slot.end_time})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Priority</label>
+                      <select
+                        value={deliveryPriority}
+                        onChange={(e: any) => setDeliveryPriority(e.target.value)}
+                        className="w-full px-2 py-1.5 text-xs bg-white border border-gray-200 rounded-lg font-medium text-gray-800"
+                      >
+                        <option value="STANDARD">Standard</option>
+                        <option value="EXPRESS">Express (+$1)</option>
+                        <option value="URGENT">Urgent (+$2.5)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <input
+                      type="text"
+                      value={deliveryNotes}
+                      onChange={(e) => setDeliveryNotes(e.target.value)}
+                      placeholder="Instructions for driver (optional)"
+                      className="w-full px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:outline-none placeholder-gray-400"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Checkout Tender Mode Tabs */}
             <div className="flex bg-gray-100 p-1 rounded-xl text-xs font-bold">
@@ -1929,6 +2194,35 @@ export const POSTerminal: React.FC = () => {
                   <div className="flex justify-between font-bold text-emerald-600">
                     <span>Points Earned:</span>
                     <span>+{completedSuccess.pointsEarned} pts</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Delivery Order Dispatch Notice */}
+              {completedSuccess.delivery && (
+                <div className="pt-2 border-t border-gray-200 text-left space-y-1 bg-amber-50/70 p-2.5 rounded-xl border border-amber-200">
+                  <div className="flex items-center justify-between text-amber-900 font-bold text-[11px]">
+                    <span className="flex items-center space-x-1">
+                      <Truck className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Delivery Dispatched:</span>
+                    </span>
+                    <span className="font-mono">{completedSuccess.delivery.delivery_number}</span>
+                  </div>
+                  <div className="text-[10px] text-gray-600 truncate">
+                    <span className="font-semibold text-gray-700">To: </span>
+                    {completedSuccess.delivery.recipient_name} ({completedSuccess.delivery.recipient_phone})
+                  </div>
+                  <div className="text-[10px] text-gray-600 truncate">
+                    <span className="font-semibold text-gray-700">Address: </span>
+                    {completedSuccess.delivery.delivery_address}
+                  </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[9px] font-bold text-amber-800 uppercase tracking-wider">
+                      Priority: {completedSuccess.delivery.priority || 'STANDARD'}
+                    </span>
+                    <span className="bg-amber-200/80 text-amber-900 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded">
+                      {completedSuccess.delivery.status || 'PENDING'}
+                    </span>
                   </div>
                 </div>
               )}

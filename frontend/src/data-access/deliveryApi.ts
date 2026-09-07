@@ -3,9 +3,18 @@ import {
   Delivery,
   DeliveryZone,
   DeliveryDriver,
+  DeliveryVehicle,
+  VehicleMaintenanceRecord,
+  DeliveryRoute,
+  DeliveryTimeSlot,
+  CustomerDeliveryAddress,
+  DeliverySupportTicket,
+  DeliveryRatingRecord,
+  DeliveryFeeRule,
   DriverCodSettlement,
   DeliveryDashboardMetrics,
   DeliveryStatus,
+  DeliveryAnalyticsData,
 } from '../foundation/types/delivery';
 
 const API_BASE = '/api/v1/delivery';
@@ -63,6 +72,8 @@ export const createDeliveryOrder = async (payload: {
   driver_id?: number;
   customer_id?: number;
   sale_id?: number;
+  time_slot_id?: number;
+  vehicle_id?: number;
   items?: Array<{
     product_name: string;
     product_id?: number;
@@ -77,6 +88,38 @@ export const createDeliveryOrder = async (payload: {
   delivery: Delivery;
 }> => {
   const res = await axios.post(`${API_BASE}/orders`, payload);
+  return res.data;
+};
+
+export const generateDeliveryFromSale = async (payload: {
+  sale_id: number;
+  recipient_name?: string;
+  recipient_phone?: string;
+  delivery_address?: string;
+  zone_id?: number;
+  time_slot_id?: number;
+  delivery_fee?: number;
+  priority?: string;
+  notes?: string;
+  payment_type?: string;
+}): Promise<{
+  success: boolean;
+  message: string;
+  delivery: Delivery;
+}> => {
+  const res = await axios.post(`${API_BASE}/orders/from-sale`, payload);
+  return res.data;
+};
+
+export const bulkAssignDeliveries = async (payload: {
+  delivery_ids: number[];
+  driver_id: number;
+  vehicle_id?: number;
+}): Promise<{
+  success: boolean;
+  message: string;
+}> => {
+  const res = await axios.post(`${API_BASE}/orders/bulk-assign`, payload);
   return res.data;
 };
 
@@ -113,6 +156,38 @@ export const assignDriverToDelivery = async (
     driver_id: driverId,
     notes,
   });
+  return res.data;
+};
+
+export const rescheduleDelivery = async (
+  deliveryId: number,
+  payload: {
+    scheduled_date: string;
+    time_slot_id?: number;
+    reason?: string;
+  }
+): Promise<{
+  success: boolean;
+  message: string;
+  delivery: Delivery;
+}> => {
+  const res = await axios.post(`${API_BASE}/orders/${deliveryId}/reschedule`, payload);
+  return res.data;
+};
+
+export const processReturnDelivery = async (
+  deliveryId: number,
+  payload: {
+    return_reason: string;
+    restock_items?: boolean;
+    inspection_notes?: string;
+  }
+): Promise<{
+  success: boolean;
+  message: string;
+  delivery: Delivery;
+}> => {
+  const res = await axios.post(`${API_BASE}/orders/${deliveryId}/return`, payload);
   return res.data;
 };
 
@@ -154,6 +229,191 @@ export const markDeliveryFailed = async (
   return res.data;
 };
 
+// Vehicles API
+export const getDeliveryVehicles = async (params?: { status?: string; vehicle_type?: string }): Promise<{
+  success: boolean;
+  data: DeliveryVehicle[];
+}> => {
+  const res = await axios.get(`${API_BASE}/vehicles`, { params });
+  return res.data;
+};
+
+export const createDeliveryVehicle = async (payload: Partial<DeliveryVehicle>): Promise<{
+  success: boolean;
+  message: string;
+  data: DeliveryVehicle;
+}> => {
+  const res = await axios.post(`${API_BASE}/vehicles`, payload);
+  return res.data;
+};
+
+export const updateDeliveryVehicleStatus = async (id: number, status: string): Promise<{
+  success: boolean;
+  message: string;
+  data: DeliveryVehicle;
+}> => {
+  const res = await axios.patch(`${API_BASE}/vehicles/${id}/status`, { status });
+  return res.data;
+};
+
+export const addVehicleMaintenance = async (id: number, payload: Partial<VehicleMaintenanceRecord>): Promise<{
+  success: boolean;
+  message: string;
+  data: VehicleMaintenanceRecord;
+}> => {
+  const res = await axios.post(`${API_BASE}/vehicles/${id}/maintenance`, payload);
+  return res.data;
+};
+
+// Routes API
+export const getDeliveryRoutes = async (params?: { date?: string; status?: string }): Promise<{
+  success: boolean;
+  data: DeliveryRoute[];
+}> => {
+  const res = await axios.get(`${API_BASE}/routes`, { params });
+  return res.data;
+};
+
+export const createDeliveryRoute = async (payload: {
+  driver_id?: number;
+  vehicle_id?: number;
+  route_date: string;
+  delivery_ids: number[];
+  notes?: string;
+}): Promise<{
+  success: boolean;
+  message: string;
+  data: DeliveryRoute;
+}> => {
+  const res = await axios.post(`${API_BASE}/routes`, payload);
+  return res.data;
+};
+
+export const optimizeDeliveryRoute = async (id: number): Promise<{
+  success: boolean;
+  message: string;
+  data: DeliveryRoute;
+}> => {
+  const res = await axios.post(`${API_BASE}/routes/${id}/optimize`);
+  return res.data;
+};
+
+// Time Slots API
+export const getDeliveryTimeSlots = async (): Promise<{
+  success: boolean;
+  data: DeliveryTimeSlot[];
+}> => {
+  const res = await axios.get(`${API_BASE}/time-slots`);
+  return res.data;
+};
+
+export const createDeliveryTimeSlot = async (payload: Partial<DeliveryTimeSlot>): Promise<{
+  success: boolean;
+  message: string;
+  data: DeliveryTimeSlot;
+}> => {
+  const res = await axios.post(`${API_BASE}/time-slots`, payload);
+  return res.data;
+};
+
+// Customer Addresses API
+export const getCustomerAddresses = async (customerId?: number): Promise<{
+  success: boolean;
+  data: CustomerDeliveryAddress[];
+}> => {
+  const res = await axios.get(`${API_BASE}/addresses`, { params: { customer_id: customerId } });
+  return res.data;
+};
+
+export const createCustomerAddress = async (payload: Partial<CustomerDeliveryAddress>): Promise<{
+  success: boolean;
+  message: string;
+  data: CustomerDeliveryAddress;
+}> => {
+  const res = await axios.post(`${API_BASE}/addresses`, payload);
+  return res.data;
+};
+
+// Fee Rules API
+export const getDeliveryFeeRules = async (): Promise<{
+  success: boolean;
+  data: DeliveryFeeRule[];
+}> => {
+  const res = await axios.get(`${API_BASE}/fee-rules`);
+  return res.data;
+};
+
+export const saveDeliveryFeeRule = async (payload: Partial<DeliveryFeeRule>): Promise<{
+  success: boolean;
+  message: string;
+  data: DeliveryFeeRule;
+}> => {
+  const res = await axios.post(`${API_BASE}/fee-rules`, payload);
+  return res.data;
+};
+
+// Support Tickets API
+export const getDeliverySupportTickets = async (params?: { status?: string; priority?: string }): Promise<{
+  success: boolean;
+  data: DeliverySupportTicket[];
+}> => {
+  const res = await axios.get(`${API_BASE}/support-tickets`, { params });
+  return res.data;
+};
+
+export const createDeliverySupportTicket = async (payload: {
+  delivery_id: number;
+  customer_id?: number;
+  driver_id?: number;
+  issue_type: string;
+  priority: string;
+  description: string;
+}): Promise<{
+  success: boolean;
+  message: string;
+  data: DeliverySupportTicket;
+}> => {
+  const res = await axios.post(`${API_BASE}/support-tickets`, payload);
+  return res.data;
+};
+
+export const resolveDeliverySupportTicket = async (id: number, resolution_notes: string): Promise<{
+  success: boolean;
+  message: string;
+  data: DeliverySupportTicket;
+}> => {
+  const res = await axios.post(`${API_BASE}/support-tickets/${id}/resolve`, { resolution_notes });
+  return res.data;
+};
+
+// Ratings & Reviews API
+export const getDeliveryRatings = async (): Promise<{
+  success: boolean;
+  data: DeliveryRatingRecord[];
+}> => {
+  const res = await axios.get(`${API_BASE}/ratings`);
+  return res.data;
+};
+
+export const submitDeliveryRating = async (payload: Partial<DeliveryRatingRecord>): Promise<{
+  success: boolean;
+  message: string;
+  data: DeliveryRatingRecord;
+}> => {
+  const res = await axios.post(`${API_BASE}/ratings`, payload);
+  return res.data;
+};
+
+// Analytics API
+export const getDeliveryAnalytics = async (): Promise<{
+  success: boolean;
+  data: DeliveryAnalyticsData;
+}> => {
+  const res = await axios.get(`${API_BASE}/analytics`);
+  return res.data;
+};
+
+// Drivers & Zones API
 export const getDeliveryDrivers = async (): Promise<{
   success: boolean;
   drivers: DeliveryDriver[];

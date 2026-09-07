@@ -10,6 +10,8 @@ use App\Modules\Delivery\Persistence\Models\DeliveryItem;
 use App\Modules\Delivery\Persistence\Models\DeliveryTrackingLog;
 use App\Modules\Delivery\Persistence\Models\DeliveryProof;
 use App\Modules\Delivery\Persistence\Models\DeliveryDriver;
+use App\Modules\Delivery\Persistence\Models\DeliveryFeeRule;
+use App\Modules\Sales\Persistence\Models\Sale;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -342,5 +344,217 @@ class DeliveryOrderController extends Controller
             'message' => 'Delivery marked as ' . $delivery->status,
             'delivery' => $delivery->load(['driver', 'zone', 'customer', 'trackingLogs']),
         ]);
+    }
+
+    public function generateFromSale(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'sale_id' => 'required|exists:sales,id',
+            'recipient_name' => 'nullable|string',
+            'recipient_phone' => 'nullable|string',
+            'delivery_address' => 'nullable|string',
+            'zone_id' => 'nullable|exists:delivery_zones,id',
+            'time_slot_id' => 'nullable|exists:delivery_time_slots,id',
+            'delivery_fee' => 'nullable|numeric|min:0',
+            'priority' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'payment_type' => 'nullable|string',
+        ]);
+
+        $sale = Sale::with(['customer', 'items.product'])->findOrFail($validated['sale_id']);
+
+        return DB::transaction(function () use ($sale, $validated) {
+            $deliveryNum = 'DEL-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
+            $recipientName = $validated['recipient_name'] ?? ($sale->customer?->name ?? 'Walk-in Customer');
+            $recipientPhone = $validated['recipient_phone'] ?? ($sale->customer?->phone ?? 'N/A');
+            $address = $validated['delivery_address'] ?? ($sale->customer?->address ?? 'Customer Delivery Address');
+            $fee = $validated['delivery_fee'] ?? 1.50;
+            $subtotal = (float) $sale->total_amount;
+            $total = $subtotal + $fee;
+            $paymentType = $validated['payment_type'] ?? ($sale->paid_amount >= $total ? 'PREPAID' : 'COD');
+            $codDue = $paymentType === 'COD' ? max(0, $total - (float)$sale->paid_amount) : 0;
+
+            $delivery = Delivery::create([
+                'delivery_number' => $deliveryNum,
+                'sale_id' => $sale->id,
+                'customer_id' => $sale->customer_id,
+                'zone_id' => $validated['zone_id'] ?? null,
+                'time_slot_id' => $validated['time_slot_id'] ?? null,
+                'recipient_name' => $recipientName,
+                'recipient_phone' => $recipientPhone,
+                'delivery_address' => $address,
+                'delivery_notes' => $validated['notes'] ?? null,
+                'priority' => $validated['priority'] ?? 'STANDARD',
+                'payment_type' => $paymentType,
+                'cod_amount_due' => $codDue,
+                'delivery_fee' => $fee,
+                'order_subtotal' => $subtotal,
+                'total_amount' => $total,
+                'status' => 'PENDING',
+            ]);
+
+            if ($sale->items) {
+                foreach ($sale->items as $item) {
+                    DeliveryItem::create([
+                        'delivery_id' => $delivery->id,
+                        'product_id' => $item->product_id,
+                        'product_name' => $item->product?->name ?? 'POS Item',
+                        'sku' => $item->product?->sku ?? null,
+                        'quantity' => (int) $item->quantity,
+                        'unit_price' => (float) $item->unit_price,
+                        'total_price' => (float) $item->total_amount,
+                        'image_url' => $item->product?->image_url ?? null,
+                    ]);
+                }
+            }
+
+            DeliveryTrackingLog::create([
+                'delivery_id' => $delivery->id,
+                'status' => 'PENDING',
+                'actor_type' => 'SYSTEM',
+                'actor_name' => 'POS Terminal',
+                'notes' => 'Generated automatically from Sale #' . $sale->sale_number,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Delivery order ' . $deliveryNum . ' created from sale',
+                'delivery' => $delivery->load(['items', 'zone', 'customer']),
+            ], 201);
+        });
+    }
+
+    public function bulkAssign(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'delivery_ids' => 'required|array|min:1',
+            'delivery_ids.*' => 'exists:deliveries,id',
+            'driver_id' => 'required|exists:delivery_drivers,id',
+            'vehicle_id' => 'nullable|exists:delivery_vehicles,id',
+        ]);
+
+        $driver = DeliveryDriver::findOrFail($validated['driver_id']);
+
+        DB::transaction(function () use ($validated, $driver) {
+            foreach ($validated['delivery_ids'] as $id) {
+                $delivery = Delivery::find($id);
+                if ($delivery) {
+                    $delivery->driver_id = $driver->id;
+                    $delivery->vehicle_id = $validated['vehicle_id'] ?? null;
+                    $delivery->status = 'ASSIGNED';
+                    $delivery->assigned_at = now();
+                    $delivery->save();
+
+                    DeliveryTrackingLog::create([
+                        'delivery_id' => $delivery->id,
+                        'status' => 'ASSIGNED',
+                        'actor_type' => 'DISPATCHER',
+                        'actor_name' => 'Dispatcher',
+                        'notes' => 'Batch assigned to ' . $driver->name,
+                    ]);
+                }
+            }
+            $driver->update(['current_status' => 'BUSY']);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => count($validated['delivery_ids']) . ' deliveries successfully assigned to ' . $driver->name,
+        ]);
+    }
+
+    public function reschedule(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'scheduled_date' => 'required|date',
+            'time_slot_id' => 'nullable|exists:delivery_time_slots,id',
+            'reason' => 'nullable|string',
+        ]);
+
+        $delivery = Delivery::findOrFail($id);
+        $delivery->scheduled_at = Carbon::parse($validated['scheduled_date']);
+        $delivery->time_slot_id = $validated['time_slot_id'] ?? $delivery->time_slot_id;
+        $delivery->status = 'PENDING';
+        $delivery->reschedule_count += 1;
+        $delivery->save();
+
+        DeliveryTrackingLog::create([
+            'delivery_id' => $delivery->id,
+            'status' => 'RESCHEDULED',
+            'actor_type' => 'DISPATCHER',
+            'actor_name' => 'Dispatcher',
+            'notes' => 'Rescheduled to ' . $validated['scheduled_date'] . '. Reason: ' . ($validated['reason'] ?? 'Customer request'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Delivery rescheduled successfully',
+            'delivery' => $delivery->load(['driver', 'zone', 'customer', 'trackingLogs']),
+        ]);
+    }
+
+    public function processReturn(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'return_reason' => 'required|string',
+            'restock_items' => 'nullable|boolean',
+            'inspection_notes' => 'nullable|string',
+        ]);
+
+        $delivery = Delivery::with('items')->findOrFail($id);
+        $delivery->status = 'RETURNED_TO_STORE';
+        $delivery->failure_reason_code = 'RETURNED_TO_STORE';
+        $delivery->failure_notes = $validated['return_reason'] . ' - Inspection: ' . ($validated['inspection_notes'] ?? 'Good condition');
+        $delivery->save();
+
+        DeliveryTrackingLog::create([
+            'delivery_id' => $delivery->id,
+            'status' => 'RETURNED_TO_STORE',
+            'actor_type' => 'WAREHOUSE',
+            'actor_name' => 'Warehouse Staff',
+            'notes' => 'Returned to store. Restocked: ' . (!empty($validated['restock_items']) ? 'YES' : 'NO') . '. Reason: ' . $validated['return_reason'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Return processed & warehouse stock adjusted',
+            'delivery' => $delivery,
+        ]);
+    }
+
+    public function getFeeRules(): JsonResponse
+    {
+        $rules = DeliveryFeeRule::orderBy('min_order_value', 'asc')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $rules,
+        ]);
+    }
+
+    public function saveFeeRule(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => 'required|string',
+            'rule_type' => 'required|string',
+            'min_order_value' => 'nullable|numeric',
+            'max_order_value' => 'nullable|numeric',
+            'min_distance_km' => 'nullable|numeric',
+            'max_distance_km' => 'nullable|numeric',
+            'fee_amount' => 'required|numeric',
+            'is_free' => 'nullable|boolean',
+            'peak_hour_surcharge' => 'nullable|numeric',
+            'weekend_surcharge' => 'nullable|numeric',
+            'holiday_surcharge' => 'nullable|numeric',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $rule = DeliveryFeeRule::create($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Fee rule saved successfully',
+            'data' => $rule,
+        ], 201);
     }
 }

@@ -66,4 +66,34 @@ class Delivery extends Model
     {
         return $this->hasOne(DeliveryProof::class, 'delivery_id');
     }
+
+    public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryVehicle::class, 'vehicle_id');
+    }
+
+    public function timeSlot(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryTimeSlot::class, 'time_slot_id');
+    }
+
+    public function route(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryRoute::class, 'route_id');
+    }
+
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(DeliverySupportTicket::class, 'delivery_id');
+    }
+
+    public function rating(): HasOne
+    {
+        return $this->hasOne(DeliveryRating::class, 'delivery_id');
+    }
+
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(DeliveryAuditLog::class, 'delivery_id')->orderBy('created_at', 'desc');
+    }
 }

@@ -26,4 +26,14 @@ class DeliveryDriver extends Model
     {
         return $this->hasMany(DriverCodSettlement::class, 'driver_id');
     }
+
+    public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryVehicle::class, 'id', 'assigned_driver_id');
+    }
+
+    public function routes(): HasMany
+    {
+        return $this->hasMany(DeliveryRoute::class, 'driver_id');
+    }
 }

@@ -42,6 +42,14 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'sanctum' => [
+            'driver' => 'auth_session',
+            'provider' => 'users',
+        ],
+        'api' => [
+            'driver' => 'auth_session',
+            'provider' => 'users',
+        ],
     ],
 
     /*
@@ -64,13 +72,8 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model' => env('AUTH_MODEL', \App\Modules\User\Persistence\Models\User::class),
         ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
     ],
 
     /*

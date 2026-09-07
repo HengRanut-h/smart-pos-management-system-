@@ -18,14 +18,17 @@ class UserProfileController extends Controller
      */
     public function getProfile(Request $request): JsonResponse
     {
-        $user = $request->user() ?? User::with(['employee.branch', 'roles'])->first();
+        $user = $request->user();
 
         if (!$user) {
-            return response()->json(['message' => 'User not found.'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
         }
 
         // Load relations
-        $user->loadMissing(['employee.branch', 'roles.permissions']);
+        $user->loadMissing(['employee.branch', 'customer', 'roles.permissions']);
 
         // Shift statistics for current user
         $activeShift = Shift::where('cashier_id', $user->id)
@@ -42,7 +45,15 @@ class UserProfileController extends Controller
             ->sum('total_amount');
 
         $employee = $user->employee;
+        $customer = $user->customer;
         $branch = $employee?->branch;
+
+        $firstName = $employee?->first_name
+            ?? ($customer ? explode(' ', $customer->name)[0] : $user->username);
+        $lastName = $employee?->last_name
+            ?? ($customer && str_contains($customer->name, ' ') ? substr($customer->name, strpos($customer->name, ' ') + 1) : '');
+        $fullName = $employee ? trim("{$employee->first_name} {$employee->last_name}")
+            : ($customer?->name ?? $user->username);
 
         $roles = $user->roles->map(fn($r) => [
             'id' => $r->id,
@@ -50,29 +61,43 @@ class UserProfileController extends Controller
             'code' => $r->code,
         ]);
 
+        if ($roles->isEmpty()) {
+            $defaultRole = \App\Modules\Role\Persistence\Models\Role::where('code', 'CUSTOMER')->first();
+            if ($defaultRole) {
+                $roles = collect([[
+                    'id' => $defaultRole->id,
+                    'name' => $defaultRole->name,
+                    'code' => $defaultRole->code,
+                ]]);
+            }
+        }
+
         $permissions = $user->roles->flatMap(fn($r) => $r->permissions)->pluck('code')->unique()->values();
 
         return response()->json([
+            'success' => true,
             'data' => [
                 'id' => $user->id,
                 'username' => $user->username,
                 'email' => $user->email,
                 'phone' => $user->phone,
-                'first_name' => $employee?->first_name ?? 'Lead',
-                'last_name' => $employee?->last_name ?? 'Admin',
-                'full_name' => trim(($employee?->first_name ?? 'Lead') . ' ' . ($employee?->last_name ?? 'Admin')),
-                'employee_code' => $employee?->employee_code ?? 'EMP-001',
-                'branch' => [
-                    'id' => $branch?->id ?? 1,
-                    'name' => $branch?->name ?? 'Phnom Penh Headquarters',
-                    'code' => $branch?->code ?? 'HQ-01',
-                    'address' => $branch?->address ?? 'Preah Monivong Blvd, Phnom Penh',
-                ],
+                'registration_source' => $user->registration_source ?? 'system',
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'full_name' => $fullName,
+                'employee_code' => $employee?->employee_code,
+                'customer_code' => $customer?->customer_code,
+                'branch' => $branch ? [
+                    'id' => $branch->id,
+                    'name' => $branch->name,
+                    'code' => $branch->code,
+                    'address' => $branch->address,
+                ] : null,
                 'roles' => $roles,
-                'primary_role' => $roles->first()['name'] ?? 'Super Administrator',
+                'primary_role' => $roles->first()['name'] ?? 'Customer',
                 'permissions' => $permissions,
                 'status' => 'ACTIVE',
-                'last_login_at' => $user->last_login_at ?? now()->subHours(2)->toIso8601String(),
+                'last_login_at' => $user->last_login_at ?? now()->toIso8601String(),
                 'last_login_ip' => $user->last_login_ip ?? '127.0.0.1',
                 'stats' => [
                     'active_shift' => $activeShift ? [
@@ -92,10 +117,13 @@ class UserProfileController extends Controller
      */
     public function updateProfile(Request $request): JsonResponse
     {
-        $user = $request->user() ?? User::first();
+        $user = $request->user();
 
         if (!$user) {
-            return response()->json(['message' => 'User not found.'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
         }
 
         $validated = $request->validate([
@@ -134,12 +162,23 @@ class UserProfileController extends Controller
 
         $user->save();
 
-        // Update employee first and last name if exists
+        // Update employee if exists
         if ($user->employee && (isset($validated['first_name']) || isset($validated['last_name']))) {
             $employee = $user->employee;
             if (isset($validated['first_name'])) $employee->first_name = $validated['first_name'];
             if (isset($validated['last_name'])) $employee->last_name = $validated['last_name'];
             $employee->save();
+        }
+
+        // Update customer if exists
+        if ($user->customer && (isset($validated['first_name']) || isset($validated['last_name']))) {
+            $customer = $user->customer;
+            $first = $validated['first_name'] ?? ($customer->name ? explode(' ', $customer->name)[0] : '');
+            $last = $validated['last_name'] ?? ($customer->name && str_contains($customer->name, ' ') ? substr($customer->name, strpos($customer->name, ' ') + 1) : '');
+            $customer->name = trim("{$first} {$last}");
+            if (isset($validated['email'])) $customer->email = $validated['email'];
+            if (isset($validated['phone'])) $customer->phone = $validated['phone'];
+            $customer->save();
         }
 
         return $this->getProfile($request);

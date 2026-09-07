@@ -153,8 +153,12 @@ class EmployeeController extends Controller
 
             if ($employee->user) {
                 if ($request->filled('role_id')) {
+                    $currentUser = $request->user();
+                    if ($currentUser && !$currentUser->isAdmin()) {
+                        abort(403, 'Forbidden. Only administrators can assign or modify user roles.');
+                    }
                     $employee->user->roles()->sync([
-                        $request->integer('role_id') => ['assigned_by' => 1, 'assigned_at' => now()]
+                        $request->integer('role_id') => ['assigned_by' => $currentUser?->id ?? 1, 'assigned_at' => now()]
                     ]);
                 }
                 if ($request->filled('password')) {

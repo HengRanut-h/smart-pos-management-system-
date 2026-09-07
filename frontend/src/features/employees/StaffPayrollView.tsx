@@ -133,6 +133,11 @@ export const StaffPayrollView: React.FC<StaffPayrollViewProps> = ({ onBack }) =>
     }
   };
 
+  const handleSaveRoleBaseRates = (rates: Record<string, number>) => {
+    localStorage.setItem('smartpos_role_base_rates', JSON.stringify(rates));
+    setIsEditingRoleRatesModal(false);
+  };
+
   const handleOpenEditEmpSalary = (emp: EmployeeAttendanceSummary) => {
     setEditingEmpSalaryModal(emp);
     const foundRole = roles.find(
@@ -687,7 +692,7 @@ export const StaffPayrollView: React.FC<StaffPayrollViewProps> = ({ onBack }) =>
                       ${emp.effective_regular_pay.toFixed(2)}
                     </td>
                     <td className="p-3.5 text-center font-mono text-purple-700 font-semibold">
-                      {emp.ot_hours > 0 ? `${emp.ot_hours} hrs` : '-'}
+                      {(emp.ot_hours ?? 0) > 0 ? `${emp.ot_hours} hrs` : '-'}
                     </td>
                     <td className="p-3.5 text-center font-mono font-bold text-purple-700">
                       {emp.effective_ot_pay > 0 ? `$${emp.effective_ot_pay.toFixed(2)}` : '$0.00'}

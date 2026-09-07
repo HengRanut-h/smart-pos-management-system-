@@ -56,3 +56,28 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+# React
+
+# Start Vite Development Server 
+```
+npm run dev
+```
+# Build React Frontend for Production
+```
+npm run build
+```
+
+# Laravel
+# Run Backend Automated PHPUnit Tests
+```
+php vendor/bin/phpunit
+```
+
+```
+
+```
+```
+php artisan serve --host=127.0.0.1 --port=8000
+```

@@ -123,6 +123,86 @@ class AuthValidationTest extends TestCase
         $successVerify->assertJson(['success' => true]);
     }
 
+    public function test_full_registration_and_activation_flow(): void
+    {
+        $this->seed();
+
+        // 1. Register account -> status: PENDING_VERIFICATION
+        $regRes = $this->postJson('/api/v1/auth/register', [
+            'username' => 'staff_pending',
+            'email' => 'staff_pending@smartpos.com',
+            'password' => 'Secret123!',
+            'confirm_password' => 'Secret123!',
+            'first_name' => 'Pending',
+            'last_name' => 'Staff',
+            'accept_terms' => true,
+        ]);
+
+        $regRes->assertStatus(201);
+        $otpCode = $regRes->json('otp_code');
+        $this->assertNotEmpty($otpCode);
+
+        // 2. Verify Registration OTP -> activates user account
+        $verifyRes = $this->postJson('/api/v1/auth/verify-registration-otp', [
+            'identifier' => 'staff_pending@smartpos.com',
+            'otp_code' => $otpCode,
+        ]);
+
+        $verifyRes->assertStatus(200);
+        $verifyRes->assertJson(['success' => true]);
+
+        // 3. Login with newly activated user
+        $loginRes = $this->postJson('/api/v1/auth/login', [
+            'username' => 'staff_pending',
+            'password' => 'Secret123!',
+        ]);
+
+        $loginRes->assertStatus(200);
+        $loginRes->assertJson(['success' => true]);
+    }
+
+    public function test_forgot_password_and_short_lived_token_reset_flow(): void
+    {
+        $this->seed();
+
+        // 1. Initiate forgot password
+        $forgotRes = $this->postJson('/api/v1/auth/forgot-password', [
+            'email' => 'admin@smartpos.com',
+        ]);
+
+        $forgotRes->assertStatus(200);
+        $otpCode = $forgotRes->json('otp_code');
+
+        // 2. Verify Reset OTP -> receives short-lived reset_token
+        $verifyRes = $this->postJson('/api/v1/auth/verify-reset-otp', [
+            'identifier' => 'admin@smartpos.com',
+            'otp_code' => $otpCode,
+        ]);
+
+        $verifyRes->assertStatus(200);
+        $resetToken = $verifyRes->json('reset_token');
+        $this->assertNotEmpty($resetToken);
+
+        // 3. Reset password using valid reset_token
+        $resetRes = $this->postJson('/api/v1/auth/reset-password', [
+            'email' => 'admin@smartpos.com',
+            'reset_token' => $resetToken,
+            'new_password' => 'NewAdminPassword123!',
+            'confirm_password' => 'NewAdminPassword123!',
+        ]);
+
+        $resetRes->assertStatus(200);
+        $resetRes->assertJson(['success' => true]);
+
+        // 4. Verify login with new password
+        $loginRes = $this->postJson('/api/v1/auth/login', [
+            'username' => 'admin',
+            'password' => 'NewAdminPassword123!',
+        ]);
+
+        $loginRes->assertStatus(200);
+    }
+
     public function test_oauth_redirect_and_callback(): void
     {
         $redirectRes = $this->getJson('/api/v1/auth/oauth/google/redirect');

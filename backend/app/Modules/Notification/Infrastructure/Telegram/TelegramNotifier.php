@@ -19,7 +19,7 @@ class TelegramNotifier implements TelegramNotifierInterface
         }
 
         try {
-            $response = Http::post("https://api.telegram.org/bot{$botToken}/sendMessage", [
+            $response = Http::withoutVerifying()->post("https://api.telegram.org/bot{$botToken}/sendMessage", [
                 'chat_id' => $targetChat,
                 'text' => $message,
                 'parse_mode' => 'Markdown',

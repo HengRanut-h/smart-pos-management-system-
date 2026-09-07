@@ -88,9 +88,80 @@ export const SidebarNav: React.FC = () => {
     }));
   };
 
+  const isCustomerOnly = useMemo(() => {
+    if (!currentUser) return false;
+    const roleCodes = currentUser.roles?.map((r) => r.code?.toUpperCase()) || [];
+    const hasStaffRole = roleCodes.some((code) =>
+      ['ADMIN', 'SUPER_ADMIN', 'MANAGER', 'CASHIER', 'STOCK_MANAGER', 'ACCOUNTANT', 'HR', 'EMPLOYEE'].includes(code)
+    );
+    return !hasStaffRole && (roleCodes.includes('CUSTOMER') || currentUser.primary_role?.toLowerCase() === 'customer');
+  }, [currentUser]);
+
   // 100% READY AND FUNCTIONAL MODULES
-  const navGroups: NavGroup[] = useMemo(
-    () => [
+  const navGroups: NavGroup[] = useMemo(() => {
+    if (isCustomerOnly) {
+      return [
+        {
+          id: 'customer_portal',
+          title: 'Customer Portal',
+          titleKh: 'ផតថលអតិថិជន',
+          icon: <Home className="w-4 h-4" />,
+          items: [
+            {
+              id: 'dashboard',
+              name: 'Customer Dashboard',
+              nameKh: 'ផ្ទាំងគ្រប់គ្រងអតិថិជន',
+              icon: <Home className="w-4 h-4" />,
+              tab: 'dashboard',
+              description: 'My points & orders overview',
+            },
+            {
+              id: 'sales',
+              name: 'My Purchase Orders',
+              nameKh: 'ប្រវត្តិនៃការបញ្ជាទិញ',
+              icon: <History className="w-4 h-4" />,
+              tab: 'sales',
+              description: 'Order receipts & history',
+            },
+            {
+              id: 'invoices',
+              name: 'My E-Invoices',
+              nameKh: 'វិក្កយបត្រអេឡិចត្រូនិច',
+              icon: <FileText className="w-4 h-4" />,
+              tab: 'invoices',
+              description: 'Official invoices & receipts',
+            },
+            {
+              id: 'notifications',
+              name: 'Notifications & Alerts',
+              nameKh: 'ដំណឹង និងប្រូម៉ូសិន',
+              icon: <Bell className="w-4 h-4" />,
+              tab: 'notifications',
+              badge: unreadNotifCount,
+              description: 'Promotions, orders & updates',
+            },
+            {
+              id: 'profile',
+              name: 'My Profile & Security',
+              nameKh: 'ព័ត៌មានផ្ទាល់ខ្លួន',
+              icon: <Users className="w-4 h-4" />,
+              tab: 'profile',
+              description: 'Contact info & password',
+            },
+            {
+              id: 'settings',
+              name: 'Preferences & Settings',
+              nameKh: 'ការកំណត់ផ្ទាល់ខ្លួន',
+              icon: <Settings className="w-4 h-4" />,
+              tab: 'settings',
+              description: 'Language & display preferences',
+            },
+          ],
+        },
+      ];
+    }
+
+    return [
       {
         id: 'analytics',
         title: 'Dashboard & KPI',
@@ -321,23 +392,20 @@ export const SidebarNav: React.FC = () => {
           },
         ],
       },
-    ],
-    [totalCartCount, unreadNotifCount]
-  );
+    ];
+  }, [totalCartCount, unreadNotifCount, isCustomerOnly]);
 
-  // Exact 9-item rail list matching user concept:
-  // logo
-  // ───
-  // 🏠 (Dashboard)
-  // 🛒 (Sales & Commerce / POS)
-  // 📦 (Inventory)
-  // 👥 (Customers)
-  // 📄 (Invoices)
-  // 🔔 (Notifications)
-  // 🛡️ (Security & Audit)
-  // 💾 (Backup & Data)
-  // ⚙️ (Settings)
   const railItems = useMemo(() => {
+    if (isCustomerOnly) {
+      return [
+        { id: 'dashboard' as NavTab, label: 'Dashboard', icon: <Home className="w-5 h-5" />, sub: 'My Overview' },
+        { id: 'sales' as NavTab, label: 'Orders', icon: <History className="w-5 h-5" />, sub: 'My Orders' },
+        { id: 'invoices' as NavTab, label: 'Invoices', icon: <FileText className="w-5 h-5" />, sub: 'My Invoices' },
+        { id: 'notifications' as NavTab, label: 'Alerts', icon: <Bell className="w-5 h-5" />, badge: unreadNotifCount, sub: 'Notifications' },
+        { id: 'profile' as NavTab, label: 'Profile', icon: <Users className="w-5 h-5" />, sub: 'My Account' },
+        { id: 'settings' as NavTab, label: 'Settings', icon: <Settings className="w-5 h-5" />, sub: 'Preferences' },
+      ];
+    }
     return [
       { id: 'dashboard' as NavTab, label: 'Dashboard', icon: <Home className="w-5 h-5" />, hotkey: 'F7', sub: 'Executive KPI' },
       { id: 'pos' as NavTab, label: 'POS & Sales', icon: <ShoppingCart className="w-5 h-5" />, badge: totalCartCount, hotkey: 'F1', sub: 'Cashier Checkout' },
@@ -349,7 +417,7 @@ export const SidebarNav: React.FC = () => {
       { id: 'backup' as NavTab, label: 'Backup & Data', icon: <Database className="w-5 h-5" />, hotkey: 'F11', sub: 'Snapshots & Exports' },
       { id: 'settings' as NavTab, label: 'Settings', icon: <Settings className="w-5 h-5" />, hotkey: 'F12', sub: 'Store & Branch Config' },
     ];
-  }, [totalCartCount, unreadNotifCount]);
+  }, [totalCartCount, unreadNotifCount, isCustomerOnly]);
 
   // Search filter for expanded mode
   const filteredGroups = useMemo(() => {

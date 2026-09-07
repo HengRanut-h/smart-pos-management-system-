@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient, ensureCsrfCookie } from './apiClient';
 import {
   Product,
   Employee,
@@ -261,6 +261,7 @@ export const uploadStoreLogo = async (file: File): Promise<{ success: boolean; i
 // Authentication API
 export const loginApi = async (credentials: { username: string; password?: string; pin?: string }) => {
   try {
+    await ensureCsrfCookie();
     const res = await apiClient.post('/auth/login', credentials);
     return res.data;
   } catch (err: any) {
@@ -268,13 +269,56 @@ export const loginApi = async (credentials: { username: string; password?: strin
   }
 };
 
-export const sendOtpApi = async (data: { type: 'register' | 'forgot_password'; identifier: string }) => {
-  const res = await apiClient.post('/auth/send-otp', data);
+export const logoutApi = async (): Promise<any> => {
+  try {
+    const res = await apiClient.post('/auth/logout');
+    return res.data;
+  } catch (err) {
+    return null;
+  }
+};
+
+export const sendOtpApi = async (data: { type?: 'register' | 'forgot_password'; purpose?: string; identifier?: string; destination?: string; channel?: 'EMAIL' | 'SMS' }) => {
+  const res = await apiClient.post('/auth/send-otp', {
+    ...data,
+    destination: data.destination || data.identifier,
+    purpose: data.purpose || (data.type === 'forgot_password' ? 'PASSWORD_RESET' : 'REGISTRATION'),
+  });
   return res.data;
 };
 
-export const verifyOtpApi = async (data: { type: 'register' | 'forgot_password'; identifier: string; otp_code: string }) => {
-  const res = await apiClient.post('/auth/verify-otp', data);
+export const verifyOtpApi = async (data: { type?: 'register' | 'forgot_password'; purpose?: string; identifier?: string; destination?: string; otp?: string; otp_code?: string }) => {
+  const res = await apiClient.post('/auth/verify-otp', {
+    ...data,
+    destination: data.destination || data.identifier,
+    otp_code: data.otp_code || data.otp,
+    purpose: data.purpose || (data.type === 'forgot_password' ? 'PASSWORD_RESET' : 'REGISTRATION'),
+  });
+  return res.data;
+};
+
+export const verifyRegistrationOtpApi = async (data: { identifier: string; otp_code: string }) => {
+  const res = await apiClient.post('/auth/verify-registration-otp', data);
+  return res.data;
+};
+
+export const resendRegistrationOtpApi = async (data: { identifier: string; channel?: 'EMAIL' | 'SMS' }) => {
+  const res = await apiClient.post('/auth/resend-registration-otp', data);
+  return res.data;
+};
+
+export const sendResetOtpApi = async (data: { email: string; channel?: 'EMAIL' | 'SMS' }) => {
+  const res = await apiClient.post('/auth/forgot-password', data);
+  return res.data;
+};
+
+export const verifyResetOtpApi = async (data: { identifier: string; otp_code: string }) => {
+  const res = await apiClient.post('/auth/verify-reset-otp', data);
+  return res.data;
+};
+
+export const resendResetOtpApi = async (data: { identifier: string; channel?: 'EMAIL' | 'SMS' }) => {
+  const res = await apiClient.post('/auth/resend-reset-otp', data);
   return res.data;
 };
 
@@ -287,21 +331,25 @@ export const registerApi = async (data: {
   username: string;
   email: string;
   password: string;
+  confirm_password?: string;
   first_name: string;
   last_name: string;
   phone?: string;
   role?: string;
+  accept_terms?: boolean;
+  channel?: 'EMAIL' | 'SMS';
 }) => {
+  await ensureCsrfCookie();
   const res = await apiClient.post('/auth/register', data);
   return res.data;
 };
 
-export const forgotPasswordApi = async (email: string) => {
-  const res = await apiClient.post('/auth/forgot-password', { email });
+export const forgotPasswordApi = async (email: string, channel?: 'EMAIL' | 'SMS') => {
+  const res = await apiClient.post('/auth/forgot-password', { email, channel });
   return res.data;
 };
 
-export const resetPasswordApi = async (data: { email: string; code: string; new_password: string }) => {
+export const resetPasswordApi = async (data: { email?: string; reset_token: string; new_password: string; confirm_password?: string }) => {
   const res = await apiClient.post('/auth/reset-password', data);
   return res.data;
 };
@@ -569,6 +617,35 @@ export const updateAttendanceNotes = async (
   return res.data;
 };
 
+export interface AdminUserItem {
+  id: number;
+  username: string;
+  email: string;
+  phone?: string;
+  registration_source?: string;
+  status_id?: number;
+  customer_id?: number;
+  employee_id?: number;
+  created_at?: string;
+  roles?: Array<{ id: number; name: string; code: string }>;
+  customer?: { id: number; customer_code: string; name: string; email: string; phone: string; status?: string };
+  employee?: { id: number; employee_code: string; first_name: string; last_name: string; branch_id?: number; branch?: { id: number; name: string } };
+}
 
+export const getAdminUsers = async (params?: { search?: string; role?: string }): Promise<AdminUserItem[]> => {
+  const res = await apiClient.get('/admin/users', { params });
+  return res.data?.data || [];
+};
 
+export const getAdminBranches = async (): Promise<Array<{ id: number; name: string; code: string; is_active: boolean }>> => {
+  const res = await apiClient.get('/admin/branches');
+  return res.data?.data || [];
+};
 
+export const assignUserRole = async (
+  userId: number,
+  payload: { role: string; branch_id?: number; reason?: string }
+): Promise<{ success: boolean; message: string; data: any }> => {
+  const res = await apiClient.post(`/admin/users/${userId}/role`, payload);
+  return res.data;
+};

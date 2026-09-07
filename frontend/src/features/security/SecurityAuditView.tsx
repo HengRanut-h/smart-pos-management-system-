@@ -3,6 +3,7 @@ import { useApp } from '../../application/context/AppContext';
 import { AuditLogItem } from '../../foundation/types';
 import { getAuditLogs } from '../../data-access/posApi';
 import { RolePermissionManagementView } from '../employees/RolePermissionManagementView';
+import { AdminUserRoleAssignmentView } from './AdminUserRoleAssignmentView';
 import {
   Shield,
   Search,
@@ -14,6 +15,7 @@ import {
   Server,
   KeyRound,
   FileCheck,
+  Users,
 } from 'lucide-react';
 
 export const SecurityAuditView: React.FC = () => {
@@ -21,7 +23,7 @@ export const SecurityAuditView: React.FC = () => {
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [actionFilter, setActionFilter] = useState('');
-  const [activeTab, setActiveTab] = useState<'AUDIT_LOGS' | 'ROLES' | 'POLICIES'>('AUDIT_LOGS');
+  const [activeTab, setActiveTab] = useState<'AUDIT_LOGS' | 'USER_ROLES' | 'ROLES' | 'POLICIES'>('AUDIT_LOGS');
 
   const fetchLogs = async () => {
     setIsLoading(true);
@@ -114,6 +116,7 @@ export const SecurityAuditView: React.FC = () => {
       <div className="bg-white border-b border-gray-200 px-6 py-2.5 flex items-center space-x-4">
         {[
           { id: 'AUDIT_LOGS', label: 'Audit Trail Logs', icon: <Terminal className="w-4 h-4" /> },
+          { id: 'USER_ROLES', label: 'User Roles & Customer Assignment', icon: <Users className="w-4 h-4" /> },
           { id: 'ROLES', label: 'Roles & Permission Matrix', icon: <UserCheck className="w-4 h-4" /> },
           { id: 'POLICIES', label: 'Security Status & Policy', icon: <Lock className="w-4 h-4" /> },
         ].map((tab) => (
@@ -211,6 +214,10 @@ export const SecurityAuditView: React.FC = () => {
               </div>
             </div>
           </>
+        )}
+
+        {activeTab === 'USER_ROLES' && (
+          <AdminUserRoleAssignmentView />
         )}
 
         {activeTab === 'ROLES' && (

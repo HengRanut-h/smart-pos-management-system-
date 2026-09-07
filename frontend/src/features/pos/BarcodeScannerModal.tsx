@@ -46,9 +46,11 @@ import {
 interface BarcodeScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  products: Product[];
-  onScanProduct: (product: Product, quantity?: number) => void;
-  playScanBeep: (tone?: 'standard' | 'double' | 'soft') => void;
+  products?: Product[];
+  onScanProduct?: (product: Product, quantity?: number) => void;
+  playScanBeep?: (tone?: 'standard' | 'double' | 'soft') => void;
+  onDetectedBarcode?: (code: string) => void | Promise<void>;
+  onAddProductToCart?: () => void;
 }
 
 interface CheatsheetItem {
@@ -72,9 +74,11 @@ const COMMON_CHEATSHEET_ITEMS: CheatsheetItem[] = [
 export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   isOpen,
   onClose,
-  products,
-  onScanProduct,
-  playScanBeep,
+  products = [],
+  onScanProduct = () => {},
+  playScanBeep = () => {},
+  onDetectedBarcode,
+  onAddProductToCart,
 }) => {
   const [activeTab, setActiveTab] = useState<'camera' | 'smartphone' | 'shelf' | 'cheatsheet' | 'manual'>('camera');
   const [scanMultiplier, setScanMultiplier] = useState<number>(1);
@@ -477,6 +481,10 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const handleMatchBarcode = (barcodeStr: string) => {
     const raw = barcodeStr.trim();
     if (!raw) return false;
+
+    if (onDetectedBarcode) {
+      onDetectedBarcode(raw);
+    }
 
     // Check for quantity multiplier prefix (e.g. "5*8850123456781" or "12*BEV-001")
     let targetBarcode = raw;

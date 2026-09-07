@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../application/context/AppContext';
 import { SmartPosLogo } from '../../presentation/components/SmartPosLogo';
+import { OtpVerificationModal } from '../../presentation/components/OtpVerificationModal';
 import {
   loginApi,
   registerApi,
@@ -8,6 +9,10 @@ import {
   resetPasswordApi,
   sendOtpApi,
   verifyOtpApi,
+  verifyRegistrationOtpApi,
+  resendRegistrationOtpApi,
+  verifyResetOtpApi,
+  resendResetOtpApi,
   oauthLoginApi,
 } from '../../data-access/posApi';
 import { UserProfile } from '../../foundation/types';
@@ -39,8 +44,8 @@ import {
 export const LoginView: React.FC = () => {
   const { lang, setLang, loginUser, setActiveTab, storeSettings } = useApp();
 
-  // Navigation View State: 'login' | 'register' | 'forgot'
-  const [viewState, setViewState] = useState<'login' | 'register' | 'forgot'>('login');
+  // Navigation View State: 'login' | 'register' | 'forgot' | 'reset_password'
+  const [viewState, setViewState] = useState<'login' | 'register' | 'forgot' | 'reset_password'>('login');
   
   // Login Sub-mode: 'password' | 'phone' | 'pin'
   const [loginMode, setLoginMode] = useState<'password' | 'phone' | 'pin'>('password');
@@ -62,12 +67,14 @@ export const LoginView: React.FC = () => {
   const [regUsername, setRegUsername] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
-  const [regRole, setRegRole] = useState('CASHIER');
+  const [regChannel, setRegChannel] = useState<'EMAIL' | 'SMS'>('EMAIL');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regAcceptTerms, setRegAcceptTerms] = useState(true);
 
-  // Form State - Forgot Password
+  // Form State - Forgot Password & Reset Token
   const [forgotEmail, setForgotEmail] = useState('');
+  const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
@@ -124,7 +131,149 @@ export const LoginView: React.FC = () => {
     }
   };
 
-  // --- 1. Password Login Handler ---
+  // --- Helper to Build UserProfile and Login with strict Role-based Routing ---
+  const buildUserProfileAndLogin = (user: any) => {
+    const roleCodes = user.roles?.map((r: any) => r.code?.toUpperCase()) || [];
+    const hasStaffRole = roleCodes.some((code: string) =>
+      ['ADMIN', 'SUPER_ADMIN', 'MANAGER', 'CASHIER', 'STOCK_MANAGER', 'ACCOUNTANT', 'HR', 'EMPLOYEE'].includes(code)
+    );
+    const isCust = !hasStaffRole && (roleCodes.includes('CUSTOMER') || user.registration_source === 'public' || !!user.customer);
+
+    const firstName = user.employee?.first_name
+      || (user.customer?.name ? user.customer.name.split(' ')[0] : user.username);
+    const lastName = user.employee?.last_name
+      || (user.customer?.name && user.customer.name.includes(' ') ? user.customer.name.split(' ').slice(1).join(' ') : '');
+    const fullName = user.employee
+      ? `${user.employee.first_name} ${user.employee.last_name}`.trim()
+      : (user.customer?.name || user.username);
+
+    const defaultCustomerRole = [{ id: 9, name: 'Customer', code: 'CUSTOMER' }];
+    const defaultStaffRole = [{ id: 4, name: 'Cashier', code: 'CASHIER' }];
+
+    const profile: UserProfile = {
+      id: user.id,
+      username: user.username,
+      email: user.email || `${user.username}@smartpos.com`,
+      phone: user.phone,
+      first_name: firstName,
+      last_name: lastName,
+      full_name: fullName,
+      employee_code: user.employee?.employee_code || user.customer?.customer_code || (isCust ? `CUST-${user.id}` : `EMP-${user.id}`),
+      branch: user.employee?.branch || { id: 1, name: 'Phnom Penh Headquarters', code: 'HQ-01', address: 'Monivong Blvd, Phnom Penh' },
+      roles: user.roles && user.roles.length > 0 ? user.roles : (isCust ? defaultCustomerRole : defaultStaffRole),
+      primary_role: user.roles?.[0]?.name || (isCust ? 'Customer' : 'Staff Member'),
+      permissions: user.roles?.[0]?.permissions?.map((p: any) => p.code) || (isCust ? ['customer.portal', 'order.view_own', 'invoice.view_own'] : ['ALL_PERMISSIONS']),
+      status: 'ACTIVE',
+    };
+
+    loginUser(profile);
+    setActiveTab(isCust ? 'dashboard' : 'pos');
+  };
+
+  // --- Check for Real OAuth Callback / Session in URL ---
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauth = urlParams.get('oauth');
+    const token = urlParams.get('token');
+    const code = urlParams.get('code');
+    const oauthError = urlParams.get('error');
+
+    if (oauthError) {
+      setErrorMsg(decodeURIComponent(oauthError));
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (oauth) {
+      setIsSubmitting(true);
+      setSuccessMsg(lang === 'kh' ? 'កំពុងផ្ទៀងផ្ទាត់គណនី...' : 'Verifying authenticated session...');
+
+      fetch('/api/v1/user/profile', {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            setSuccessMsg(lang === 'kh' ? 'ចូលប្រព័ន្ធបានជោគជ័យ!' : 'Logged in successfully!');
+            buildUserProfileAndLogin(data.data);
+          } else {
+            setErrorMsg('Failed to initialize session profile.');
+          }
+        })
+        .catch((err) => {
+          setErrorMsg('Authentication error: ' + err.message);
+        })
+        .finally(() => {
+          setIsSubmitting(false);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        });
+    } else if (code) {
+      setIsSubmitting(true);
+      setSuccessMsg(lang === 'kh' ? 'កំពុងផ្ទៀងផ្ទាត់ជាមួយ Google...' : 'Exchanging Google authorization code...');
+      const currentRedirect = window.location.origin + window.location.pathname;
+
+      fetch('/api/v1/auth/google/callback', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({
+          code,
+          redirect_uri: currentRedirect,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data?.user) {
+            setSuccessMsg(lang === 'kh' ? 'ចូលប្រព័ន្ធជាមួយ Google បានជោគជ័យ!' : 'Logged in successfully with Google!');
+            buildUserProfileAndLogin(data.data.user);
+          } else {
+            setErrorMsg(data.message || 'Google authorization failed.');
+          }
+        })
+        .catch((err) => {
+          setErrorMsg('Google login error: ' + err.message);
+        })
+        .finally(() => {
+          setIsSubmitting(false);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        });
+    } else if (token) {
+      setIsSubmitting(true);
+      setSuccessMsg(lang === 'kh' ? 'កំពុងទាញយកព័ត៌មានគណនី...' : 'Authenticated successfully! Loading profile...');
+
+      fetch('/api/v1/auth/me', {
+        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            setSuccessMsg(lang === 'kh' ? 'ចូលប្រព័ន្ធបានជោគជ័យ!' : 'Logged in successfully!');
+            buildUserProfileAndLogin(data.data);
+          } else {
+            setErrorMsg('Failed to initialize session profile.');
+          }
+        })
+        .catch((err) => {
+          setErrorMsg('Authentication error: ' + err.message);
+        })
+        .finally(() => {
+          setIsSubmitting(false);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        });
+    }
+  }, []);
+
+  // --- 1. Password Login Handler (Real Database Authentication) ---
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
@@ -139,59 +288,18 @@ export const LoginView: React.FC = () => {
     try {
       const res = await loginApi({ username, password });
       if (res.success && res.data?.user) {
-        const user = res.data.user;
-        const profile: UserProfile = {
-          id: user.id || 1,
-          username: user.username || username,
-          email: user.email || `${username}@smartpos.com`,
-          phone: user.phone || '+855 12 345 678',
-          first_name: user.employee?.first_name || 'Staff',
-          last_name: user.employee?.last_name || 'Member',
-          full_name: `${user.employee?.first_name || ''} ${user.employee?.last_name || ''}`.trim() || username,
-          employee_code: user.employee?.employee_code || 'EMP-001',
-          branch: { id: 1, name: 'Phnom Penh Headquarters', code: 'HQ-01', address: 'Monivong Blvd, Phnom Penh' },
-          roles: user.roles || [{ id: 1, name: 'User', code: 'CASHIER' }],
-          primary_role: user.roles?.[0]?.name || 'User',
-          permissions: ['ALL_PERMISSIONS'],
-          status: 'ACTIVE',
-        };
-
         setSuccessMsg(lang === 'kh' ? 'ចូលប្រព័ន្ធបានជោគជ័យ!' : 'Login successful! Redirecting...');
         setTimeout(() => {
-          loginUser(profile);
-          setActiveTab('pos');
-        }, 500);
+          buildUserProfileAndLogin(res.data.user);
+        }, 400);
         return;
       }
     } catch (err: any) {
-      console.warn('Backend login fallback active', err);
-      if (username.toLowerCase() === 'admin' && password === 'Admin@123456') {
-        const demoUser: UserProfile = {
-          id: 1,
-          username: 'admin',
-          email: 'admin@smartpos.com',
-          phone: '+855 12 345 678',
-          first_name: 'Lead',
-          last_name: 'Admin',
-          full_name: 'Lead Admin',
-          employee_code: 'EMP-001',
-          branch: { id: 1, name: 'Phnom Penh Headquarters', code: 'HQ-01', address: 'Monivong Blvd, Phnom Penh' },
-          roles: [{ id: 1, name: 'Super Administrator', code: 'SUPER_ADMIN' }],
-          primary_role: 'Super Administrator',
-          permissions: ['ALL_PERMISSIONS'],
-          status: 'ACTIVE',
-        };
-        setSuccessMsg(lang === 'kh' ? 'ចូលប្រព័ន្ធបានជោគជ័យ!' : 'Login successful!');
-        setTimeout(() => {
-          loginUser(demoUser);
-          setActiveTab('pos');
-        }, 500);
-        return;
-      }
-
-      setErrorMsg(
-        err.response?.data?.message || (lang === 'kh' ? 'ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវទេ' : 'Invalid username or password')
-      );
+      const serverMsg =
+        err.response?.data?.message ||
+        err.response?.data?.errors?.username?.[0] ||
+        (lang === 'kh' ? 'ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវទេ' : 'Invalid username or password');
+      setErrorMsg(serverMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -210,11 +318,10 @@ export const LoginView: React.FC = () => {
 
     try {
       const res = await sendOtpApi({
-        type: 'register',
-        identifier: loginPhone,
+        purpose: 'PHONE_LOGIN',
+        destination: loginPhone,
+        channel: 'SMS',
       });
-
-      const generatedCode = res.otp_code || (Math.floor(100000 + Math.random() * 900000)).toString();
 
       setOtpDigits(['', '', '', '', '', '']);
       setOtpCountdown(180);
@@ -222,20 +329,11 @@ export const LoginView: React.FC = () => {
         isOpen: true,
         type: 'phone_login',
         identifier: loginPhone,
-        code: generatedCode,
+        code: res.otp_code || '',
       });
-      setSuccessMsg(lang === 'kh' ? `កូដ OTP ត្រូវបានផ្ញើទៅកាន់ ${loginPhone}` : `Real OTP code sent to phone ${loginPhone}`);
-    } catch {
-      const generatedCode = (Math.floor(100000 + Math.random() * 900000)).toString();
-      setOtpDigits(['', '', '', '', '', '']);
-      setOtpCountdown(180);
-      setOtpModal({
-        isOpen: true,
-        type: 'phone_login',
-        identifier: loginPhone,
-        code: generatedCode,
-      });
-      setSuccessMsg(lang === 'kh' ? `កូដ OTP ត្រូវបានផ្ញើទៅកាន់ ${loginPhone}` : `Real OTP code sent to phone ${loginPhone}`);
+      setSuccessMsg(lang === 'kh' ? `កូដ OTP ត្រូវបានផ្ញើទៅកាន់ ${loginPhone}` : `OTP code sent to phone ${loginPhone}`);
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || (lang === 'kh' ? 'លេខទូរស័ព្ទនេះមិនទាន់បានចុះឈ្មោះក្នុងប្រព័ន្ធទេ' : 'No account associated with this phone number. Please register first.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -260,16 +358,16 @@ export const LoginView: React.FC = () => {
     setErrorMsg('');
 
     setTimeout(() => {
-      if (pin === masterPin || pin === '1234' || pin === '0000' || pin === '5678') {
-        const demoUser: UserProfile = {
+      if (pin === masterPin) {
+        const stationUser: UserProfile = {
           id: 1,
-          username: 'cashier',
-          email: 'cashier@smartpos.com',
+          username: 'cashier_terminal',
+          email: 'terminal@smartpos.com',
           phone: '+855 12 345 678',
-          first_name: 'Cashier',
-          last_name: 'Station',
-          full_name: 'Cashier Station',
-          employee_code: 'EMP-003',
+          first_name: 'POS',
+          last_name: 'Cashier',
+          full_name: 'Cashier Terminal',
+          employee_code: 'POS-TERM',
           branch: { id: 1, name: 'Phnom Penh Headquarters', code: 'HQ-01', address: 'Monivong Blvd, Phnom Penh' },
           roles: [{ id: 3, name: 'Cashier', code: 'CASHIER' }],
           primary_role: 'Cashier',
@@ -278,78 +376,53 @@ export const LoginView: React.FC = () => {
         };
         setSuccessMsg(lang === 'kh' ? 'ផ្ទៀងផ្ទាត់ PIN ជោគជ័យ!' : 'PIN verified successfully!');
         setTimeout(() => {
-          loginUser(demoUser);
+          loginUser(stationUser);
           setActiveTab('pos');
           setIsSubmitting(false);
-        }, 500);
+        }, 400);
       } else {
         setErrorMsg(lang === 'kh' ? 'កូដ PIN មិនត្រឹមត្រូវទេ' : 'Invalid security PIN');
         setIsSubmitting(false);
       }
-    }, 400);
+    }, 300);
   };
 
-  // --- 4. OAuth2 (Telegram & Google) Handler ---
+  // --- 4. Real OAuth2 (Google & Telegram) Handler ---
   const handleOauthLogin = async (provider: 'google' | 'telegram') => {
     setIsSubmitting(true);
     setErrorMsg('');
-    const providerTitle = provider === 'google' ? 'Google OAuth' : 'Telegram SSO';
-    setSuccessMsg(lang === 'kh' ? `កំពុងភ្ជាប់ទៅកាន់ ${providerTitle}...` : `Authenticating with ${providerTitle}...`);
+    const providerTitle = provider === 'google' ? 'Google' : 'Telegram';
+    setSuccessMsg(lang === 'kh' ? `កំពុងភ្ជាប់ទៅកាន់ ${providerTitle}...` : `Connecting to ${providerTitle}...`);
 
     try {
-      const res = await oauthLoginApi(provider);
-      if (res.success && res.data?.user) {
-        const user = res.data.user;
-        const profile: UserProfile = {
-          id: user.id || Date.now(),
-          username: user.username || `${provider}_user`,
-          email: user.email || `${provider}_user@smartpos.com`,
-          phone: '+855 12 888 999',
-          first_name: user.employee?.first_name || provider.toUpperCase(),
-          last_name: user.employee?.last_name || 'User',
-          full_name: `${user.employee?.first_name || provider.toUpperCase()} User`,
-          employee_code: user.employee?.employee_code || `SSO-${provider.toUpperCase()}`,
-          branch: { id: 1, name: 'Phnom Penh Headquarters', code: 'HQ-01', address: 'Monivong Blvd, Phnom Penh' },
-          roles: [{ id: 3, name: 'Cashier', code: 'CASHIER' }],
-          primary_role: `${providerTitle} User`,
-          permissions: ['pos.view', 'sales.create'],
-          status: 'ACTIVE',
-        };
+      if (provider === 'google') {
+        const res = await fetch('/api/v1/auth/google', {
+          headers: { Accept: 'application/json' },
+        }).then((r) => r.json());
 
-        setSuccessMsg(lang === 'kh' ? `ផ្ទៀងផ្ទាត់ ${providerTitle} ជោគជ័យ!` : `Authenticated with ${providerTitle} successfully! Redirecting...`);
-        setTimeout(() => {
-          loginUser(profile);
-          setActiveTab('pos');
-        }, 600);
+        if (res.success && res.auth_url) {
+          window.location.href = res.auth_url;
+          return;
+        }
+        throw new Error(res.message || 'Failed to obtain Google login URL');
+      } else if (provider === 'telegram') {
+        const res = await fetch('/api/v1/auth/telegram/bot-info', {
+          headers: { Accept: 'application/json' },
+        }).then((r) => r.json());
+
+        if (res.success && res.auth_url) {
+          window.location.href = res.auth_url;
+          return;
+        }
+        throw new Error(res.message || 'Failed to obtain Telegram login URL');
       }
-    } catch {
-      const profile: UserProfile = {
-        id: Date.now(),
-        username: `${provider}_user`,
-        email: `${provider}_user@smartpos.com`,
-        phone: '+855 12 888 999',
-        first_name: provider === 'google' ? 'Google' : 'Telegram',
-        last_name: 'User',
-        full_name: `${provider === 'google' ? 'Google' : 'Telegram'} Account User`,
-        employee_code: `SSO-${provider.toUpperCase()}`,
-        branch: { id: 1, name: 'Phnom Penh Headquarters', code: 'HQ-01', address: 'Monivong Blvd, Phnom Penh' },
-        roles: [{ id: 3, name: 'Cashier', code: 'CASHIER' }],
-        primary_role: `${providerTitle} User`,
-        permissions: ['pos.view', 'sales.create'],
-        status: 'ACTIVE',
-      };
-
-      setSuccessMsg(lang === 'kh' ? `ផ្ទៀងផ្ទាត់ ${providerTitle} ជោគជ័យ!` : `Authenticated with ${providerTitle}! Redirecting...`);
-      setTimeout(() => {
-        loginUser(profile);
-        setActiveTab('pos');
-      }, 600);
-    } finally {
+    } catch (err: any) {
+      setErrorMsg(err.message || (lang === 'kh' ? 'ការភ្ជាប់បានបរាជ័យ' : 'Connection failed'));
       setIsSubmitting(false);
     }
   };
 
-  // --- 5. Register OTP Trigger ---
+  // --- 5. Register Account & Trigger OTP ---
   const handleInitiateRegisterOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!regFirstName || !regLastName || !regUsername || !regEmail || !regPassword) {
@@ -362,48 +435,50 @@ export const LoginView: React.FC = () => {
       return;
     }
 
+    if (!regAcceptTerms) {
+      setErrorMsg(lang === 'kh' ? 'សូមយល់ព្រមតាមលក្ខខណ្ឌប្រើប្រាស់' : 'Please accept terms and conditions');
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg('');
     setSuccessMsg('');
 
     try {
-      const res = await sendOtpApi({
-        type: 'register',
-        identifier: regEmail,
+      const targetDestination = regChannel === 'SMS' && regPhone.trim() ? regPhone.trim() : regEmail.trim();
+
+      const regRes = await registerApi({
+        username: regUsername,
+        email: regEmail,
+        password: regPassword,
+        confirm_password: regConfirmPassword,
+        first_name: regFirstName,
+        last_name: regLastName,
+        phone: regPhone,
+        channel: regChannel,
+        accept_terms: regAcceptTerms,
       });
 
-      const generatedCode = res.otp_code || (Math.floor(100000 + Math.random() * 900000)).toString();
-
-      setOtpDigits(['', '', '', '', '', '']);
-      setOtpCountdown(180);
+      const otpCode = regRes.otp_code || '';
       setOtpModal({
         isOpen: true,
         type: 'register',
-        identifier: regEmail,
-        code: generatedCode,
+        identifier: targetDestination,
+        code: otpCode,
       });
-      setSuccessMsg(lang === 'kh' ? `កូដ OTP ត្រូវបានផ្ញើទៅកាន់ ${regEmail}` : `Real OTP code sent to ${regEmail}`);
-    } catch {
-      const generatedCode = (Math.floor(100000 + Math.random() * 900000)).toString();
-      setOtpDigits(['', '', '', '', '', '']);
-      setOtpCountdown(180);
-      setOtpModal({
-        isOpen: true,
-        type: 'register',
-        identifier: regEmail,
-        code: generatedCode,
-      });
-      setSuccessMsg(lang === 'kh' ? `កូដ OTP ត្រូវបានផ្ញើទៅកាន់ ${regEmail}` : `Real OTP code sent to ${regEmail}`);
+      setSuccessMsg(lang === 'kh' ? `កូដ OTP ត្រូវបានផ្ញើទៅកាន់ ${targetDestination}` : `Real OTP code sent to ${targetDestination}`);
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || (lang === 'kh' ? 'ការចុះឈ្មោះបរាជ័យ' : 'Registration failed'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // --- 6. Forgot Password OTP Trigger ---
+  // --- 6. Forgot Password & Trigger OTP ---
   const handleInitiateForgotOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotEmail) {
-      setErrorMsg(lang === 'kh' ? 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែល ឬឈ្មោះអ្នកប្រើប្រាស់' : 'Please enter your email or username');
+      setErrorMsg(lang === 'kh' ? 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែល ឬលេខទូរស័ព្ទ' : 'Please enter your email or phone number');
       return;
     }
 
@@ -412,194 +487,116 @@ export const LoginView: React.FC = () => {
     setSuccessMsg('');
 
     try {
-      const res = await sendOtpApi({
-        type: 'forgot_password',
-        identifier: forgotEmail,
-      });
+      const res = await forgotPasswordApi(forgotEmail);
+      const otpCode = res.otp_code || '';
 
-      const generatedCode = res.otp_code || (Math.floor(100000 + Math.random() * 900000)).toString();
-
-      setOtpDigits(['', '', '', '', '', '']);
-      setOtpCountdown(180);
       setOtpModal({
         isOpen: true,
         type: 'forgot_password',
         identifier: forgotEmail,
-        code: generatedCode,
+        code: otpCode,
       });
-      setSuccessMsg(lang === 'kh' ? `កូដ OTP ត្រូវបានផ្ញើទៅកាន់ ${forgotEmail}` : `Real OTP code sent to ${forgotEmail}`);
-    } catch {
-      const generatedCode = (Math.floor(100000 + Math.random() * 900000)).toString();
-      setOtpDigits(['', '', '', '', '', '']);
-      setOtpCountdown(180);
-      setOtpModal({
-        isOpen: true,
-        type: 'forgot_password',
-        identifier: forgotEmail,
-        code: generatedCode,
-      });
-      setSuccessMsg(lang === 'kh' ? `កូដ OTP ត្រូវបានផ្ញើទៅកាន់ ${forgotEmail}` : `Real OTP code sent to ${forgotEmail}`);
+      setSuccessMsg(lang === 'kh' ? `កូដ OTP ត្រូវបានផ្ញើទៅកាន់ ${forgotEmail}` : `OTP verification code sent to ${forgotEmail}`);
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការផ្ញើកូដ OTP' : 'Failed to send OTP code'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // --- 7. Real OTP Verification Submit ---
-  const handleVerifyOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const enteredCode = otpDigits.join('');
-    if (enteredCode.length < 6) {
-      setErrorMsg(lang === 'kh' ? 'សូមបញ្ចូលកូដ OTP 6 ខ្ទង់ឱ្យគ្រប់' : 'Please enter complete 6-digit OTP code');
-      return;
-    }
-
+  // --- 7. Modal OTP Verification Handler ---
+  const handleModalVerify = async (otpCode: string, selectedChannel: 'EMAIL' | 'SMS') => {
     if (!otpModal) return;
 
-    setIsVerifyingOtp(true);
-    setErrorMsg('');
+    if (otpModal.type === 'register') {
+      await verifyRegistrationOtpApi({
+        identifier: otpModal.identifier,
+        otp_code: otpCode,
+      });
+      setOtpModal(null);
+      setViewState('login');
+      setUsername(regUsername);
+      setPassword(regPassword);
+      setSuccessMsg(lang === 'kh' ? 'ផ្ទៀងផ្ទាត់ OTP បានជោគជ័យ! គណនីរបស់អ្នកដំណើរការហើយ សូមចូលប្រព័ន្ធ' : 'Account activated successfully! Please sign in.');
+    } else if (otpModal.type === 'forgot_password') {
+      const res = await verifyResetOtpApi({
+        identifier: otpModal.identifier,
+        otp_code: otpCode,
+      });
+      setOtpModal(null);
+      setResetToken(res.reset_token);
+      setViewState('reset_password');
+      setSuccessMsg(lang === 'kh' ? 'ផ្ទៀងផ្ទាត់ OTP បានជោគជ័យ! សូមបង្កើតពាក្យសម្ងាត់ថ្មី' : 'OTP verified successfully! Please enter your new password.');
+    } else if (otpModal.type === 'phone_login') {
+      const verifyRes = await verifyOtpApi({
+        destination: otpModal.identifier,
+        purpose: 'PHONE_LOGIN',
+        otp: otpCode,
+      });
 
-    try {
-      try {
-        await verifyOtpApi({
-          type: otpModal.type === 'phone_login' ? 'register' : otpModal.type,
-          identifier: otpModal.identifier,
-          otp_code: enteredCode,
-        });
-      } catch (err) {
-        if (enteredCode !== otpModal.code) {
-          setErrorMsg(lang === 'kh' ? 'កូដ OTP មិនត្រឹមត្រូវទេ! សូមពិនិត្យមើលម្ដងទៀត' : 'Invalid OTP code! Please check the code and try again.');
-          setIsVerifyingOtp(false);
-          return;
-        }
-      }
-
-      setSuccessMsg(lang === 'kh' ? 'ផ្ទៀងផ្ទាត់ OTP បានជោគជ័យ!' : 'OTP Code Verified Successfully!');
-
-      if (otpModal.type === 'phone_login') {
-        const phoneUser: UserProfile = {
-          id: Date.now(),
-          username: `user_${otpModal.identifier.replace(/\D/g, '')}`,
-          email: `${otpModal.identifier.replace(/\D/g, '')}@smartpos.com`,
-          phone: otpModal.identifier,
-          first_name: 'Phone',
-          last_name: 'User',
-          full_name: `Phone User (${otpModal.identifier})`,
-          employee_code: 'EMP-TEL',
-          branch: { id: 1, name: 'Phnom Penh Headquarters', code: 'HQ-01', address: 'Monivong Blvd, Phnom Penh' },
-          roles: [{ id: 3, name: 'Cashier', code: 'CASHIER' }],
-          primary_role: 'Phone SMS User',
-          permissions: ['pos.view', 'sales.create'],
-          status: 'ACTIVE',
-        };
+      if (verifyRes.success && verifyRes.user) {
+        setOtpModal(null);
+        setSuccessMsg(lang === 'kh' ? 'ចូលប្រព័ន្ធបានជោគជ័យ!' : 'Signed in successfully with Phone OTP!');
         setTimeout(() => {
-          setOtpModal(null);
-          loginUser(phoneUser);
-          setActiveTab('pos');
-        }, 600);
-      } else if (otpModal.type === 'register') {
-        try {
-          const regRes = await registerApi({
-            username: regUsername,
-            email: regEmail,
-            password: regPassword,
-            first_name: regFirstName,
-            last_name: regLastName,
-            phone: regPhone,
-            role: regRole,
-          });
-
-          const newUser: UserProfile = {
-            id: regRes.data?.user?.id || Date.now(),
-            username: regUsername,
-            email: regEmail,
-            phone: regPhone || '+855 12 000 000',
-            first_name: regFirstName,
-            last_name: regLastName,
-            full_name: `${regFirstName} ${regLastName}`,
-            employee_code: 'EMP-' + Math.floor(100 + Math.random() * 900),
-            branch: { id: 1, name: 'Phnom Penh Headquarters', code: 'HQ-01', address: 'Monivong Blvd, Phnom Penh' },
-            roles: [{ id: 4, name: regRole, code: regRole }],
-            primary_role: regRole,
-            permissions: ['pos.view', 'sales.create'],
-            status: 'ACTIVE',
-          };
-
-          setTimeout(() => {
-            setOtpModal(null);
-            loginUser(newUser);
-            setActiveTab('pos');
-          }, 600);
-        } catch {
-          const newUser: UserProfile = {
-            id: Date.now(),
-            username: regUsername,
-            email: regEmail,
-            phone: regPhone || '+855 12 000 000',
-            first_name: regFirstName,
-            last_name: regLastName,
-            full_name: `${regFirstName} ${regLastName}`,
-            employee_code: 'EMP-' + Math.floor(100 + Math.random() * 900),
-            branch: { id: 1, name: 'Phnom Penh Headquarters', code: 'HQ-01', address: 'Monivong Blvd, Phnom Penh' },
-            roles: [{ id: 4, name: regRole, code: regRole }],
-            primary_role: regRole,
-            permissions: ['pos.view', 'sales.create'],
-            status: 'ACTIVE',
-          };
-          setTimeout(() => {
-            setOtpModal(null);
-            loginUser(newUser);
-            setActiveTab('pos');
-          }, 600);
-        }
-      } else if (otpModal.type === 'forgot_password') {
-        if (!newPassword || newPassword !== confirmNewPassword) {
-          setErrorMsg(lang === 'kh' ? 'សូមបញ្ចូល និងផ្ទៀងផ្ទាត់ពាក្យសម្ងាត់ថ្មី' : 'Please enter and confirm your new password');
-          setIsVerifyingOtp(false);
-          return;
-        }
-
-        try {
-          await resetPasswordApi({
-            email: forgotEmail,
-            code: enteredCode,
-            new_password: newPassword,
-          });
-        } catch {
-          console.warn('Fallback reset password executed');
-        }
-
-        setSuccessMsg(lang === 'kh' ? 'ប្តូរពាក្យសម្ងាត់បានជោគជ័យ! សូមចូលប្រព័ន្ធ' : 'Password reset successfully! Please sign in.');
-        setTimeout(() => {
-          setOtpModal(null);
-          setViewState('login');
-          setUsername(forgotEmail);
-          setPassword(newPassword);
-        }, 800);
+          buildUserProfileAndLogin(verifyRes.user);
+        }, 400);
+      } else {
+        throw new Error(verifyRes.message || 'OTP verification failed');
       }
-    } finally {
-      setIsVerifyingOtp(false);
     }
   };
 
-  const handleResendOtp = async () => {
+  // --- 8. Modal OTP Resend Handler ---
+  const handleModalResend = async (selectedChannel: 'EMAIL' | 'SMS') => {
     if (!otpModal) return;
-    setIsSubmitting(true);
-    try {
-      const res = await sendOtpApi({
-        type: otpModal.type === 'phone_login' ? 'register' : otpModal.type,
+
+    if (otpModal.type === 'register') {
+      const res = await resendRegistrationOtpApi({
         identifier: otpModal.identifier,
+        channel: selectedChannel,
       });
-      const newCode = res.otp_code || (Math.floor(100000 + Math.random() * 900000)).toString();
-      setOtpModal({ ...otpModal, code: newCode });
-      setOtpDigits(['', '', '', '', '', '']);
-      setOtpCountdown(180);
-      setSuccessMsg(lang === 'kh' ? 'កូដ OTP ថ្មីត្រូវបានផ្ញើ!' : 'New OTP code re-sent successfully!');
-    } catch {
-      const newCode = (Math.floor(100000 + Math.random() * 900000)).toString();
-      setOtpModal({ ...otpModal, code: newCode });
-      setOtpDigits(['', '', '', '', '', '']);
-      setOtpCountdown(180);
-      setSuccessMsg(lang === 'kh' ? 'កូដ OTP ថ្មីត្រូវបានផ្ញើ!' : 'New OTP code re-sent successfully!');
+      return res.otp_code;
+    } else {
+      const res = await resendResetOtpApi({
+        identifier: otpModal.identifier,
+        channel: selectedChannel,
+      });
+      return res.otp_code;
+    }
+  };
+
+  // --- 9. Reset Password Submit with Validated Token ---
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || !confirmNewPassword) {
+      setErrorMsg(lang === 'kh' ? 'សូមបញ្ចូល និងផ្ទៀងផ្ទាត់ពាក្យសម្ងាត់ថ្មី' : 'Please enter and confirm your new password');
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setErrorMsg(lang === 'kh' ? 'ពាក្យសម្ងាត់ទាំងពីរមិនដូចគ្នាទេ' : 'Passwords do not match');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMsg('');
+
+    try {
+      await resetPasswordApi({
+        email: forgotEmail,
+        reset_token: resetToken,
+        new_password: newPassword,
+        confirm_password: confirmNewPassword,
+      });
+
+      setSuccessMsg(lang === 'kh' ? 'ប្តូរពាក្យសម្ងាត់បានជោគជ័យ! សូមចូលប្រព័ន្ធជាមួយពាក្យសម្ងាត់ថ្មី' : 'Password reset successfully! Please sign in with your new password.');
+      setTimeout(() => {
+        setViewState('login');
+        setUsername(forgotEmail);
+        setPassword(newPassword);
+      }, 800);
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការប្តូរពាក្យសម្ងាត់' : 'Password reset failed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -1097,24 +1094,34 @@ export const LoginView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                  {lang === 'kh' ? 'តួនាទីបុគ្គលិក' : 'Staff Role'}
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1.5">
+                  {lang === 'kh' ? 'វិធីសាស្ត្រទទួលកូដ OTP' : 'OTP Verification Channel'}
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Briefcase className="w-4 h-4 text-slate-400" />
-                  </div>
-                  <select
-                    value={regRole}
-                    onChange={(e) => setRegRole(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700 text-white text-xs rounded-xl focus:outline-hidden focus:border-emerald-500 font-semibold"
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRegChannel('EMAIL')}
+                    className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center space-x-2 transition ${
+                      regChannel === 'EMAIL'
+                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-xs'
+                        : 'bg-slate-900/60 border-slate-700 text-slate-400 hover:text-slate-200'
+                    }`}
                   >
-                    <option value="CASHIER">Store Cashier & POS Operator</option>
-                    <option value="MANAGER">Branch Manager</option>
-                    <option value="STOCK_MANAGER">Stock & Inventory Manager</option>
-                    <option value="ACCOUNTANT">Accountant</option>
-                    <option value="EMPLOYEE">Standard Employee</option>
-                  </select>
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>{lang === 'kh' ? 'តាមអ៊ីមែល' : 'Verify by Email'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRegChannel('SMS')}
+                    className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center space-x-2 transition ${
+                      regChannel === 'SMS'
+                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-xs'
+                        : 'bg-slate-900/60 border-slate-700 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>{lang === 'kh' ? 'តាមសារ SMS' : 'Verify by SMS'}</span>
+                  </button>
                 </div>
               </div>
 
@@ -1145,6 +1152,20 @@ export const LoginView: React.FC = () => {
                     className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 text-white text-xs rounded-xl focus:outline-hidden focus:border-emerald-500"
                   />
                 </div>
+              </div>
+
+              {/* Accept Terms & Conditions Checkbox */}
+              <div className="flex items-center space-x-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="acceptTerms"
+                  checked={regAcceptTerms}
+                  onChange={(e) => setRegAcceptTerms(e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 bg-slate-900 border-slate-700 rounded-sm focus:ring-emerald-500"
+                />
+                <label htmlFor="acceptTerms" className="text-xs text-slate-300 select-none cursor-pointer">
+                  {lang === 'kh' ? 'ខ្ញុំយល់ព្រមតាមលក្ខខណ្ឌប្រើប្រាស់ និងគោលការណ៍ឯកជនភាព' : 'I accept SmartPOS Terms of Service & Privacy Policy'}
+                </label>
               </div>
 
               <button
@@ -1187,54 +1208,25 @@ export const LoginView: React.FC = () => {
               <form onSubmit={handleInitiateForgotOtp} className="space-y-4">
                 <p className="text-xs text-slate-300 leading-relaxed">
                   {lang === 'kh'
-                    ? 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលរបស់អ្នកដើម្បីទទួលបានកូដ OTP 6 ខ្ទង់សម្រាប់ផ្លាស់ប្តូរពាក្យសម្ងាត់។'
-                    : 'Enter your registered email address to receive a real 6-digit OTP code to reset your password.'}
+                    ? 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែល ឬលេខទូរស័ព្ទរបស់អ្នកដើម្បីទទួលបានកូដ OTP 6 ខ្ទង់សម្រាប់ផ្ទៀងផ្ទាត់ និងប្តូរពាក្យសម្ងាត់។'
+                    : 'Enter your registered email address or phone number to receive a 6-digit OTP code to reset your password.'}
                 </p>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                    {lang === 'kh' ? 'អាសយដ្ឋានអ៊ីមែល' : 'Email Address'}
+                    {lang === 'kh' ? 'អាសយដ្ឋានអ៊ីមែល / លេខទូរស័ព្ទ' : 'Email Address or Phone'}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                       <Mail className="w-4 h-4 text-slate-400" />
                     </div>
                     <input
-                      type="email"
+                      type="text"
                       required
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
-                      placeholder="user@smartpos.com"
+                      placeholder="user@smartpos.com or +85512345678"
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700 text-white text-sm rounded-xl focus:outline-hidden focus:border-emerald-500 font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                      {lang === 'kh' ? 'ពាក្យសម្ងាត់ថ្មី' : 'New Password'}
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Min 6 chars"
-                      className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 text-white text-xs rounded-xl focus:outline-hidden focus:border-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
-                      {lang === 'kh' ? 'បញ្ជាក់ពាក្យសម្ងាត់ថ្មី' : 'Confirm New Password'}
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      placeholder="Repeat password"
-                      className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700 text-white text-xs rounded-xl focus:outline-hidden focus:border-emerald-500"
                     />
                   </div>
                 </div>
@@ -1249,7 +1241,7 @@ export const LoginView: React.FC = () => {
                   ) : (
                     <>
                       <Send className="w-4 h-4" />
-                      <span>{lang === 'kh' ? 'ផ្ញើកូដ OTP ផ្ទៀងផ្ទាត់' : 'Send OTP Code & Proceed'}</span>
+                      <span>{lang === 'kh' ? 'ផ្ញើកូដ OTP ផ្ទៀងផ្ទាត់' : 'Send OTP Code & Verify'}</span>
                     </>
                   )}
                 </button>
@@ -1272,10 +1264,82 @@ export const LoginView: React.FC = () => {
             </div>
           )}
 
+          {/* ============================================================ */}
+          {/* 4. RESET PASSWORD VIEW (Requires Verified Reset Token) */}
+          {/* ============================================================ */}
+          {viewState === 'reset_password' && (
+            <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
+              <div className="p-3 bg-emerald-950/80 border border-emerald-800 text-emerald-300 rounded-2xl text-xs space-y-1">
+                <div className="font-bold flex items-center space-x-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>{lang === 'kh' ? 'កូដ OTP បានផ្ទៀងផ្ទាត់ជោគជ័យ' : 'OTP Verified Successfully'}</span>
+                </div>
+                <p className="text-[11px] opacity-90">
+                  {lang === 'kh'
+                    ? 'សូមបញ្ចូលពាក្យសម្ងាត់ថ្មីរបស់អ្នកដើម្បីបញ្ចប់ការប្តូរពាក្យសម្ងាត់។'
+                    : 'Issued short-lived reset token. Please enter and confirm your new account password.'}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                  {lang === 'kh' ? 'ពាក្យសម្ងាត់ថ្មី' : 'New Password'}
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Lock className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <input
+                    type="password"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Min 6 characters"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700 text-white text-sm rounded-xl focus:outline-hidden focus:border-emerald-500 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase mb-1">
+                  {lang === 'kh' ? 'បញ្ជាក់ពាក្យសម្ងាត់ថ្មី' : 'Confirm New Password'}
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Lock className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <input
+                    type="password"
+                    required
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    placeholder="Repeat new password"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700 text-white text-sm rounded-xl focus:outline-hidden focus:border-emerald-500 font-medium"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-900/40 transition transform active:scale-98 flex items-center justify-center space-x-2"
+              >
+                {isSubmitting ? (
+                  <span className="inline-block animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4" />
+                ) : (
+                  <>
+                    <KeyRound className="w-4 h-4" />
+                    <span>{lang === 'kh' ? 'រក្សាទុកពាក្យសម្ងាត់ថ្មី' : 'Reset Password & Sign In'}</span>
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+
           {/* System Footer */}
           <div className="text-center pt-2 border-t border-slate-700/50">
             <span className="text-[10px] text-slate-500">
-              SmartPOS Business Management System &bull; Telegram, Google & Phone OTP Login
+              SmartPOS Business Management System &bull; Secure OTP & Token Authentication
             </span>
           </div>
 
@@ -1283,107 +1347,19 @@ export const LoginView: React.FC = () => {
       </div>
 
       {/* ============================================================ */}
-      {/* REAL OTP VERIFICATION OVERLAY MODAL */}
+      {/* REUSABLE REAL OTP VERIFICATION OVERLAY MODAL */}
       {/* ============================================================ */}
-      {otpModal?.isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-800 border border-slate-700 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl text-white relative animate-in fade-in zoom-in-95 duration-200">
-            
-            {/* Modal Close Button */}
-            <button
-              onClick={() => setOtpModal(null)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-700/50 transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Header */}
-            <div className="text-center space-y-2">
-              <div className="w-14 h-14 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
-                <Key className="w-7 h-7" />
-              </div>
-              <h3 className="text-lg font-black text-white">
-                {lang === 'kh' ? 'ផ្ទៀងផ្ទាត់កូដ OTP' : 'Real OTP Security Verification'}
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                {lang === 'kh' ? 'កូដ OTP 6 ខ្ទង់ត្រូវបានផ្ញើទៅកាន់' : 'Enter the 6-digit real OTP code sent to'}{' '}
-                <span className="font-bold text-emerald-400 font-mono">{otpModal.identifier}</span>
-              </p>
-            </div>
-
-            {/* Prominent Live OTP Display Badge for Immediate Verification */}
-            <div className="p-3 bg-slate-900/90 rounded-2xl border border-emerald-500/40 text-center space-y-1">
-              <span className="text-[10px] uppercase font-extrabold text-emerald-400 tracking-wider flex items-center justify-center space-x-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Real Security OTP Code:</span>
-              </span>
-              <div className="text-2xl font-mono font-black text-amber-400 tracking-[0.25em]">
-                {otpModal.code}
-              </div>
-            </div>
-
-            {/* OTP 6-Digit Individual Input Boxes */}
-            <form onSubmit={handleVerifyOtpSubmit} className="space-y-6">
-              <div className="flex justify-center items-center gap-2">
-                {otpDigits.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    ref={(el) => (otpInputRefs.current[idx] = el)}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleDigitChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleDigitKeyDown(idx, e)}
-                    className="w-11 h-13 text-center text-xl font-bold font-mono bg-slate-900 border border-slate-700 rounded-xl text-white focus:outline-hidden focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition shadow-inner"
-                  />
-                ))}
-              </div>
-
-              {/* Countdown Timer & Resend Option */}
-              <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
-                <div className="flex items-center space-x-1.5 font-mono">
-                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>
-                    Expires in: <strong className="text-white">{formatCountdown(otpCountdown)}</strong>
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={otpCountdown > 150}
-                  className="font-bold text-emerald-400 hover:text-emerald-300 disabled:opacity-40 disabled:hover:text-emerald-400 transition hover:underline"
-                >
-                  {lang === 'kh' ? 'ផ្ញើកូដឡើងវិញ' : 'Resend Code'}
-                </button>
-              </div>
-
-              {/* Submit Verification Button */}
-              <button
-                type="submit"
-                disabled={isVerifyingOtp || otpDigits.join('').length < 6}
-                className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-900/50 transition transform active:scale-98 flex items-center justify-center space-x-2"
-              >
-                {isVerifyingOtp ? (
-                  <span className="inline-block animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4" />
-                ) : (
-                  <>
-                    <Check className="w-4 h-4" />
-                    <span>
-                      {otpModal.type === 'phone_login'
-                        ? (lang === 'kh' ? 'ផ្ទៀងផ្ទាត់ & ចូលប្រព័ន្ធ' : 'Verify & Sign In')
-                        : otpModal.type === 'register'
-                        ? (lang === 'kh' ? 'ផ្ទៀងផ្ទាត់ & បញ្ចប់ការចុះឈ្មោះ' : 'Verify & Complete Registration')
-                        : (lang === 'kh' ? 'ផ្ទៀងផ្ទាត់ & ប្តូរពាក្យសម្ងាត់' : 'Verify & Reset Password')}
-                    </span>
-                  </>
-                )}
-              </button>
-            </form>
-
-          </div>
-        </div>
+      {otpModal && otpModal.isOpen && (
+        <OtpVerificationModal
+          isOpen={otpModal.isOpen}
+          purpose={otpModal.type}
+          identifier={otpModal.identifier}
+          initialOtpCode={otpModal.code}
+          onVerify={handleModalVerify}
+          onResend={handleModalResend}
+          onCancel={() => setOtpModal(null)}
+          lang={lang}
+        />
       )}
 
     </div>

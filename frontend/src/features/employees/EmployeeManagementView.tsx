@@ -20,6 +20,8 @@ import {
   Trash2,
   Key,
   Shield,
+  ShieldCheck,
+  Globe,
   Phone,
   Mail,
   Building2,
@@ -55,7 +57,13 @@ const SAMPLE_STAFF_AVATARS = [
 ];
 
 export const EmployeeManagementView: React.FC = () => {
-  const { lang, t, setActiveTab } = useApp();
+  const { lang, t, setActiveTab, currentUser } = useApp();
+
+  const isSuperAdmin = useMemo(() => {
+    if (!currentUser) return false;
+    const roleCodes = currentUser.roles?.map((r) => r.code?.toUpperCase()) || [];
+    return roleCodes.includes('SUPER_ADMIN') || currentUser.primary_role?.toUpperCase() === 'SUPER_ADMIN';
+  }, [currentUser]);
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [roles, setRoles] = useState<RoleItem[]>([]);
@@ -426,6 +434,37 @@ export const EmployeeManagementView: React.FC = () => {
           >
             <UserPlus className="w-4 h-4 stroke-[2.5]" />
             <span>{lang === 'kh' ? '+ បន្ថែមបុគ្គលិកថ្មី' : '+ Add New Staff'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Guidance Banner: Explaining Customers vs Staff Directory */}
+      <div className="bg-sky-50 border border-sky-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-start space-x-3">
+          <div className="w-8 h-8 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center shrink-0 mt-0.5">
+            <Globe className="w-4 h-4" />
+          </div>
+          <div className="text-xs text-sky-950 leading-relaxed">
+            <span className="font-bold">{lang === 'kh' ? 'ព័ត៌មានអំពីអតិថិជន និងបុគ្គលិក:' : 'Looking for Customers?'}</span>{' '}
+            {lang === 'kh'
+              ? 'អតិថិជនដែលចុះឈ្មោះខ្លួនឯងត្រូវបានរក្សាទុកក្នុងផ្នែក «អតិថិជន»។ ផ្ទាំងនេះសម្រាប់តែបុគ្គលិកខាងក្នុង (អ្នកគិតប្រាក់, ប្រធានសាខា) ប៉ុណ្ណោះ។ ដើម្បីតែងតាំងអតិថិជនជាបុគ្គលិក សូមប្រើប្រាស់ «តួនាទី & សិទ្ធិ»។'
+              : 'Self-registered customers are stored in the "Customers" directory. This directory is reserved for internal store employees and cashiers. To promote or assign a customer to a Staff or Cashier role, use "Roles & Permissions".'}
+          </div>
+        </div>
+        <div className="flex items-center space-x-2 shrink-0">
+          <button
+            onClick={() => setActiveTab('customers')}
+            className="px-3 py-1.5 rounded-xl bg-white text-sky-800 border border-sky-200 hover:bg-sky-100 font-bold text-xs transition flex items-center space-x-1.5 shadow-xs"
+          >
+            <Users className="w-3.5 h-3.5 text-sky-600" />
+            <span>{lang === 'kh' ? 'មើលបញ្ជីអតិថិជន' : 'View Customers'}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('security')}
+            className="px-3 py-1.5 rounded-xl bg-sky-600 text-white hover:bg-sky-700 font-bold text-xs transition flex items-center space-x-1.5 shadow-xs"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>{lang === 'kh' ? 'តែងតាំងតួនាទី' : 'Assign Roles'}</span>
           </button>
         </div>
       </div>
@@ -1091,11 +1130,14 @@ export const EmployeeManagementView: React.FC = () => {
                     onChange={(e) => setFormRoleId(Number(e.target.value))}
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 focus:outline-hidden focus:border-emerald-500"
                   >
-                    {roles.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name} ({r.code})
-                      </option>
-                    ))}
+                    {roles.map((r) => {
+                      const isPrivileged = ['ADMIN', 'SUPER_ADMIN'].includes(r.code?.toUpperCase());
+                      return (
+                        <option key={r.id} value={r.id} disabled={isPrivileged && !isSuperAdmin}>
+                          {r.name} ({r.code}) {isPrivileged && !isSuperAdmin ? '(Super Admin Only)' : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 

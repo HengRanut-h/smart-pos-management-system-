@@ -31,6 +31,7 @@ import {
   Monitor,
   Package,
   ShoppingCart,
+  Coins,
 } from 'lucide-react';
 import { Customer, Product } from '../../foundation/types';
 import {

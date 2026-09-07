@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Language, translations } from '../../foundation/i18n/translations';
-import { Product, CartItem, Sale, Shift, UserProfile, SystemSettings } from '../../foundation/types';
-import { getProducts, getCurrentShift, getUserProfile, getSystemSettings } from '../../data-access/posApi';
+import { getProducts, getCurrentShift, getUserProfile, getSystemSettings, logoutApi } from '../../data-access/posApi';
 
 export type NavTab =
   | 'pos'
@@ -68,72 +67,56 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | null>(null);
 
-const DEFAULT_USER: UserProfile = {
-  id: 1,
-  username: 'admin',
-  email: 'admin@smartpos.com',
-  phone: '012 345 678',
-  first_name: 'Lead',
-  last_name: 'Admin',
-  full_name: 'Lead Admin',
-  employee_code: 'EMP-001',
-  branch: {
-    id: 1,
-    name: 'Phnom Penh Headquarters',
-    code: 'HQ-01',
-    address: 'Preah Monivong Blvd, Phnom Penh',
-  },
-  roles: [{ id: 1, name: 'Super Administrator', code: 'SUPER_ADMIN' }],
-  primary_role: 'Super Administrator',
-  permissions: ['ALL_PERMISSIONS'],
-  status: 'ACTIVE',
-  last_login_at: new Date().toISOString(),
-  last_login_ip: '127.0.0.1',
-  stats: {
-    active_shift: null,
-    today_sales_count: 0,
-    today_sales_total: 0,
-  },
-};
-
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [lang, setLang] = useState<Language>('en');
+  const [lang, setLangState] = useState<Language>(() => {
+    return (localStorage.getItem('smartpos_lang') as Language) || 'en';
+  });
+  const setLang = (newLang: Language) => {
+    localStorage.setItem('smartpos_lang', newLang);
+    setLangState(newLang);
+  };
+
   const [activeTab, setActiveTab] = useState<NavTab>('pos');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [lastCompletedSale, setLastCompletedSale] = useState<Sale | null>(null);
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('smartpos_sidebar_collapsed') === 'true';
+  });
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('smartpos_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
+
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
-  // Current User Profile State & Auth Session
-  const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
-    try {
-      const saved = localStorage.getItem('smartpos_auth_user');
-      return saved ? JSON.parse(saved) : DEFAULT_USER;
-    } catch {
-      return DEFAULT_USER;
-    }
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('smartpos_auth_logged_out') !== 'true';
-  });
+  // Current User Profile State & Auth Session (Managed via HttpOnly Session Cookie)
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLocked, setIsLocked] = useState<boolean>(false);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
 
   const loginUser = (user: UserProfile) => {
     setCurrentUser(user);
     setIsAuthenticated(true);
     setIsLocked(false);
-    localStorage.removeItem('smartpos_auth_logged_out');
-    localStorage.setItem('smartpos_auth_user', JSON.stringify(user));
   };
 
   const logoutUser = () => {
-    setIsAuthenticated(false);
-    setIsLocked(false);
-    localStorage.setItem('smartpos_auth_logged_out', 'true');
+    logoutApi().finally(() => {
+      setCurrentUser(null);
+      setIsAuthenticated(false);
+      setIsLocked(false);
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('smartpos_auth_user');
+      localStorage.removeItem('smartpos_auth_logged_out');
+    });
   };
 
   const lockSession = () => {
@@ -173,13 +156,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const refreshUserProfile = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasOAuth = urlParams.has('oauth') || urlParams.has('token');
+
     setIsLoadingProfile(true);
     getUserProfile()
-      .then((data) => setCurrentUser(data))
-      .catch((err) => {
-        console.error('Failed to load user profile, using fallback', err);
+      .then((data) => {
+        if (data && data.id) {
+          setCurrentUser(data);
+          setIsAuthenticated(true);
+
+          // Route to Customer Portal or Staff POS based on role
+          const roleCodes = data.roles?.map((r) => r.code?.toUpperCase()) || [];
+          const hasStaffRole = roleCodes.some((code) =>
+            ['ADMIN', 'SUPER_ADMIN', 'MANAGER', 'CASHIER', 'STOCK_MANAGER', 'ACCOUNTANT', 'HR', 'EMPLOYEE'].includes(code)
+          );
+          const isCust = !hasStaffRole && (roleCodes.includes('CUSTOMER') || data.registration_source === 'public');
+          setActiveTab(isCust ? 'dashboard' : 'pos');
+        } else {
+          setCurrentUser(null);
+          setIsAuthenticated(false);
+        }
       })
-      .finally(() => setIsLoadingProfile(false));
+      .catch((err) => {
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+      })
+      .finally(() => {
+        setIsLoadingProfile(false);
+        if (hasOAuth) {
+          window.history.replaceState({}, document.title, window.location.pathname || '/');
+        }
+      });
   };
 
   const refreshStoreSettings = () => {

@@ -22,6 +22,9 @@ class DatabaseSeeder extends Seeder
             ['domain' => 'SYSTEM', 'code' => 'ACTIVE', 'name' => 'Active'],
             ['domain' => 'SYSTEM', 'code' => 'INACTIVE', 'name' => 'Inactive'],
             ['domain' => 'USER', 'code' => 'ACTIVE', 'name' => 'Active'],
+            ['domain' => 'USER', 'code' => 'PENDING_VERIFICATION', 'name' => 'Pending Verification'],
+            ['domain' => 'USER', 'code' => 'DISABLED', 'name' => 'Disabled'],
+            ['domain' => 'USER', 'code' => 'LOCKED', 'name' => 'Locked'],
             ['domain' => 'USER', 'code' => 'SUSPENDED', 'name' => 'Suspended'],
             ['domain' => 'SALE', 'code' => 'COMPLETED', 'name' => 'Completed'],
             ['domain' => 'SALE', 'code' => 'PARTIALLY_RETURNED', 'name' => 'Partially Returned'],
@@ -66,6 +69,7 @@ class DatabaseSeeder extends Seeder
             ['code' => 'ACCOUNTANT', 'name' => 'Accountant', 'description' => 'Financial reporting and invoices'],
             ['code' => 'HR', 'name' => 'Human Resources', 'description' => 'Employee and attendance management'],
             ['code' => 'EMPLOYEE', 'name' => 'Employee', 'description' => 'Standard employee access'],
+            ['code' => 'CUSTOMER', 'name' => 'Customer', 'description' => 'Public registered customer with access to customer portal'],
         ];
 
         $createdRoles = [];
@@ -96,6 +100,11 @@ class DatabaseSeeder extends Seeder
             ['module' => 'Invoice', 'code' => 'invoice.generate', 'name' => 'Generate Invoice', 'action' => 'generate'],
             ['module' => 'Report', 'code' => 'report.view', 'name' => 'View Reports', 'action' => 'view'],
             ['module' => 'Audit', 'code' => 'audit.view', 'name' => 'View Audit Logs', 'action' => 'view'],
+            ['module' => 'Customer', 'code' => 'customer.portal', 'name' => 'Access Customer Portal', 'action' => 'view'],
+            ['module' => 'Customer', 'code' => 'order.view_own', 'name' => 'View Own Orders', 'action' => 'view'],
+            ['module' => 'Customer', 'code' => 'invoice.view_own', 'name' => 'View Own Invoices', 'action' => 'view'],
+            ['module' => 'User', 'code' => 'role.assign', 'name' => 'Assign Roles to Users', 'action' => 'assign'],
+            ['module' => 'User', 'code' => 'user.manage', 'name' => 'Manage System Users', 'action' => 'manage'],
         ];
 
         $createdPermissions = [];
@@ -110,6 +119,10 @@ class DatabaseSeeder extends Seeder
         $superAdminRole = $createdRoles['SUPER_ADMIN'];
         $superAdminRole->permissions()->sync(array_column($createdPermissions, 'id'));
 
+        // Assign permissions to ADMIN
+        $adminRole = $createdRoles['ADMIN'];
+        $adminRole->permissions()->sync(array_column($createdPermissions, 'id'));
+
         // Assign POS permissions to CASHIER
         $cashierRole = $createdRoles['CASHIER'];
         $cashierRole->permissions()->sync([
@@ -117,6 +130,14 @@ class DatabaseSeeder extends Seeder
             $createdPermissions['sale.view']->id,
             $createdPermissions['sale.create']->id,
             $createdPermissions['invoice.view']->id,
+        ]);
+
+        // Assign Customer Portal permissions to CUSTOMER
+        $customerRole = $createdRoles['CUSTOMER'];
+        $customerRole->permissions()->sync([
+            $createdPermissions['customer.portal']->id,
+            $createdPermissions['order.view_own']->id,
+            $createdPermissions['invoice.view_own']->id,
         ]);
 
         // 6. Seed Default Branch & Warehouse
@@ -155,6 +176,17 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $superAdminUser = User::firstOrCreate(
+            ['username' => 'superadmin'],
+            [
+                'email' => 'superadmin@smartpos.com',
+                'password' => Hash::make('SuperAdmin@123456'),
+                'employee_id' => $employee->id,
+                'status_id' => $activeStatusId,
+            ]
+        );
+        $superAdminUser->roles()->syncWithoutDetaching([$superAdminRole->id]);
+
         $adminUser = User::firstOrCreate(
             ['username' => 'admin'],
             [
@@ -164,7 +196,6 @@ class DatabaseSeeder extends Seeder
                 'status_id' => $activeStatusId,
             ]
         );
-
-        $adminUser->roles()->syncWithoutDetaching([$superAdminRole->id]);
+        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
     }
 }

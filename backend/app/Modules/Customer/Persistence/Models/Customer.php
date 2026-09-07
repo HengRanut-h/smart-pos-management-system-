@@ -17,4 +17,9 @@ class Customer extends Model
         'credit_limit' => 'decimal:4',
         'date_of_birth' => 'date',
     ];
+
+    public function user()
+    {
+        return $this->hasOne(\App\Modules\User\Persistence\Models\User::class, 'customer_id');
+    }
 }

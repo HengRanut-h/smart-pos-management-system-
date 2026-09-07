@@ -13,6 +13,7 @@ export interface Product {
   brand?: { id: number; name: string };
   unit?: { id: number; name: string; symbol?: string };
   available_quantity?: number;
+  status_id?: number;
   created_at?: string;
 }
 
@@ -374,9 +375,9 @@ export interface UserProfile {
   primary_role: string;
   permissions: string[];
   status: string;
-  last_login_at: string;
-  last_login_ip: string;
-  stats: {
+  last_login_at?: string | null;
+  last_login_ip?: string | null;
+  stats?: {
     active_shift: {
       id: number;
       opened_at: string;
@@ -496,6 +497,9 @@ export interface AttendanceRecord {
   notes?: string | null;
   formatted_duration?: string;
   is_on_duty?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  ip_address?: string | null;
   employee?: Employee;
 }
 
@@ -541,6 +545,20 @@ export interface EmployeeAttendanceSummary {
   total_hours: number;
   formatted_duration: string;
   total_late_minutes: number;
+  employment_type?: string;
+  hourly_rate?: number;
+  ot_multiplier?: number;
+  late_penalty_rate?: number;
+  regular_hours?: number;
+  ot_hours?: number;
+  effective_hourly_rate?: number;
+  effective_ot_rate?: number;
+  effective_ot_multiplier?: number;
+  effective_late_penalty_rate?: number;
+  effective_regular_pay?: number;
+  effective_ot_pay?: number;
+  effective_late_deduction?: number;
+  effective_net_salary?: number;
 }
 
 export interface AttendanceReportResponse {

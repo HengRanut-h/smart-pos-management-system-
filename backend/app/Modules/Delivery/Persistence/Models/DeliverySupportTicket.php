@@ -4,7 +4,7 @@ namespace App\Modules\Delivery\Persistence\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Modules\Customers\Customer;
+use App\Modules\Customer\Persistence\Models\Customer;
 use App\Models\User;
 
 class DeliverySupportTicket extends Model

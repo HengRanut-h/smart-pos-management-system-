@@ -3,7 +3,7 @@ import { AppProvider, useApp } from './application/context/AppContext';
 import { Navbar } from './presentation/components/Navbar';
 import { SidebarNav } from './presentation/components/SidebarNav';
 import { POSTerminal } from './features/pos/POSTerminal';
-import { ProductCatalogView } from './features/products/ProductCatalogView';
+import { ProductManagementHub } from './features/products/ProductManagementHub';
 import { DashboardView } from './features/dashboard/DashboardView';
 import { ReportsView } from './features/reports/ReportsView';
 import { SalesHistoryView } from './features/sales/SalesHistoryView';
@@ -36,7 +36,7 @@ const MainContent: React.FC = () => {
       }`}
     >
       {activeTab === 'pos' && <POSTerminal />}
-      {activeTab === 'products' && <ProductCatalogView />}
+      {activeTab === 'products' && <ProductManagementHub />}
       {activeTab === 'dashboard' && <DashboardView />}
       {activeTab === 'reports' && <ReportsView />}
       {activeTab === 'sales' && <SalesHistoryView />}

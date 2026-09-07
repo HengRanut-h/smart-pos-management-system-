@@ -42,6 +42,8 @@ interface AppContextType {
   cartTotal: number;
   activeTab: NavTab;
   setActiveTab: (tab: NavTab) => void;
+  deliverySubTab: string;
+  setDeliverySubTab: (subTab: string) => void;
   lastCompletedSale: Sale | null;
   setLastCompletedSale: (sale: Sale | null) => void;
   refreshProducts: () => void;
@@ -81,6 +83,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const [activeTab, setActiveTab] = useState<NavTab>('pos');
+  const [deliverySubTab, setDeliverySubTab] = useState<string>('DASHBOARD');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -332,6 +335,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         cartTotal,
         activeTab,
         setActiveTab,
+        deliverySubTab,
+        setDeliverySubTab,
         lastCompletedSale,
         setLastCompletedSale,
         refreshProducts,

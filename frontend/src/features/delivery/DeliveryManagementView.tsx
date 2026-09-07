@@ -116,9 +116,23 @@ export type DeliverySubTab =
   | 'ANALYTICS';
 
 export const DeliveryManagementView: React.FC = () => {
-  const { products } = useApp();
+  const { products, deliverySubTab, setDeliverySubTab } = useApp();
 
-  const [activeTab, setActiveTab] = useState<DeliverySubTab>('DASHBOARD');
+  const [activeTab, setActiveTab] = useState<DeliverySubTab>(
+    (deliverySubTab as DeliverySubTab) || 'DASHBOARD'
+  );
+  const [navCategory, setNavCategory] = useState<'ALL' | 'DISPATCH' | 'FLEET' | 'FINANCE' | 'SERVICE'>('ALL');
+
+  useEffect(() => {
+    if (deliverySubTab && deliverySubTab !== activeTab) {
+      setActiveTab(deliverySubTab as DeliverySubTab);
+    }
+  }, [deliverySubTab]);
+
+  const handleSelectSubTab = (tab: DeliverySubTab) => {
+    setActiveTab(tab);
+    setDeliverySubTab(tab);
+  };
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -453,56 +467,94 @@ export const DeliveryManagementView: React.FC = () => {
       </div>
 
       {/* ========================================================= */}
-      {/* 2. SUB-NAVIGATION TABS (20 ENTERPRISE MODULES) */}
+      {/* 2. SUB-NAVIGATION TABS (19 ENTERPRISE LOGISTICS MODULES) */}
       {/* ========================================================= */}
-      <div className="bg-white rounded-2xl p-1.5 border border-gray-100 shadow-xs overflow-x-auto scrollbar-none">
-        <div className="flex items-center space-x-1 min-w-max">
-          {[
-            { id: 'DASHBOARD' as const, label: '01. Dashboard', icon: <BarChart3 className="w-3.5 h-3.5" /> },
-            { id: 'ORDERS' as const, label: '02. Orders & Pipeline', count: deliveries.length, icon: <Package className="w-3.5 h-3.5" /> },
-            { id: 'ASSIGNMENT' as const, label: '03. Dispatch Board', icon: <CheckSquare className="w-3.5 h-3.5" /> },
-            { id: 'TRACKING' as const, label: '04. Live Tracking', icon: <Navigation className="w-3.5 h-3.5" /> },
-            { id: 'ROUTES' as const, label: '05. Multi-Stop Routes', count: routes.length, icon: <RouteIcon className="w-3.5 h-3.5" /> },
-            { id: 'STAFF' as const, label: '06. Delivery Staff', count: drivers.length, icon: <UserCheck className="w-3.5 h-3.5" /> },
-            { id: 'VEHICLES' as const, label: '07. Fleet & Maintenance', count: vehicles.length, icon: <Truck className="w-3.5 h-3.5" /> },
-            { id: 'ZONES' as const, label: '08. Zones & Boundaries', count: zones.length, icon: <Layers className="w-3.5 h-3.5" /> },
-            { id: 'FEES' as const, label: '09. Fee Surcharges', icon: <Sliders className="w-3.5 h-3.5" /> },
-            { id: 'TIMESLOTS' as const, label: '10. Time Slots', count: timeSlots.length, icon: <Clock className="w-3.5 h-3.5" /> },
-            { id: 'ADDRESSES' as const, label: '11. Address Book', count: addresses.length, icon: <MapPin className="w-3.5 h-3.5" /> },
-            { id: 'POD' as const, label: '12. Proof of Delivery (POD)', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
-            { id: 'RETURNS' as const, label: '13. Returns & Restock', icon: <RotateCcw className="w-3.5 h-3.5" /> },
-            { id: 'COD' as const, label: '14. COD & Settlements', icon: <DollarSign className="w-3.5 h-3.5" /> },
-            { id: 'NOTIFICATIONS' as const, label: '15. Alert Triggers', icon: <Bell className="w-3.5 h-3.5" /> },
-            { id: 'SUPPORT' as const, label: '16. Support Tickets', count: supportTickets.filter(t => t.status === 'OPEN').length, icon: <LifeBuoy className="w-3.5 h-3.5" /> },
-            { id: 'RATINGS' as const, label: '17. Customer Ratings', count: ratings.length, icon: <Star className="w-3.5 h-3.5" /> },
-            { id: 'REPORTS' as const, label: '18. Operational Reports', icon: <FileSpreadsheet className="w-3.5 h-3.5" /> },
-            { id: 'ANALYTICS' as const, label: '19. Funnel Analytics', icon: <Sparkles className="w-3.5 h-3.5" /> },
-          ].map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md rounded-2xl p-2.5 border border-gray-200/80 shadow-sm space-y-2">
+        {/* Category Filter Pills */}
+        <div className="flex items-center justify-between gap-2 overflow-x-auto scrollbar-none pb-1 border-b border-gray-100">
+          <div className="flex items-center space-x-1.5 min-w-max text-xs font-bold">
+            <span className="text-gray-400 uppercase tracking-wider text-[10px] mr-1">Section:</span>
+            {[
+              { id: 'ALL', label: 'All Modules (19)' },
+              { id: 'DISPATCH', label: '🚀 Dispatch & Routes' },
+              { id: 'FLEET', label: '🛵 Fleet & Staff' },
+              { id: 'FINANCE', label: '💰 COD & Proof (POD)' },
+              { id: 'SERVICE', label: '⭐ Support & Analytics' },
+            ].map((cat) => (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={'px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer ' + (
-                  isActive
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                )}
+                key={cat.id}
+                onClick={() => setNavCategory(cat.id as any)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                  navCategory === cat.id
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
               >
-                {tab.icon}
-                <span>{tab.label}</span>
-                {tab.count !== undefined && (
-                  <span
-                    className={'ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ' + (
-                      isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-700'
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="hidden sm:flex items-center space-x-2 text-[11px] text-gray-400 font-medium">
+            <span>Active:</span>
+            <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              {activeTab}
+            </span>
+          </div>
+        </div>
+
+        {/* Scrollable Subtabs Bar */}
+        <div className="overflow-x-auto scrollbar-none">
+          <div className="flex items-center space-x-1 min-w-max">
+            {[
+              { id: 'DASHBOARD' as const, category: 'DISPATCH', label: '01. Dashboard', icon: <BarChart3 className="w-3.5 h-3.5" /> },
+              { id: 'ORDERS' as const, category: 'DISPATCH', label: '02. Orders & Pipeline', count: deliveries.length, icon: <Package className="w-3.5 h-3.5" /> },
+              { id: 'ASSIGNMENT' as const, category: 'DISPATCH', label: '03. Dispatch Board', icon: <CheckSquare className="w-3.5 h-3.5" /> },
+              { id: 'TRACKING' as const, category: 'DISPATCH', label: '04. Live Tracking', icon: <Navigation className="w-3.5 h-3.5" /> },
+              { id: 'ROUTES' as const, category: 'DISPATCH', label: '05. Multi-Stop Routes', count: routes.length, icon: <RouteIcon className="w-3.5 h-3.5" /> },
+              { id: 'STAFF' as const, category: 'FLEET', label: '06. Delivery Staff', count: drivers.length, icon: <UserCheck className="w-3.5 h-3.5" /> },
+              { id: 'VEHICLES' as const, category: 'FLEET', label: '07. Fleet & Maintenance', count: vehicles.length, icon: <Truck className="w-3.5 h-3.5" /> },
+              { id: 'ZONES' as const, category: 'FLEET', label: '08. Zones & Boundaries', count: zones.length, icon: <Layers className="w-3.5 h-3.5" /> },
+              { id: 'FEES' as const, category: 'FLEET', label: '09. Fee Surcharges', icon: <Sliders className="w-3.5 h-3.5" /> },
+              { id: 'TIMESLOTS' as const, category: 'FLEET', label: '10. Time Slots', count: timeSlots.length, icon: <Clock className="w-3.5 h-3.5" /> },
+              { id: 'ADDRESSES' as const, category: 'FLEET', label: '11. Address Book', count: addresses.length, icon: <MapPin className="w-3.5 h-3.5" /> },
+              { id: 'POD' as const, category: 'FINANCE', label: '12. Proof of Delivery (POD)', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+              { id: 'RETURNS' as const, category: 'FINANCE', label: '13. Returns & Restock', icon: <RotateCcw className="w-3.5 h-3.5" /> },
+              { id: 'COD' as const, category: 'FINANCE', label: '14. COD & Settlements', icon: <DollarSign className="w-3.5 h-3.5" /> },
+              { id: 'NOTIFICATIONS' as const, category: 'SERVICE', label: '15. Alert Triggers', icon: <Bell className="w-3.5 h-3.5" /> },
+              { id: 'SUPPORT' as const, category: 'SERVICE', label: '16. Support Tickets', count: supportTickets.filter(t => t.status === 'OPEN').length, icon: <LifeBuoy className="w-3.5 h-3.5" /> },
+              { id: 'RATINGS' as const, category: 'SERVICE', label: '17. Customer Ratings', count: ratings.length, icon: <Star className="w-3.5 h-3.5" /> },
+              { id: 'REPORTS' as const, category: 'SERVICE', label: '18. Operational Reports', icon: <FileSpreadsheet className="w-3.5 h-3.5" /> },
+              { id: 'ANALYTICS' as const, category: 'SERVICE', label: '19. Funnel Analytics', icon: <Sparkles className="w-3.5 h-3.5" /> },
+            ]
+              .filter(tab => navCategory === 'ALL' || tab.category === navCategory)
+              .map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleSelectSubTab(tab.id)}
+                    className={'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer ' + (
+                      isActive
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     )}
                   >
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+                    {tab.icon}
+                    <span>{tab.label}</span>
+                    {tab.count !== undefined && (
+                      <span
+                        className={'ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ' + (
+                          isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-700'
+                        )}
+                      >
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+          </div>
         </div>
       </div>
 

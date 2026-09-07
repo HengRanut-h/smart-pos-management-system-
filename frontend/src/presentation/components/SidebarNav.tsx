@@ -32,14 +32,26 @@ import {
   QrCode,
   DollarSign,
   ChevronsRight,
+  BarChart3,
+  Layers,
+  MapPin,
+  RotateCcw,
+  Route as RouteIcon,
+  LifeBuoy,
+  Star,
+  Navigation,
+  CheckSquare,
+  FileSpreadsheet,
+  Sparkles,
 } from 'lucide-react';
 
 interface NavItem {
-  id: NavTab;
+  id: NavTab | string;
   name: string;
   nameKh?: string;
   icon: React.ReactNode;
   tab: NavTab;
+  subTab?: string;
   badge?: number | string;
   hotkey?: string;
   description?: string;
@@ -70,6 +82,8 @@ export const SidebarNav: React.FC = () => {
     t,
     activeTab,
     setActiveTab,
+    deliverySubTab,
+    setDeliverySubTab,
     cart,
     isShiftOpen,
     isSidebarCollapsed,
@@ -240,14 +254,167 @@ export const SidebarNav: React.FC = () => {
         badge: 'LIVE',
         items: [
           {
-            id: 'delivery',
-            name: 'Delivery Management',
-            nameKh: 'គ្រប់គ្រងការដឹកជញ្ជូន',
+            id: 'delivery_dashboard',
+            name: '01. Delivery Dashboard',
+            nameKh: 'ផ្ទាំងគ្រប់គ្រងដឹកជញ្ជូន',
+            icon: <BarChart3 className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'DASHBOARD',
+            badge: 'LIVE',
+            description: 'Live KPIs, dispatch & performance',
+          },
+          {
+            id: 'delivery_orders',
+            name: '02. Orders & Pipeline',
+            nameKh: 'ការបញ្ជាទិញ & ដំណើរការ',
+            icon: <Package className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'ORDERS',
+            description: 'Delivery orders, pipeline & status',
+          },
+          {
+            id: 'delivery_assignment',
+            name: '03. Dispatch Board',
+            nameKh: 'ក្តារបញ្ជូន & បែងចែកអ្នកដឹក',
+            icon: <CheckSquare className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'ASSIGNMENT',
+            description: 'Assign riders & bulk dispatch',
+          },
+          {
+            id: 'delivery_tracking',
+            name: '04. Live GPS Tracking',
+            nameKh: 'តាមដាន GPS ផ្ទាល់',
+            icon: <Navigation className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'TRACKING',
+            description: 'Real-time delivery map & timeline',
+          },
+          {
+            id: 'delivery_routes',
+            name: '05. Multi-Stop Routes',
+            nameKh: 'ផ្លូវដឹកជញ្ជូនច្រើនចំណត',
+            icon: <RouteIcon className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'ROUTES',
+            description: 'Route optimization & stops',
+          },
+          {
+            id: 'delivery_staff',
+            name: '06. Delivery Staff & Riders',
+            nameKh: 'អ្នកដឹកជញ្ជូន & អ្នកជិះ',
+            icon: <UserCheck className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'STAFF',
+            description: 'Driver profiles, licenses & workloads',
+          },
+          {
+            id: 'delivery_vehicles',
+            name: '07. Fleet & Vehicles',
+            nameKh: 'យានជំនិះ & ការថែទាំ',
             icon: <Truck className="w-4 h-4" />,
             tab: 'delivery',
-            hotkey: 'F7',
-            badge: 'LIVE',
-            description: 'Orders, dispatch, tracking, zones & COD',
+            subTab: 'VEHICLES',
+            description: 'Bikes, vans & vehicle maintenance',
+          },
+          {
+            id: 'delivery_zones',
+            name: '08. Delivery Zones',
+            nameKh: 'តំបន់ដឹកជញ្ជូន & ថ្លៃសេវា',
+            icon: <Layers className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'ZONES',
+            description: 'Zone boundaries & base pricing',
+          },
+          {
+            id: 'delivery_fees',
+            name: '09. Fee Surcharges',
+            nameKh: 'ច្បាប់គិតថ្លៃ & បន្ថែម',
+            icon: <SlidersHorizontal className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'FEES',
+            description: 'Distance, weight & peak surcharges',
+          },
+          {
+            id: 'delivery_timeslots',
+            name: '10. Time Slots',
+            nameKh: 'ម៉ោងកំណត់ដឹកជញ្ជូន',
+            icon: <Clock className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'TIMESLOTS',
+            description: 'Delivery windows & capacity limits',
+          },
+          {
+            id: 'delivery_addresses',
+            name: '11. Address Book',
+            nameKh: 'សៀវភៅអាសយដ្ឋានអតិថិជន',
+            icon: <MapPin className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'ADDRESSES',
+            description: 'Saved delivery addresses & GPS pins',
+          },
+          {
+            id: 'delivery_pod',
+            name: '12. Proof of Delivery (POD)',
+            nameKh: 'ភស្តុតាងនៃការប្រគល់ (POD)',
+            icon: <Shield className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'POD',
+            description: 'Digital signatures, photos & OTP',
+          },
+          {
+            id: 'delivery_returns',
+            name: '13. Returns & Restock',
+            nameKh: 'ការប្រគល់ត្រឡប់ & ស្តុក',
+            icon: <RotateCcw className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'RETURNS',
+            description: 'Failed deliveries & warehouse return',
+          },
+          {
+            id: 'delivery_cod',
+            name: '14. COD & Settlements',
+            nameKh: 'ទូទាត់ប្រាក់ COD & អ្នកដឹក',
+            icon: <DollarSign className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'COD',
+            description: 'Cash-on-delivery reconciliation',
+          },
+          {
+            id: 'delivery_support',
+            name: '15. Support & Issues',
+            nameKh: 'សំបុត្រគាំទ្រ & ពាក្យបណ្តឹង',
+            icon: <LifeBuoy className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'SUPPORT',
+            description: 'Customer claims & tickets',
+          },
+          {
+            id: 'delivery_ratings',
+            name: '16. Ratings & Feedback',
+            nameKh: 'ការវាយតម្លៃអតិថិជន',
+            icon: <Star className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'RATINGS',
+            description: 'Driver performance & satisfaction',
+          },
+          {
+            id: 'delivery_reports',
+            name: '17. Operational Reports',
+            nameKh: 'របាយការណ៍ប្រតិបត្តិការ',
+            icon: <FileSpreadsheet className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'REPORTS',
+            description: 'Export trip logs & driver performance',
+          },
+          {
+            id: 'delivery_analytics',
+            name: '18. Funnel Analytics',
+            nameKh: 'ការវិភាគភស្តុភារ',
+            icon: <Sparkles className="w-4 h-4" />,
+            tab: 'delivery',
+            subTab: 'ANALYTICS',
+            description: 'On-time delivery rate & trends',
           },
         ],
       },
@@ -438,6 +605,7 @@ export const SidebarNav: React.FC = () => {
     return [
       { id: 'dashboard' as NavTab, label: 'Dashboard', icon: <Home className="w-5 h-5" />, hotkey: 'F7', sub: 'Executive KPI' },
       { id: 'pos' as NavTab, label: 'POS & Sales', icon: <ShoppingCart className="w-5 h-5" />, badge: totalCartCount, hotkey: 'F1', sub: 'Cashier Checkout' },
+      { id: 'delivery' as NavTab, label: 'Delivery', icon: <Truck className="w-5 h-5" />, hotkey: 'F7', sub: 'Fleet & Logistics' },
       { id: 'inventory' as NavTab, label: 'Inventory', icon: <Package className="w-5 h-5" />, hotkey: 'F5', sub: 'Stock & Ledger' },
       { id: 'customers' as NavTab, label: 'Customers', icon: <Users className="w-5 h-5" />, hotkey: 'F8', sub: 'Loyalty Program' },
       { id: 'invoices' as NavTab, label: 'Invoices', icon: <FileText className="w-5 h-5" />, hotkey: 'F4', sub: 'Fiscal Tax Records' },
@@ -469,8 +637,11 @@ export const SidebarNav: React.FC = () => {
       .filter(Boolean) as NavGroup[];
   }, [navGroups, searchQuery]);
 
-  const handleSelectTab = (tab: NavTab) => {
+  const handleSelectTab = (tab: NavTab, subTab?: string) => {
     setActiveTab(tab);
+    if (tab === 'delivery' && subTab) {
+      setDeliverySubTab(subTab);
+    }
     if (window.innerWidth < 1024) {
       setIsMobileDrawerOpen(false);
     }
@@ -706,11 +877,14 @@ export const SidebarNav: React.FC = () => {
                   {hasSubnav && !isCollapsed && (
                     <div className="pl-3 pr-1 py-1 space-y-1">
                       {group.items.map((item) => {
-                        const isActive = activeTab === item.tab;
+                        const isActive =
+                          item.tab === 'delivery'
+                            ? activeTab === 'delivery' && (!item.subTab || deliverySubTab === item.subTab)
+                            : activeTab === item.tab;
                         return (
                           <button
                             key={item.id}
-                            onClick={() => handleSelectTab(item.tab)}
+                            onClick={() => handleSelectTab(item.tab, item.subTab)}
                             className={`nav-subitem-pill ${isActive ? 'is-active' : ''}`}
                           >
                             <div className="flex items-center space-x-2 min-w-0">

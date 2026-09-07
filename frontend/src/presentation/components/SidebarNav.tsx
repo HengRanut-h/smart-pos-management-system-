@@ -40,7 +40,7 @@ interface NavItem {
   nameKh?: string;
   icon: React.ReactNode;
   tab: NavTab;
-  badge?: number;
+  badge?: number | string;
   hotkey?: string;
   description?: string;
 }
@@ -50,7 +50,17 @@ interface NavGroup {
   title: string;
   titleKh: string;
   icon: React.ReactNode;
+  badge?: number | string;
   items: NavItem[];
+}
+
+interface RailItem {
+  id: NavTab;
+  label: string;
+  icon: React.ReactNode;
+  sub: string;
+  badge?: number | string;
+  hotkey?: string;
 }
 
 export const SidebarNav: React.FC = () => {
@@ -89,8 +99,8 @@ export const SidebarNav: React.FC = () => {
 
   const isCustomerOnly = useMemo(() => {
     if (!currentUser) return false;
-    const roleCodes = currentUser.roles?.map((r) => r.code?.toUpperCase()) || [];
-    const hasStaffRole = roleCodes.some((code) =>
+    const roleCodes = currentUser.roles?.map((r: any) => r.code?.toUpperCase()) || [];
+    const hasStaffRole = roleCodes.some((code: string) =>
       ['ADMIN', 'SUPER_ADMIN', 'MANAGER', 'CASHIER', 'STOCK_MANAGER', 'ACCOUNTANT', 'HR', 'EMPLOYEE'].includes(code)
     );
     return !hasStaffRole && (roleCodes.includes('CUSTOMER') || currentUser.primary_role?.toLowerCase() === 'customer');
@@ -414,7 +424,7 @@ export const SidebarNav: React.FC = () => {
     }
   }, [activeTab, navGroups]);
 
-  const railItems = useMemo(() => {
+  const railItems: RailItem[] = useMemo(() => {
     if (isCustomerOnly) {
       return [
         { id: 'dashboard' as NavTab, label: 'Dashboard', icon: <Home className="w-5 h-5" />, sub: 'My Overview' },
@@ -532,12 +542,12 @@ export const SidebarNav: React.FC = () => {
                       ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200'
                       : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                   }`}
-                  title={`${item.label} (${item.hotkey})`}
+                  title={item.hotkey ? `${item.label} (${item.hotkey})` : item.label}
                 >
                   {item.icon}
 
                   {/* Notification / Cart Badge */}
-                  {item.badge !== undefined && item.badge > 0 && (
+                  {item.badge !== undefined && (typeof item.badge === 'number' ? item.badge > 0 : Boolean(item.badge)) && (
                     <span
                       className={`absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
                         isActive
@@ -555,7 +565,7 @@ export const SidebarNav: React.FC = () => {
                   <div className="absolute left-16 px-3 py-1.5 bg-gray-900 text-white text-xs font-semibold rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition whitespace-nowrap z-50 shadow-xl flex flex-col items-start leading-tight">
                     <div className="flex items-center space-x-2">
                       <span className="font-bold">{item.label}</span>
-                      <span className="text-gray-400 font-mono text-[10px]">({item.hotkey})</span>
+                      {item.hotkey && <span className="text-gray-400 font-mono text-[10px]">({item.hotkey})</span>}
                     </div>
                     <span className="text-[10px] text-gray-400 font-normal">{item.sub}</span>
                   </div>
@@ -724,7 +734,7 @@ export const SidebarNav: React.FC = () => {
                             </div>
 
                             <div className="flex items-center space-x-1.5 shrink-0 ml-2">
-                              {item.badge !== undefined && item.badge > 0 && (
+                              {item.badge !== undefined && (typeof item.badge === 'number' ? item.badge > 0 : Boolean(item.badge)) && (
                                 <span
                                   className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
                                     isActive

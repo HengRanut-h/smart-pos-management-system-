@@ -40,7 +40,7 @@ export const SmartPosLogo: React.FC<SmartPosLogoProps> = ({
     setImgHasError(false);
   }, [activeLogoUrl]);
 
-  const shapeMap = {
+  const shapeMap: Record<string, string> = {
     rounded: 'rounded-xl',
     circle: 'rounded-full',
     squircle: 'rounded-3xl',

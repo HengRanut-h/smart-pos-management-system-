@@ -49,14 +49,14 @@ export const AdminUserRoleAssignmentView: React.FC = () => {
 
   const isAdmin = useMemo(() => {
     if (!currentUser) return false;
-    const roleCodes = currentUser.roles?.map((r) => r.code?.toUpperCase()) || [];
-    return roleCodes.some((code) => ['ADMIN', 'SUPER_ADMIN'].includes(code)) ||
+    const roleCodes = currentUser.roles?.map((r: any) => r.code?.toUpperCase()) || [];
+    return roleCodes.some((code: string) => ['ADMIN', 'SUPER_ADMIN'].includes(code)) ||
       ['ADMIN', 'SUPER_ADMIN'].includes(currentUser.primary_role?.toUpperCase() || '');
   }, [currentUser]);
 
   const isSuperAdmin = useMemo(() => {
     if (!currentUser) return false;
-    const roleCodes = currentUser.roles?.map((r) => r.code?.toUpperCase()) || [];
+    const roleCodes = currentUser.roles?.map((r: any) => r.code?.toUpperCase()) || [];
     return roleCodes.includes('SUPER_ADMIN') || currentUser.primary_role?.toUpperCase() === 'SUPER_ADMIN';
   }, [currentUser]);
 

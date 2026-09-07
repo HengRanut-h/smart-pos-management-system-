@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Language, translations } from '../../foundation/i18n/translations';
 import { getProducts, getCurrentShift, getUserProfile, getSystemSettings, logoutApi } from '../../data-access/posApi';
+import { Product, CartItem, Sale, Shift, UserProfile, SystemSettings } from '../../foundation/types';
 
 export type NavTab =
   | 'pos'

@@ -61,7 +61,7 @@ export const EmployeeManagementView: React.FC = () => {
 
   const isSuperAdmin = useMemo(() => {
     if (!currentUser) return false;
-    const roleCodes = currentUser.roles?.map((r) => r.code?.toUpperCase()) || [];
+    const roleCodes = currentUser.roles?.map((r: any) => r.code?.toUpperCase()) || [];
     return roleCodes.includes('SUPER_ADMIN') || currentUser.primary_role?.toUpperCase() === 'SUPER_ADMIN';
   }, [currentUser]);
 

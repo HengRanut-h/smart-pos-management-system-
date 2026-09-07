@@ -364,17 +364,20 @@ export interface UserProfile {
   first_name: string;
   last_name: string;
   full_name: string;
-  employee_code: string;
-  branch: {
+  employee_code?: string;
+  registration_source?: string;
+  customer?: any;
+  employee?: any;
+  branch?: {
     id: number;
     name: string;
     code: string;
     address?: string;
   };
   roles: Array<{ id: number; name: string; code: string }>;
-  primary_role: string;
-  permissions: string[];
-  status: string;
+  primary_role?: string;
+  permissions?: string[];
+  status?: string;
   last_login_at?: string | null;
   last_login_ip?: string | null;
   stats?: {

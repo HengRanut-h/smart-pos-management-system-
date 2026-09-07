@@ -107,9 +107,6 @@ export const ProductManagementHub: React.FC = () => {
   const [activeSubView, setActiveSubView] = useState<SubView>(
     (productSubTab as SubView) || 'dashboard'
   );
-  const [sectionCategory, setSectionCategory] = useState<
-    'ALL' | 'CATALOG' | 'PRICING' | 'WAREHOUSE' | 'MANUFACTURING' | 'AUDIT'
-  >('ALL');
 
   useEffect(() => {
     if (productSubTab && productSubTab !== activeSubView) {
@@ -305,37 +302,40 @@ export const ProductManagementHub: React.FC = () => {
     { id: 'templates', category: 'AUDIT', label: '24. Templates & Audits', count: auditLogs.length, icon: History },
   ];
 
+  const currentModule = navItems.find((item) => item.id === activeSubView) || navItems[0];
+  const CurrentIcon = currentModule.icon;
+
   return (
     <div className="min-h-screen bg-slate-50/70 flex flex-col">
-      {/* Top Banner Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
+      {/* Clean Top Header (Sub-navigation is managed cleanly via Sidebar) */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center space-x-3.5">
-            <div className="p-3 bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white rounded-2xl shadow-lg shadow-indigo-100 flex items-center justify-center">
-              <Package className="w-6 h-6" />
+            <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0 border border-indigo-100">
+              <CurrentIcon className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-                  Enterprise Product Hub
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  42 MODULES SUITE
+                <span className="text-xs font-semibold text-gray-400">Products</span>
+                <span className="text-gray-300">/</span>
+                <span className="text-xs font-bold text-indigo-600">
+                  {currentModule.label}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">
-                End-to-End Governance: Concept → BOM Recipe → Landed Cost → Multi-Tier Pricing → Inventory → POS Checkout
-              </p>
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">
+                {currentModule.label.replace(/^\d+\.\s*/, '')}
+              </h1>
             </div>
           </div>
 
           <div className="flex items-center space-x-2.5 flex-wrap">
             <button
               onClick={loadAllData}
+              disabled={isLoading}
               className="p-2.5 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl border border-gray-200 transition cursor-pointer"
               title="Refresh Data"
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
             </button>
             <button
               onClick={() => {
@@ -352,81 +352,11 @@ export const ProductManagementHub: React.FC = () => {
                 setEditingProduct(null);
                 setIsCreateModalOpen(true);
               }}
-              className="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs font-extrabold rounded-xl shadow-md shadow-indigo-200 flex items-center space-x-1.5 transition cursor-pointer"
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-1.5 transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Create Product</span>
             </button>
-          </div>
-        </div>
-
-        {/* Categorized Sticky Sub-Navigation Bar */}
-        <div className="border-t border-gray-100 bg-slate-50/80 px-4 sm:px-6 py-2.5 space-y-2">
-          {/* Section Filter Pills */}
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 overflow-x-auto scrollbar-none pb-0.5">
-            <div className="flex items-center space-x-1.5 min-w-max text-xs font-bold">
-              <span className="text-gray-400 uppercase tracking-wider text-[10px] mr-1">Section:</span>
-              {[
-                { id: 'ALL', label: 'All Modules (24)' },
-                { id: 'CATALOG', label: '📦 Catalog & Hierarchy' },
-                { id: 'PRICING', label: '💵 Pricing & Margins' },
-                { id: 'WAREHOUSE', label: '🏭 Warehouse & Stock' },
-                { id: 'MANUFACTURING', label: '⚙️ Manufacturing & QC' },
-                { id: 'AUDIT', label: '📊 Data & Audits' },
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSectionCategory(cat.id as any)}
-                  className={`px-3 py-1.5 rounded-xl text-[11px] font-extrabold transition cursor-pointer ${
-                    sectionCategory === cat.id
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200/80'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="hidden md:flex items-center space-x-2 text-[11px] text-gray-500 font-medium">
-              <span>Active Sub-Module:</span>
-              <span className="font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-lg border border-indigo-200 uppercase tracking-wider text-[10px]">
-                {activeSubView}
-              </span>
-            </div>
-          </div>
-
-          {/* Sub-Tabs Navigation */}
-          <div className="max-w-7xl mx-auto flex space-x-1 overflow-x-auto scrollbar-thin py-0.5 min-w-max">
-            {navItems
-              .filter(item => sectionCategory === 'ALL' || item.category === sectionCategory)
-              .map(item => {
-                const Icon = item.icon;
-                const isActive = activeSubView === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleSelectSubView(item.id as SubView)}
-                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
-                      isActive
-                        ? 'bg-indigo-600 text-white shadow-xs'
-                        : 'bg-white/90 text-gray-700 hover:text-gray-900 hover:bg-white border border-gray-200/70'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{item.label}</span>
-                    {item.count !== undefined && item.count > 0 && (
-                      <span
-                        className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
-                          isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        {item.count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
           </div>
         </div>
       </div>

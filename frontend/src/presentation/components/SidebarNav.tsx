@@ -1133,16 +1133,9 @@ export const SidebarNav: React.FC = () => {
                               >
                                 {item.icon}
                               </span>
-                              <div className="truncate">
-                                <span className="block truncate text-[12px] font-medium">
-                                  {lang === 'kh' && item.nameKh ? item.nameKh : item.name}
-                                </span>
-                                {item.description && (
-                                  <span className="block text-[10px] text-gray-400 truncate">
-                                    {item.description}
-                                  </span>
-                                )}
-                              </div>
+                              <span className="truncate text-[12px] font-medium">
+                                {lang === 'kh' && item.nameKh ? item.nameKh : item.name}
+                              </span>
                             </div>
 
                             <div className="flex items-center space-x-1.5 shrink-0 ml-2">

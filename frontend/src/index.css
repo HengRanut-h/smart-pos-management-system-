@@ -41,13 +41,13 @@ body {
 }
 
 .nav-subitem-pill {
-  margin: 4px 0;
-  padding: 7px 12px;
+  margin: 2px 0;
+  padding: 6px 10px;
   background-color: #ffffff;
   border-left: 3px solid #a7f3d0;
   border-radius: 6px;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.4;
   overflow-wrap: anywhere;
   display: flex;
   align-items: center;

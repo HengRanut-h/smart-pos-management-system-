@@ -326,36 +326,36 @@ export const ProductManagementHub: React.FC = () => {
 
   // Consolidated Navigation Modules Configuration
   const navItems = [
-    { id: 'dashboard', label: '01. Product Dashboard', icon: LayoutDashboard },
-    { id: 'catalog', label: '02. Product Catalog', count: products.length, icon: Package },
-    { id: 'attributes', label: '03. Categories, Brands & Units', icon: FolderTree },
-    { id: 'variants', label: '04. Variant Matrix', icon: Sparkles },
-    { id: 'pricing', label: '05. Pricing & Cost Studio', icon: DollarSign },
-    { id: 'tracking', label: '06. Batches, Serials & Warranties', icon: Calendar },
-    { id: 'manufacturing', label: '07. Manufacturing & Bundles', icon: Wrench },
-    { id: 'barcodes', label: '08. Barcode & Print Studio', icon: Barcode },
-    { id: 'data', label: '09. Data & Operations', icon: FileSpreadsheet },
+    { id: 'dashboard', label: 'Product Dashboard', labelKh: 'ផ្ទាំងគ្រប់គ្រងទំនិញ & KPI', icon: LayoutDashboard },
+    { id: 'catalog', label: 'Product Catalog', labelKh: 'កាតាឡុកទំនិញ', count: products.length, icon: Package },
+    { id: 'attributes', label: 'Categories, Brands & Units', labelKh: 'ជំពូក ម៉ាកយីហោ & ខ្នាត', icon: FolderTree },
+    { id: 'variants', label: 'Variant Matrix', labelKh: 'ម៉ាទ្រីសទំហំ & ពណ៌', icon: Sparkles },
+    { id: 'pricing', label: 'Pricing & Cost Studio', labelKh: 'តម្លៃ & ថ្លៃដើមពេញលេញ', icon: DollarSign },
+    { id: 'tracking', label: 'Batches, Serials & Warranties', labelKh: 'ឡូត៍ លេខស៊េរី & ការធានា', icon: Calendar },
+    { id: 'manufacturing', label: 'Manufacturing & Bundles', labelKh: 'ការផលិត & កញ្ចប់ទំនិញ', icon: Wrench },
+    { id: 'barcodes', label: 'Barcode & Print Studio', labelKh: 'បាកូដ & បោះពុម្ពស្លាក', icon: Barcode },
+    { id: 'data', label: 'Data & Operations', labelKh: 'ទិន្នន័យ នាំចូល/ចេញ & កំណត់ហេតុ', icon: FileSpreadsheet },
     // Aliases for backward compatibility
-    { id: 'types', label: '04. Variant Matrix', icon: Sparkles },
-    { id: 'categories', label: '03. Categories, Brands & Units', icon: FolderTree },
-    { id: 'brands', label: '03. Categories, Brands & Units', icon: Award },
-    { id: 'units', label: '03. Categories, Brands & Units', icon: Scale },
-    { id: 'landed_cost', label: '05. Pricing & Cost Studio', icon: Calculator },
-    { id: 'inventory', label: '10. Stock & Reorders', icon: Boxes },
-    { id: 'warehouse', label: '11. Warehouse Bins', icon: MapPin },
-    { id: 'suppliers', label: '13. Suppliers', icon: Truck },
-    { id: 'batches', label: '06. Batches, Serials & Warranties', icon: Calendar },
-    { id: 'serials', label: '06. Batches, Serials & Warranties', icon: Hash },
-    { id: 'warranties', label: '06. Batches, Serials & Warranties', icon: ShieldCheck },
-    { id: 'bundles', label: '07. Manufacturing & Bundles', icon: PackagePlus },
-    { id: 'bom', label: '07. Manufacturing & Bundles', icon: Wrench },
-    { id: 'qc', label: '07. Manufacturing & Bundles', icon: CheckCircle2 },
-    { id: 'promotions', label: '05. Pricing & Cost Studio', icon: Tag },
-    { id: 'reviews', label: '09. Data & Operations', icon: Star },
-    { id: 'returns', label: '09. Data & Operations', icon: RotateCcw },
-    { id: 'import_export', label: '09. Data & Operations', icon: FileSpreadsheet },
-    { id: 'templates', label: '09. Data & Operations', icon: History },
-    { id: 'audit_logs', label: '09. Data & Operations', icon: History },
+    { id: 'types', label: 'Variant Matrix', labelKh: 'ម៉ាទ្រីសទំហំ & ពណ៌', icon: Sparkles },
+    { id: 'categories', label: 'Categories, Brands & Units', labelKh: 'ជំពូក ម៉ាកយីហោ & ខ្នាត', icon: FolderTree },
+    { id: 'brands', label: 'Categories, Brands & Units', labelKh: 'ជំពូក ម៉ាកយីហោ & ខ្នាត', icon: Award },
+    { id: 'units', label: 'Categories, Brands & Units', labelKh: 'ជំពូក ម៉ាកយីហោ & ខ្នាត', icon: Scale },
+    { id: 'landed_cost', label: 'Pricing & Cost Studio', labelKh: 'តម្លៃ & ថ្លៃដើមពេញលេញ', icon: Calculator },
+    { id: 'inventory', label: 'Stock & Reorders', labelKh: 'ស្តុក & បញ្ជាទិញបន្ថែម', icon: Boxes },
+    { id: 'warehouse', label: 'Warehouse Bins', labelKh: 'ទីតាំងឃ្លាំងទំនិញ', icon: MapPin },
+    { id: 'suppliers', label: 'Suppliers', labelKh: 'អ្នកផ្គត់ផ្គង់', icon: Truck },
+    { id: 'batches', label: 'Batches, Serials & Warranties', labelKh: 'ឡូត៍ លេខស៊េរី & ការធានា', icon: Calendar },
+    { id: 'serials', label: 'Batches, Serials & Warranties', labelKh: 'ឡូត៍ លេខស៊េរី & ការធានា', icon: Hash },
+    { id: 'warranties', label: 'Batches, Serials & Warranties', labelKh: 'ឡូត៍ លេខស៊េរី & ការធានា', icon: ShieldCheck },
+    { id: 'bundles', label: 'Manufacturing & Bundles', labelKh: 'ការផលិត & កញ្ចប់ទំនិញ', icon: PackagePlus },
+    { id: 'bom', label: 'Manufacturing & Bundles', labelKh: 'ការផលិត & កញ្ចប់ទំនិញ', icon: Wrench },
+    { id: 'qc', label: 'Manufacturing & Bundles', labelKh: 'ការផលិត & កញ្ចប់ទំនិញ', icon: CheckCircle2 },
+    { id: 'promotions', label: 'Pricing & Cost Studio', labelKh: 'តម្លៃ & ថ្លៃដើមពេញលេញ', icon: Tag },
+    { id: 'reviews', label: 'Data & Operations', labelKh: 'ទិន្នន័យ នាំចូល/ចេញ & កំណត់ហេតុ', icon: Star },
+    { id: 'returns', label: 'Data & Operations', labelKh: 'ទិន្នន័យ នាំចូល/ចេញ & កំណត់ហេតុ', icon: RotateCcw },
+    { id: 'import_export', label: 'Data & Operations', labelKh: 'ទិន្នន័យ នាំចូល/ចេញ & កំណត់ហេតុ', icon: FileSpreadsheet },
+    { id: 'templates', label: 'Data & Operations', labelKh: 'ទិន្នន័យ នាំចូល/ចេញ & កំណត់ហេតុ', icon: History },
+    { id: 'audit_logs', label: 'Data & Operations', labelKh: 'ទិន្នន័យ នាំចូល/ចេញ & កំណត់ហេតុ', icon: History },
   ];
 
   const currentModule = navItems.find((item) => item.id === activeSubView) || navItems[0];
@@ -372,14 +372,14 @@ export const ProductManagementHub: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-semibold text-gray-400">Products</span>
+                <span className="text-xs font-semibold text-gray-400">{lang === 'kh' ? 'ទំនិញ' : 'Products'}</span>
                 <span className="text-gray-300">/</span>
                 <span className="text-xs font-bold text-indigo-600">
-                  {currentModule.label}
+                  {lang === 'kh' && currentModule.labelKh ? currentModule.labelKh : currentModule.label}
                 </span>
               </div>
               <h1 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">
-                {currentModule.label.replace(/^\d+\.\s*/, '')}
+                {lang === 'kh' && currentModule.labelKh ? currentModule.labelKh : currentModule.label.replace(/^\d+\.\s*/, '')}
               </h1>
             </div>
           </div>
@@ -389,7 +389,7 @@ export const ProductManagementHub: React.FC = () => {
               onClick={loadAllData}
               disabled={isLoading}
               className="p-2.5 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl border border-gray-200 transition cursor-pointer"
-              title="Refresh Data"
+              title={lang === 'kh' ? 'ផ្ទុកទិន្នន័យឡើងវិញ' : 'Refresh Data'}
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
             </button>
@@ -401,7 +401,7 @@ export const ProductManagementHub: React.FC = () => {
               className="px-3.5 py-2.5 text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl shadow-xs flex items-center space-x-1.5 transition cursor-pointer"
             >
               <Printer className="w-4 h-4 text-gray-500" />
-              <span>Print Labels</span>
+              <span>{lang === 'kh' ? 'បោះពុម្ពស្លាក' : 'Print Labels'}</span>
             </button>
             <button
               onClick={() => {
@@ -411,7 +411,7 @@ export const ProductManagementHub: React.FC = () => {
               className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center space-x-1.5 transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Create Product</span>
+              <span>{lang === 'kh' ? 'បង្កើតទំនិញថ្មី' : 'Create Product'}</span>
             </button>
           </div>
         </div>
@@ -1173,7 +1173,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <Sparkles className="w-4 h-4" />
-                <span>Variant Matrix Generator</span>
+                <span>{lang === 'kh' ? 'ម៉ាទ្រីសទំហំ & ពណ៌' : 'Variant Matrix Generator'}</span>
               </button>
               <button
                 onClick={() => setVariantsTab('types')}
@@ -1184,7 +1184,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <Layers className="w-4 h-4" />
-                <span>10 Product Types Guide</span>
+                <span>{lang === 'kh' ? 'ប្រភេទផលិតផលទាំង ១០' : '10 Product Types Guide'}</span>
               </button>
             </div>
 
@@ -1326,7 +1326,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <FolderTree className="w-4 h-4" />
-                <span>Categories Tree ({categories.length})</span>
+                <span>{lang === 'kh' ? `ជំពូកទំនិញ (${categories.length})` : `Categories Tree (${categories.length})`}</span>
               </button>
               <button
                 onClick={() => setAttributesTab('brands')}
@@ -1337,7 +1337,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <Award className="w-4 h-4" />
-                <span>Brands Portfolio ({brands.length})</span>
+                <span>{lang === 'kh' ? `ម៉ាកយីហោ (${brands.length})` : `Brands Portfolio (${brands.length})`}</span>
               </button>
               <button
                 onClick={() => setAttributesTab('units')}
@@ -1348,7 +1348,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <Scale className="w-4 h-4" />
-                <span>Unit Conversions ({units.length})</span>
+                <span>{lang === 'kh' ? `ខ្នាតទំនិញ (${units.length})` : `Unit Conversions (${units.length})`}</span>
               </button>
             </div>
 
@@ -1467,7 +1467,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <DollarSign className="w-4 h-4" />
-                <span>Multi-Tier Pricing Matrix</span>
+                <span>{lang === 'kh' ? 'ម៉ាទ្រីសតម្លៃច្រើនកម្រិត' : 'Multi-Tier Pricing Matrix'}</span>
               </button>
               <button
                 onClick={() => setPricingTab('landed_cost')}
@@ -1478,7 +1478,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <Calculator className="w-4 h-4" />
-                <span>Landed Cost & Margins Studio</span>
+                <span>{lang === 'kh' ? 'ថ្លៃដើម & ប្រាក់ចំណេញ' : 'Landed Cost & Margins Studio'}</span>
               </button>
             </div>
 
@@ -1719,7 +1719,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <Calendar className="w-4 h-4" />
-                <span>Batches & Expiry (FEFO) ({batches.length})</span>
+                <span>{lang === 'kh' ? `ឡូត៍ & ការផុតកំណត់ (${batches.length})` : `Batches & Expiry (FEFO) (${batches.length})`}</span>
               </button>
               <button
                 onClick={() => setTrackingTab('serials')}
@@ -1730,7 +1730,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <Hash className="w-4 h-4" />
-                <span>Serial & IMEI Registry ({serialNumbers.length})</span>
+                <span>{lang === 'kh' ? `បញ្ជីលេខស៊េរី & IMEI (${serialNumbers.length})` : `Serial & IMEI Registry (${serialNumbers.length})`}</span>
               </button>
             </div>
 
@@ -1872,7 +1872,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <Wrench className="w-4 h-4" />
-                <span>Bill of Materials (BOM) Recipes</span>
+                <span>{lang === 'kh' ? 'បញ្ជីធាតុផ្សំផលិតកម្ម (BOM)' : 'Bill of Materials (BOM) Recipes'}</span>
               </button>
               <button
                 onClick={() => setManufacturingTab('bundles')}
@@ -1883,7 +1883,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <PackagePlus className="w-4 h-4" />
-                <span>Bundles & Combo Kits</span>
+                <span>{lang === 'kh' ? 'កញ្ចប់ទំនិញរួម (Bundles)' : 'Bundles & Combo Kits'}</span>
               </button>
               <button
                 onClick={() => setManufacturingTab('qc')}
@@ -1894,7 +1894,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Quality Control Inspections ({qcInspections.length})</span>
+                <span>{lang === 'kh' ? `ការត្រួតពិនិត្យគុណភាព (${qcInspections.length})` : `Quality Control Inspections (${qcInspections.length})`}</span>
               </button>
             </div>
 
@@ -2030,7 +2030,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <FileSpreadsheet className="w-4 h-4" />
-                <span>Catalog Import & Export</span>
+                <span>{lang === 'kh' ? 'នាំចូល & នាំចេញកាតាឡុក' : 'Catalog Import & Export'}</span>
               </button>
               <button
                 onClick={() => setDataTab('templates')}
@@ -2041,7 +2041,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <History className="w-4 h-4" />
-                <span>Templates & Audit Trail ({auditLogs.length})</span>
+                <span>{lang === 'kh' ? `គំរូទិន្នន័យ & កំណត់ហេតុ (${auditLogs.length})` : `Templates & Audit Trail (${auditLogs.length})`}</span>
               </button>
               <button
                 onClick={() => setDataTab('reviews')}
@@ -2052,7 +2052,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <Star className="w-4 h-4" />
-                <span>Customer Reviews ({reviews.length})</span>
+                <span>{lang === 'kh' ? `ការវាយតម្លៃរបស់អតិថិជន (${reviews.length})` : `Customer Reviews (${reviews.length})`}</span>
               </button>
             </div>
 

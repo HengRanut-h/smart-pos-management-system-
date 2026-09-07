@@ -97,18 +97,21 @@ import { BulkAssignModal } from './BulkAssignModal';
 export type DeliverySubTab =
   | 'DASHBOARD'
   | 'ORDERS'
+  | 'ROUTES'
+  | 'FLEET'
+  | 'ZONES'
+  | 'FINANCE'
+  | 'SERVICE'
   | 'ASSIGNMENT'
   | 'TRACKING'
-  | 'ROUTES'
   | 'STAFF'
   | 'VEHICLES'
-  | 'ZONES'
   | 'FEES'
   | 'TIMESLOTS'
   | 'ADDRESSES'
+  | 'COD'
   | 'POD'
   | 'RETURNS'
-  | 'COD'
   | 'NOTIFICATIONS'
   | 'SUPPORT'
   | 'RATINGS'
@@ -116,7 +119,7 @@ export type DeliverySubTab =
   | 'ANALYTICS';
 
 export const DeliveryManagementView: React.FC = () => {
-  const { products, deliverySubTab, setDeliverySubTab } = useApp();
+  const { lang, t, products, deliverySubTab, setDeliverySubTab } = useApp();
 
   const [activeTab, setActiveTab] = useState<DeliverySubTab>(
     (deliverySubTab as DeliverySubTab) || 'DASHBOARD'
@@ -397,6 +400,83 @@ export const DeliveryManagementView: React.FC = () => {
     }
   };
 
+    // Consolidated Inner Tab States
+  const [ordersInnerTab, setOrdersInnerTab] = useState<'pipeline' | 'dispatch' | 'tracking'>('pipeline');
+  const [routesInnerTab, setRoutesInnerTab] = useState<'routes' | 'timeslots'>('routes');
+  const [fleetInnerTab, setFleetInnerTab] = useState<'drivers' | 'vehicles'>('drivers');
+  const [zonesInnerTab, setZonesInnerTab] = useState<'zones' | 'fees' | 'addresses'>('zones');
+  const [financeInnerTab, setFinanceInnerTab] = useState<'cod' | 'pod' | 'returns'>('cod');
+  const [serviceInnerTab, setServiceInnerTab] = useState<'tickets' | 'ratings' | 'reports'>('tickets');
+
+  useEffect(() => {
+    if (activeTab === 'ORDERS') setOrdersInnerTab('pipeline');
+    else if (activeTab === 'ASSIGNMENT') setOrdersInnerTab('dispatch');
+    else if (activeTab === 'TRACKING') setOrdersInnerTab('tracking');
+    else if (activeTab === 'ROUTES') setRoutesInnerTab('routes');
+    else if (activeTab === 'TIMESLOTS') setRoutesInnerTab('timeslots');
+    else if (activeTab === 'STAFF') setFleetInnerTab('drivers');
+    else if (activeTab === 'VEHICLES') setFleetInnerTab('vehicles');
+    else if (activeTab === 'ZONES') setZonesInnerTab('zones');
+    else if (activeTab === 'FEES') setZonesInnerTab('fees');
+    else if (activeTab === 'ADDRESSES') setZonesInnerTab('addresses');
+    else if (activeTab === 'COD') setFinanceInnerTab('cod');
+    else if (activeTab === 'POD') setFinanceInnerTab('pod');
+    else if (activeTab === 'RETURNS') setFinanceInnerTab('returns');
+    else if (activeTab === 'SUPPORT') setServiceInnerTab('tickets');
+    else if (activeTab === 'RATINGS') setServiceInnerTab('ratings');
+    else if (activeTab === 'REPORTS' || activeTab === 'ANALYTICS') setServiceInnerTab('reports');
+  }, [activeTab]);
+
+  const moduleTitles: Record<string, string> = {
+    DASHBOARD: 'Delivery Dashboard',
+    ORDERS: 'Orders & Dispatch',
+    ASSIGNMENT: 'Orders & Dispatch',
+    TRACKING: 'Orders & Dispatch',
+    ROUTES: 'Routes & Scheduling',
+    TIMESLOTS: 'Routes & Scheduling',
+    FLEET: 'Fleet & Drivers',
+    STAFF: 'Fleet & Drivers',
+    VEHICLES: 'Fleet & Drivers',
+    ZONES: 'Zones & Pricing',
+    FEES: 'Zones & Pricing',
+    ADDRESSES: 'Zones & Pricing',
+    FINANCE: 'COD & Proof of Delivery',
+    COD: 'COD & Proof of Delivery',
+    POD: 'COD & Proof of Delivery',
+    RETURNS: 'COD & Proof of Delivery',
+    SERVICE: 'Support & Reports',
+    SUPPORT: 'Support & Reports',
+    RATINGS: 'Support & Reports',
+    REPORTS: 'Support & Reports',
+    ANALYTICS: 'Support & Reports',
+    NOTIFICATIONS: 'Support & Reports',
+  };
+
+  const moduleTitlesKh: Record<string, string> = {
+    DASHBOARD: 'ផ្ទាំងគ្រប់គ្រងដឹកជញ្ជូន',
+    ORDERS: 'ការបញ្ជាទិញ & បែងចែកអ្នកដឹក',
+    ASSIGNMENT: 'ការបញ្ជាទិញ & បែងចែកអ្នកដឹក',
+    TRACKING: 'ការបញ្ជាទិញ & បែងចែកអ្នកដឹក',
+    ROUTES: 'ផ្លូវដឹក & ម៉ោងកំណត់',
+    TIMESLOTS: 'ផ្លូវដឹក & ម៉ោងកំណត់',
+    FLEET: 'អ្នកដឹក & យានជំនិះ',
+    STAFF: 'អ្នកដឹក & យានជំនិះ',
+    VEHICLES: 'អ្នកដឹក & យានជំនិះ',
+    ZONES: 'តំបន់ដឹកជញ្ជូន & ថ្លៃសេវា',
+    FEES: 'តំបន់ដឹកជញ្ជូន & ថ្លៃសេវា',
+    ADDRESSES: 'តំបន់ដឹកជញ្ជូន & ថ្លៃសេវា',
+    FINANCE: 'ទូទាត់ COD & ភស្តុតាង (POD)',
+    COD: 'ទូទាត់ COD & ភស្តុតាង (POD)',
+    POD: 'ទូទាត់ COD & ភស្តុតាង (POD)',
+    RETURNS: 'ទូទាត់ COD & ភស្តុតាង (POD)',
+    SERVICE: 'សំបុត្រគាំទ្រ & របាយការណ៍',
+    SUPPORT: 'សំបុត្រគាំទ្រ & របាយការណ៍',
+    RATINGS: 'សំបុត្រគាំទ្រ & របាយការណ៍',
+    REPORTS: 'សំបុត្រគាំទ្រ & របាយការណ៍',
+    ANALYTICS: 'សំបុត្រគាំទ្រ & របាយការណ៍',
+    NOTIFICATIONS: 'សំបុត្រគាំទ្រ & របាយការណ៍',
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* ========================================================= */}
@@ -409,13 +489,15 @@ export const DeliveryManagementView: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Enterprise Delivery & Logistics</h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                26 MODULES READY
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{lang === 'kh' ? 'ការដឹកជញ្ជូន & ភស្តុភារ' : 'Delivery & Logistics'}</h1>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                {lang === 'kh' ? (moduleTitlesKh[activeTab] || 'មជ្ឈមណ្ឌលប្រតិបត្តិការ') : (moduleTitles[activeTab] || 'Operational Hub')}
               </span>
             </div>
             <p className="text-xs text-gray-500 mt-0.5">
-              Multi-stop route dispatch, fleet vehicles, real-time GPS tracking, POD canvas, COD settlement & customer tickets
+              {lang === 'kh'
+                ? 'ការបែងចែកផ្លូវដឹកច្រើនកន្លែង យានជំនិះ ប្រព័ន្ធ GPS ផ្ទាល់ ហត្ថលេខាឌីជីថល (POD) ការទូទាត់ COD និងសំបុត្រគាំទ្រ'
+                : 'Multi-stop route dispatch, fleet vehicles, real-time GPS tracking, POD canvas, COD settlement & customer tickets'}
             </p>
           </div>
         </div>
@@ -425,7 +507,7 @@ export const DeliveryManagementView: React.FC = () => {
             onClick={loadAllData}
             disabled={isLoading}
             className="p-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition cursor-pointer"
-            title="Refresh All Modules"
+            title={lang === 'kh' ? 'ផ្ទុកទិន្នន័យឡើងវិញ' : 'Refresh All Modules'}
           >
             <RefreshCw className={'w-4 h-4 ' + (isLoading ? 'animate-spin text-emerald-600' : '')} />
           </button>
@@ -436,7 +518,7 @@ export const DeliveryManagementView: React.FC = () => {
               className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center space-x-1.5 shadow-sm cursor-pointer"
             >
               <CheckSquare className="w-4 h-4" />
-              <span>Bulk Dispatch ({selectedOrderIds.length})</span>
+              <span>{lang === 'kh' ? `បែងចែករួម (${selectedOrderIds.length})` : `Bulk Dispatch (${selectedOrderIds.length})`}</span>
             </button>
           )}
 
@@ -445,7 +527,7 @@ export const DeliveryManagementView: React.FC = () => {
             className="px-3.5 py-2.5 rounded-xl border border-teal-200 text-teal-700 bg-teal-50 hover:bg-teal-100 text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer"
           >
             <RouteIcon className="w-4 h-4" />
-            <span>Plan Route</span>
+            <span>{lang === 'kh' ? 'រៀបចំផ្លូវ' : 'Plan Route'}</span>
           </button>
 
           <button
@@ -453,7 +535,7 @@ export const DeliveryManagementView: React.FC = () => {
             className="px-3.5 py-2.5 rounded-xl border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer"
           >
             <Truck className="w-4 h-4" />
-            <span>Add Vehicle</span>
+            <span>{lang === 'kh' ? 'បន្ថែមយានជំនិះ' : 'Add Vehicle'}</span>
           </button>
 
           <button
@@ -461,102 +543,11 @@ export const DeliveryManagementView: React.FC = () => {
             className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition flex items-center space-x-1.5 shadow-md shadow-emerald-900/20 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Create Delivery</span>
+            <span>{lang === 'kh' ? 'បង្កើតការដឹកជញ្ជូន' : 'Create Delivery'}</span>
           </button>
         </div>
       </div>
 
-      {/* ========================================================= */}
-      {/* 2. SUB-NAVIGATION TABS (19 ENTERPRISE LOGISTICS MODULES) */}
-      {/* ========================================================= */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md rounded-2xl p-2.5 border border-gray-200/80 shadow-sm space-y-2">
-        {/* Category Filter Pills */}
-        <div className="flex items-center justify-between gap-2 overflow-x-auto scrollbar-none pb-1 border-b border-gray-100">
-          <div className="flex items-center space-x-1.5 min-w-max text-xs font-bold">
-            <span className="text-gray-400 uppercase tracking-wider text-[10px] mr-1">Section:</span>
-            {[
-              { id: 'ALL', label: 'All Modules (19)' },
-              { id: 'DISPATCH', label: '🚀 Dispatch & Routes' },
-              { id: 'FLEET', label: '🛵 Fleet & Staff' },
-              { id: 'FINANCE', label: '💰 COD & Proof (POD)' },
-              { id: 'SERVICE', label: '⭐ Support & Analytics' },
-            ].map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setNavCategory(cat.id as any)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
-                  navCategory === cat.id
-                    ? 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="hidden sm:flex items-center space-x-2 text-[11px] text-gray-400 font-medium">
-            <span>Active:</span>
-            <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              {activeTab}
-            </span>
-          </div>
-        </div>
-
-        {/* Scrollable Subtabs Bar */}
-        <div className="overflow-x-auto scrollbar-none">
-          <div className="flex items-center space-x-1 min-w-max">
-            {[
-              { id: 'DASHBOARD' as const, category: 'DISPATCH', label: '01. Dashboard', icon: <BarChart3 className="w-3.5 h-3.5" /> },
-              { id: 'ORDERS' as const, category: 'DISPATCH', label: '02. Orders & Pipeline', count: deliveries.length, icon: <Package className="w-3.5 h-3.5" /> },
-              { id: 'ASSIGNMENT' as const, category: 'DISPATCH', label: '03. Dispatch Board', icon: <CheckSquare className="w-3.5 h-3.5" /> },
-              { id: 'TRACKING' as const, category: 'DISPATCH', label: '04. Live Tracking', icon: <Navigation className="w-3.5 h-3.5" /> },
-              { id: 'ROUTES' as const, category: 'DISPATCH', label: '05. Multi-Stop Routes', count: routes.length, icon: <RouteIcon className="w-3.5 h-3.5" /> },
-              { id: 'STAFF' as const, category: 'FLEET', label: '06. Delivery Staff', count: drivers.length, icon: <UserCheck className="w-3.5 h-3.5" /> },
-              { id: 'VEHICLES' as const, category: 'FLEET', label: '07. Fleet & Maintenance', count: vehicles.length, icon: <Truck className="w-3.5 h-3.5" /> },
-              { id: 'ZONES' as const, category: 'FLEET', label: '08. Zones & Boundaries', count: zones.length, icon: <Layers className="w-3.5 h-3.5" /> },
-              { id: 'FEES' as const, category: 'FLEET', label: '09. Fee Surcharges', icon: <Sliders className="w-3.5 h-3.5" /> },
-              { id: 'TIMESLOTS' as const, category: 'FLEET', label: '10. Time Slots', count: timeSlots.length, icon: <Clock className="w-3.5 h-3.5" /> },
-              { id: 'ADDRESSES' as const, category: 'FLEET', label: '11. Address Book', count: addresses.length, icon: <MapPin className="w-3.5 h-3.5" /> },
-              { id: 'POD' as const, category: 'FINANCE', label: '12. Proof of Delivery (POD)', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
-              { id: 'RETURNS' as const, category: 'FINANCE', label: '13. Returns & Restock', icon: <RotateCcw className="w-3.5 h-3.5" /> },
-              { id: 'COD' as const, category: 'FINANCE', label: '14. COD & Settlements', icon: <DollarSign className="w-3.5 h-3.5" /> },
-              { id: 'NOTIFICATIONS' as const, category: 'SERVICE', label: '15. Alert Triggers', icon: <Bell className="w-3.5 h-3.5" /> },
-              { id: 'SUPPORT' as const, category: 'SERVICE', label: '16. Support Tickets', count: supportTickets.filter(t => t.status === 'OPEN').length, icon: <LifeBuoy className="w-3.5 h-3.5" /> },
-              { id: 'RATINGS' as const, category: 'SERVICE', label: '17. Customer Ratings', count: ratings.length, icon: <Star className="w-3.5 h-3.5" /> },
-              { id: 'REPORTS' as const, category: 'SERVICE', label: '18. Operational Reports', icon: <FileSpreadsheet className="w-3.5 h-3.5" /> },
-              { id: 'ANALYTICS' as const, category: 'SERVICE', label: '19. Funnel Analytics', icon: <Sparkles className="w-3.5 h-3.5" /> },
-            ]
-              .filter(tab => navCategory === 'ALL' || tab.category === navCategory)
-              .map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleSelectSubTab(tab.id)}
-                    className={'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer ' + (
-                      isActive
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    )}
-                  >
-                    {tab.icon}
-                    <span>{tab.label}</span>
-                    {tab.count !== undefined && (
-                      <span
-                        className={'ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ' + (
-                          isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-700'
-                        )}
-                      >
-                        {tab.count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-          </div>
-        </div>
-      </div>
 
       {/* ========================================================= */}
       {/* 3. TAB 1: DELIVERY DASHBOARD */}
@@ -687,10 +678,47 @@ export const DeliveryManagementView: React.FC = () => {
         </div>
       )}
 
-      {/* ========================================================= */}
-      {/* 4. TAB 2: DELIVERY ORDERS & WORKFLOW PIPELINE */}
-      {/* ========================================================= */}
-      {activeTab === 'ORDERS' && (
+
+      {/* 4. ORDERS & DISPATCH */}
+      {(activeTab === 'ORDERS' || activeTab === 'ASSIGNMENT' || activeTab === 'TRACKING') && (
+        <div className="space-y-6">
+          <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => setOrdersInnerTab('pipeline')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                ordersInnerTab === 'pipeline'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              <span>{lang === 'kh' ? `ការបញ្ជាទិញ & ដំណើរការ (${deliveries.length})` : `Orders & Pipeline (${deliveries.length})`}</span>
+            </button>
+            <button
+              onClick={() => setOrdersInnerTab('dispatch')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                ordersInnerTab === 'dispatch'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <CheckSquare className="w-4 h-4" />
+              <span>{lang === 'kh' ? 'ក្ដារបែងចែកការងារ' : 'Dispatch Board'}</span>
+            </button>
+            <button
+              onClick={() => setOrdersInnerTab('tracking')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                ordersInnerTab === 'tracking'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Navigation className="w-4 h-4" />
+              <span>{lang === 'kh' ? 'ប្រព័ន្ធ GPS ផ្ទាល់' : 'Live GPS Tracking'}</span>
+            </button>
+          </div>
+
+          {ordersInnerTab === 'pipeline' && (
         <div className="space-y-4">
           {/* Status Quick Filters */}
           <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -873,12 +901,101 @@ export const DeliveryManagementView: React.FC = () => {
             </div>
           </div>
         </div>
+          )}
+
+          {ordersInnerTab === 'dispatch' && (
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-gray-900 text-sm">Active Dispatch Board</h4>
+                  <p className="text-xs text-gray-500">Assign unassigned pending orders to active drivers</p>
+                </div>
+                {selectedOrderIds.length > 0 && (
+                  <button
+                    onClick={() => setIsBulkAssignModalOpen(true)}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-500 transition cursor-pointer"
+                  >
+                    Bulk Dispatch ({selectedOrderIds.length})
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {drivers.map((d) => (
+                  <div key={d.id} className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-gray-900">{d.name}</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                        {d.current_status}
+                      </span>
+                    </div>
+                    <p className="text-gray-500">{d.phone} &bull; {d.vehicle_type}</p>
+                    <p className="text-gray-400 text-[11px]">Completed: {d.total_deliveries_completed} &bull; ⭐ {d.rating}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {ordersInnerTab === 'tracking' && (
+            <div className="p-6 bg-slate-900 text-white rounded-3xl space-y-4 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-emerald-400 text-sm flex items-center space-x-2">
+                  <Navigation className="w-4 h-4 animate-spin" />
+                  <span>Real-Time GPS Tracking & Milestone Pipeline</span>
+                </span>
+                <span className="text-slate-400 font-mono">Simulated Coordinates Active</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-800/80 rounded-2xl border border-slate-700 space-y-2">
+                  <span className="font-bold text-slate-200">Active Trip: DEL-20260908-0101</span>
+                  <p className="text-slate-400">Driver: Vichea Roth (Yamaha QBIX 125)</p>
+                  <p className="text-slate-400">Destination: #45B, St 315, Sangkat Boeung Kak 1, Khan Toul Kork</p>
+                  <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden mt-2">
+                    <div className="bg-emerald-500 h-full rounded-full w-3/4 animate-pulse" />
+                  </div>
+                  <span className="text-emerald-400 font-bold block text-[11px]">ETA: ~12 Mins Remaining (Distance: 2.8 KM)</span>
+                </div>
+                <div className="p-4 bg-slate-800/80 rounded-2xl border border-slate-700 space-y-2">
+                  <span className="font-bold text-slate-200">Live GPS Radar</span>
+                  <div className="w-full h-28 bg-slate-950 rounded-xl border border-slate-700 flex items-center justify-center text-slate-500">
+                    [Radar map simulation: Phnom Penh Center lat: 11.5682, lng: 104.8911]
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
-      {/* ========================================================= */}
-      {/* 5. TAB 5: MULTI-STOP ROUTES */}
-      {/* ========================================================= */}
-      {activeTab === 'ROUTES' && (
+      {/* 5. ROUTES & SCHEDULING */}
+      {(activeTab === 'ROUTES' || activeTab === 'TIMESLOTS') && (
+        <div className="space-y-6">
+          <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => setRoutesInnerTab('routes')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                routesInnerTab === 'routes'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <RouteIcon className="w-4 h-4" />
+              <span>{lang === 'kh' ? `ផ្លូវដឹកជញ្ជូន (${routes.length})` : `Multi-Stop Routes (${routes.length})`}</span>
+            </button>
+            <button
+              onClick={() => setRoutesInnerTab('timeslots')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                routesInnerTab === 'timeslots'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              <span>{lang === 'kh' ? `ម៉ោងកំណត់ & វេន (${timeSlots.length})` : `Time Windows & Slots (${timeSlots.length})`}</span>
+            </button>
+          </div>
+
+          {routesInnerTab === 'routes' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between bg-white p-4 rounded-3xl border border-gray-100">
             <div>
@@ -952,12 +1069,82 @@ export const DeliveryManagementView: React.FC = () => {
             ))}
           </div>
         </div>
+          )}
+
+          {routesInnerTab === 'timeslots' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {timeSlots.map(slot => (
+                <div key={slot.id} className="p-4 rounded-2xl border border-gray-100 bg-white shadow-xs text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-gray-900">{slot.label}</span>
+                    <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">ACTIVE</span>
+                  </div>
+                  <p className="text-gray-500 text-[11px]">Time Window: {slot.start_time} - {slot.end_time}</p>
+                  <p className="text-teal-700 font-semibold text-[11px]">Max Capacity: {slot.max_capacity} orders</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
-      {/* ========================================================= */}
-      {/* 6. TAB 7: FLEET VEHICLES & MAINTENANCE */}
-      {/* ========================================================= */}
-      {activeTab === 'VEHICLES' && (
+      {/* 6. FLEET & DRIVERS */}
+      {(activeTab === 'FLEET' || activeTab === 'STAFF' || activeTab === 'VEHICLES') && (
+        <div className="space-y-6">
+          <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => setFleetInnerTab('drivers')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                fleetInnerTab === 'drivers'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Truck className="w-4 h-4" />
+              <span>{lang === 'kh' ? `បុគ្គលិកដឹកជញ្ជូន (${drivers.length})` : `Delivery Staff & Drivers (${drivers.length})`}</span>
+            </button>
+            <button
+              onClick={() => setFleetInnerTab('vehicles')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                fleetInnerTab === 'vehicles'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>{lang === 'kh' ? `យានជំនិះ (${vehicles.length})` : `Fleet Vehicles (${vehicles.length})`}</span>
+            </button>
+          </div>
+
+          {fleetInnerTab === 'drivers' && (
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setIsDriverModalOpen(true)}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-500 cursor-pointer"
+                >
+                  + Add Driver
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {drivers.map(d => (
+                  <div key={d.id} className="p-4 rounded-2xl border border-gray-100 shadow-xs space-y-2 text-xs bg-white">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-gray-900 text-sm">{d.name}</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                        {d.current_status}
+                      </span>
+                    </div>
+                    <p className="text-gray-500">{d.phone} &bull; {d.vehicle_type}</p>
+                    <p className="text-gray-400 text-[11px]">Completed: {d.total_deliveries_completed} &bull; ⭐ {d.rating}</p>
+                    <p className="font-bold text-emerald-600 text-xs">Cash in Hand: ${Number(d.active_cash_in_hand).toFixed(2)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {fleetInnerTab === 'vehicles' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between bg-white p-4 rounded-3xl border border-gray-100">
             <div>
@@ -1013,12 +1200,269 @@ export const DeliveryManagementView: React.FC = () => {
             ))}
           </div>
         </div>
+          )}
+        </div>
       )}
 
-      {/* ========================================================= */}
-      {/* 7. TAB 16: SUPPORT TICKETS */}
-      {/* ========================================================= */}
-      {activeTab === 'SUPPORT' && (
+      {/* 7. ZONES & PRICING */}
+      {(activeTab === 'ZONES' || activeTab === 'FEES' || activeTab === 'ADDRESSES') && (
+        <div className="space-y-6">
+          <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => setZonesInnerTab('zones')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                zonesInnerTab === 'zones'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <MapPin className="w-4 h-4" />
+              <span>{lang === 'kh' ? `តំបន់ដឹកជញ្ជូន (${zones.length})` : `Delivery Zones (${zones.length})`}</span>
+            </button>
+            <button
+              onClick={() => setZonesInnerTab('fees')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                zonesInnerTab === 'fees'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <DollarSign className="w-4 h-4" />
+              <span>{lang === 'kh' ? `ច្បាប់គិតថ្លៃសេវា (${feeRules.length})` : `Fee Rules & Thresholds (${feeRules.length})`}</span>
+            </button>
+            <button
+              onClick={() => setZonesInnerTab('addresses')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                zonesInnerTab === 'addresses'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <MapPin className="w-4 h-4" />
+              <span>{lang === 'kh' ? `អាសយដ្ឋានអតិថិជន (${addresses.length})` : `Customer Addresses (${addresses.length})`}</span>
+            </button>
+          </div>
+
+          {zonesInnerTab === 'zones' && (
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setIsZoneModalOpen(true)}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-500 cursor-pointer"
+                >
+                  + Add Delivery Zone
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {zones.map(z => (
+                  <div key={z.id} className="p-4 rounded-2xl border border-gray-100 shadow-xs space-y-1.5 text-xs bg-white">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-gray-900 text-sm">{z.name}</span>
+                      <span className="font-mono text-[10px] bg-gray-100 px-2 py-0.5 rounded-md font-bold">{z.code}</span>
+                    </div>
+                    <p className="text-gray-500 text-[11px]">{z.area_description || 'General City Zone'}</p>
+                    <div className="flex justify-between text-gray-700 pt-2 border-t border-gray-50">
+                      <span>Base Fee: <b>${z.base_delivery_fee}</b></span>
+                      <span>Free Over: <b>${z.free_delivery_threshold || 30}</b></span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {zonesInnerTab === 'fees' && (
+            <div className="space-y-3">
+              {feeRules.map(rule => (
+                <div key={rule.id} className="p-4 rounded-2xl border border-gray-100 bg-white flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-bold text-gray-900 block">{rule.name}</span>
+                    <span className="text-gray-500 text-[11px]">Tier: ${rule.min_order_value} - ${rule.max_order_value}</span>
+                  </div>
+                  <span className="text-sm font-black text-emerald-600">
+                    {rule.is_free ? 'FREE' : `$${rule.fee_amount}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {zonesInnerTab === 'addresses' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {addresses.map(a => (
+                <div key={a.id} className="p-4 rounded-2xl border border-gray-100 bg-white space-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-gray-900">{a.label} &bull; {a.recipient_name}</span>
+                    {a.is_default && <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Default</span>}
+                  </div>
+                  <p className="text-gray-600">{a.full_address}</p>
+                  <p className="text-gray-400 text-[10px]">Instructions: {a.delivery_instructions || 'None'}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 8. COD & PROOF OF DELIVERY */}
+      {(activeTab === 'FINANCE' || activeTab === 'COD' || activeTab === 'POD' || activeTab === 'RETURNS') && (
+        <div className="space-y-6">
+          <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => setFinanceInnerTab('cod')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                financeInnerTab === 'cod'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <DollarSign className="w-4 h-4" />
+              <span>{lang === 'kh' ? 'ការទូទាត់ COD' : 'COD Settlements'}</span>
+            </button>
+            <button
+              onClick={() => setFinanceInnerTab('pod')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                financeInnerTab === 'pod'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>{lang === 'kh' ? 'ភស្តុតាងដឹកជញ្ជូន (POD)' : 'Proof of Delivery (POD)'}</span>
+            </button>
+            <button
+              onClick={() => setFinanceInnerTab('returns')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                financeInnerTab === 'returns'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>{lang === 'kh' ? 'ទំនិញប្រគល់មកវិញ' : 'Returned Orders'}</span>
+            </button>
+          </div>
+
+          {financeInnerTab === 'cod' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {driversWithCash.map(d => (
+                  <div key={d.id} className="p-4 rounded-2xl border border-gray-100 bg-amber-50/40 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="font-bold text-gray-900 block">{d.name}</span>
+                      <span className="text-gray-500">{d.phone} &bull; {d.vehicle_type}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-black text-amber-900 block">${Number(d.active_cash_in_hand).toFixed(2)}</span>
+                      <button
+                        onClick={() => setSettleModalDriver(d)}
+                        className="mt-1 px-3 py-1 bg-amber-600 text-white rounded-lg text-[10px] font-bold hover:bg-amber-500 cursor-pointer"
+                      >
+                        Settle Cash
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {financeInnerTab === 'pod' && (
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-gray-900 text-sm">Proof of Delivery & Digital Signatures</h4>
+                  <p className="text-xs text-gray-500">Verified digital signatures and recipient OTP photo records</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                {deliveries.filter(d => d.proof).map(d => (
+                  <div key={d.id} className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 space-y-2">
+                    <span className="font-bold text-gray-900 block">{d.delivery_number}</span>
+                    <p className="text-gray-500">{d.recipient_name} &bull; {d.recipient_phone}</p>
+                    <div className="p-2 bg-emerald-50 rounded-xl text-emerald-800 text-[11px] font-medium">
+                      Signed: {d.proof?.receiver_name || 'Customer Signed'}
+                    </div>
+                  </div>
+                ))}
+                {deliveries.filter(d => d.proof).length === 0 && (
+                  <div className="col-span-3 text-center py-8 text-gray-400">
+                    No completed digital signature proofs yet today.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {financeInnerTab === 'returns' && (
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-gray-900 text-sm">Returns & Restock Processing</h4>
+                  <p className="text-xs text-gray-500">Returned parcels ready for inspection and inventory re-entry</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                {deliveries.filter(d => d.status === 'RETURNED_TO_STORE' || d.status === 'FAILED' || d.status === 'CANCELLED').map(d => (
+                  <div key={d.id} className="p-4 rounded-2xl border border-rose-100 bg-rose-50/30 space-y-2">
+                    <span className="font-bold text-gray-900 block">{d.delivery_number}</span>
+                    <p className="text-gray-500">{d.recipient_name} &bull; {d.delivery_address}</p>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                      {d.status}
+                    </span>
+                  </div>
+                ))}
+                {deliveries.filter(d => d.status === 'RETURNED_TO_STORE' || d.status === 'FAILED' || d.status === 'CANCELLED').length === 0 && (
+                  <div className="col-span-3 text-center py-8 text-gray-400">
+                    No returned or failed orders recorded.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 9. SUPPORT, RATINGS & REPORTS */}
+      {(activeTab === 'SERVICE' || activeTab === 'SUPPORT' || activeTab === 'RATINGS' || activeTab === 'REPORTS' || activeTab === 'ANALYTICS' || activeTab === 'NOTIFICATIONS') && (
+        <div className="space-y-6">
+          <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => setServiceInnerTab('tickets')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                serviceInnerTab === 'tickets'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <LifeBuoy className="w-4 h-4" />
+              <span>{lang === 'kh' ? `សំបុត្រគាំទ្រ (${supportTickets.length})` : `Support Tickets (${supportTickets.length})`}</span>
+            </button>
+            <button
+              onClick={() => setServiceInnerTab('ratings')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                serviceInnerTab === 'ratings'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <Star className="w-4 h-4" />
+              <span>{lang === 'kh' ? `ការវាយតម្លៃ (${ratings.length})` : `Customer Ratings (${ratings.length})`}</span>
+            </button>
+            <button
+              onClick={() => setServiceInnerTab('reports')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                serviceInnerTab === 'reports'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>{lang === 'kh' ? 'របាយការណ៍ប្រតិបត្តិការ' : 'Operational Reports & Analytics'}</span>
+            </button>
+          </div>
+
+          {serviceInnerTab === 'tickets' && (
         <div className="space-y-4">
           <div className="bg-white p-4 rounded-3xl border border-gray-100 flex items-center justify-between">
             <div>
@@ -1068,12 +1512,9 @@ export const DeliveryManagementView: React.FC = () => {
             ))}
           </div>
         </div>
-      )}
+          )}
 
-      {/* ========================================================= */}
-      {/* 8. TAB 17: CUSTOMER RATINGS & REVIEWS */}
-      {/* ========================================================= */}
-      {activeTab === 'RATINGS' && (
+          {serviceInnerTab === 'ratings' && (
         <div className="space-y-4">
           <div className="bg-white p-4 rounded-3xl border border-gray-100">
             <h3 className="font-bold text-gray-900 text-sm">Customer Delivery Ratings & Reviews</h3>
@@ -1109,12 +1550,10 @@ export const DeliveryManagementView: React.FC = () => {
             ))}
           </div>
         </div>
-      )}
+          )}
 
-      {/* ========================================================= */}
-      {/* 9. TAB 19: FUNNEL ANALYTICS */}
-      {/* ========================================================= */}
-      {activeTab === 'ANALYTICS' && analytics && (
+          {serviceInnerTab === 'reports' && (
+            analytics ? (
         <div className="space-y-6">
           {/* Conversion Funnel */}
           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xs space-y-4">
@@ -1189,187 +1628,9 @@ export const DeliveryManagementView: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Operations subviews: STAFF, COD, ZONES, TIMESLOTS, FEES, ADDRESSES, TRACKING */}
-      {['ASSIGNMENT', 'TRACKING', 'STAFF', 'ZONES', 'FEES', 'TIMESLOTS', 'ADDRESSES', 'POD', 'RETURNS', 'COD', 'NOTIFICATIONS', 'REPORTS'].includes(activeTab) && (
-        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-xs">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
-            <h3 className="text-base font-bold text-gray-900">
-              {activeTab === 'ASSIGNMENT' && '🎯 Dispatch Board & Workload Assignment'}
-              {activeTab === 'TRACKING' && '📡 Live Delivery Tracking & Simulated GPS Radar'}
-              {activeTab === 'STAFF' && '🛵 Delivery Staff & Fleet Drivers'}
-              {activeTab === 'ZONES' && '🗺️ Delivery Zones & Administrative Boundaries'}
-              {activeTab === 'FEES' && '💲 Delivery Fee Rules & Surcharges'}
-              {activeTab === 'TIMESLOTS' && '⏰ Time Slots & Overbooking Controls'}
-              {activeTab === 'ADDRESSES' && '📍 Customer Address Directory'}
-              {activeTab === 'POD' && '✍️ Proof of Delivery & Digital Signatures'}
-              {activeTab === 'RETURNS' && '🔄 Returned Orders & Warehouse Restock'}
-              {activeTab === 'COD' && '💵 COD Reconciliation & Driver Cash Handover'}
-              {activeTab === 'NOTIFICATIONS' && '🔔 Automated Delivery Notification Center'}
-              {activeTab === 'REPORTS' && '📊 Operational & Financial Reports'}
-            </h3>
-            <button
-              onClick={() => setActiveTab('ORDERS')}
-              className="text-xs text-emerald-600 font-bold hover:underline cursor-pointer"
-            >
-              Back to Orders &rarr;
-            </button>
-          </div>
-
-          {activeTab === 'STAFF' && (
-            <div className="space-y-4">
-              <div className="flex justify-end">
-                <button
-                  onClick={() => setIsDriverModalOpen(true)}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-500 cursor-pointer"
-                >
-                  + Add Driver
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {drivers.map(d => (
-                  <div key={d.id} className="p-4 rounded-2xl border border-gray-100 shadow-xs space-y-2 text-xs bg-white">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-900 text-sm">{d.name}</span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                        {d.current_status}
-                      </span>
-                    </div>
-                    <p className="text-gray-500">{d.phone} &bull; {d.vehicle_type}</p>
-                    <p className="text-gray-400 text-[11px]">Completed: {d.total_deliveries_completed} &bull; ⭐ {d.rating}</p>
-                    <p className="font-bold text-emerald-600 text-xs">Cash in Hand: ${Number(d.active_cash_in_hand).toFixed(2)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'COD' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {driversWithCash.map(d => (
-                  <div key={d.id} className="p-4 rounded-2xl border border-gray-100 bg-amber-50/40 flex items-center justify-between text-xs">
-                    <div>
-                      <span className="font-bold text-gray-900 block">{d.name}</span>
-                      <span className="text-gray-500">{d.phone} &bull; {d.vehicle_type}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-sm font-black text-amber-900 block">${Number(d.active_cash_in_hand).toFixed(2)}</span>
-                      <button
-                        onClick={() => setSettleModalDriver(d)}
-                        className="mt-1 px-3 py-1 bg-amber-600 text-white rounded-lg text-[10px] font-bold hover:bg-amber-500 cursor-pointer"
-                      >
-                        Settle Cash
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'ZONES' && (
-            <div className="space-y-4">
-              <div className="flex justify-end">
-                <button
-                  onClick={() => setIsZoneModalOpen(true)}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-500 cursor-pointer"
-                >
-                  + Add Delivery Zone
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {zones.map(z => (
-                  <div key={z.id} className="p-4 rounded-2xl border border-gray-100 shadow-xs space-y-1.5 text-xs bg-white">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-900 text-sm">{z.name}</span>
-                      <span className="font-mono text-[10px] bg-gray-100 px-2 py-0.5 rounded-md font-bold">{z.code}</span>
-                    </div>
-                    <p className="text-gray-500 text-[11px]">{z.area_description || 'General City Zone'}</p>
-                    <div className="flex justify-between text-gray-700 pt-2 border-t border-gray-50">
-                      <span>Base Fee: <b>${z.base_delivery_fee}</b></span>
-                      <span>Free Over: <b>${z.free_delivery_threshold || 30}</b></span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'TIMESLOTS' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {timeSlots.map(slot => (
-                <div key={slot.id} className="p-4 rounded-2xl border border-gray-100 bg-white shadow-xs text-xs space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-gray-900">{slot.label}</span>
-                    <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">ACTIVE</span>
-                  </div>
-                  <p className="text-gray-500 text-[11px]">Time Window: {slot.start_time} - {slot.end_time}</p>
-                  <p className="text-teal-700 font-semibold text-[11px]">Max Capacity: {slot.max_capacity} orders</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'FEES' && (
-            <div className="space-y-3">
-              {feeRules.map(rule => (
-                <div key={rule.id} className="p-4 rounded-2xl border border-gray-100 bg-white flex items-center justify-between text-xs">
-                  <div>
-                    <span className="font-bold text-gray-900 block">{rule.name}</span>
-                    <span className="text-gray-500 text-[11px]">Tier: ${rule.min_order_value} - ${rule.max_order_value}</span>
-                  </div>
-                  <span className="text-sm font-black text-emerald-600">
-                    {rule.is_free ? 'FREE' : `$${rule.fee_amount}`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'ADDRESSES' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {addresses.map(a => (
-                <div key={a.id} className="p-4 rounded-2xl border border-gray-100 bg-white space-y-1 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-gray-900">{a.label} &bull; {a.recipient_name}</span>
-                    {a.is_default && <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Default</span>}
-                  </div>
-                  <p className="text-gray-600">{a.full_address}</p>
-                  <p className="text-gray-400 text-[10px]">Instructions: {a.delivery_instructions || 'None'}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'TRACKING' && (
-            <div className="p-6 bg-slate-900 text-white rounded-3xl space-y-4 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-emerald-400 text-sm flex items-center space-x-2">
-                  <Navigation className="w-4 h-4 animate-spin" />
-                  <span>Real-Time GPS Tracking & Milestone Pipeline</span>
-                </span>
-                <span className="text-slate-400 font-mono">Simulated Coordinates Active</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-800/80 rounded-2xl border border-slate-700 space-y-2">
-                  <span className="font-bold text-slate-200">Active Trip: DEL-20260908-0101</span>
-                  <p className="text-slate-400">Driver: Vichea Roth (Yamaha QBIX 125)</p>
-                  <p className="text-slate-400">Destination: #45B, St 315, Sangkat Boeung Kak 1, Khan Toul Kork</p>
-                  <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden mt-2">
-                    <div className="bg-emerald-500 h-full rounded-full w-3/4 animate-pulse" />
-                  </div>
-                  <span className="text-emerald-400 font-bold block text-[11px]">ETA: ~12 Mins Remaining (Distance: 2.8 KM)</span>
-                </div>
-                <div className="p-4 bg-slate-800/80 rounded-2xl border border-slate-700 space-y-2">
-                  <span className="font-bold text-slate-200">Live GPS Radar</span>
-                  <div className="w-full h-28 bg-slate-950 rounded-xl border border-slate-700 flex items-center justify-center text-slate-500">
-                    [Radar map simulation: Phnom Penh Center lat: 11.5682, lng: 104.8911]
-                  </div>
-                </div>
-              </div>
-            </div>
+            ) : (
+              <div className="bg-white rounded-3xl p-12 text-center text-gray-400">Loading delivery analytics...</div>
+            )
           )}
         </div>
       )}

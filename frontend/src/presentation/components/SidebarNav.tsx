@@ -82,8 +82,10 @@ interface NavGroup {
 interface RailItem {
   id: NavTab;
   label: string;
+  labelKh?: string;
   icon: React.ReactNode;
   sub: string;
+  subKh?: string;
   badge?: number | string;
   hotkey?: string;
 }
@@ -266,170 +268,62 @@ export const SidebarNav: React.FC = () => {
         title: 'Delivery & Logistics',
         titleKh: 'ការដឹកជញ្ជូន & ភស្តុភារ',
         icon: <Truck className="w-4 h-4" />,
-        badge: 'LIVE',
         items: [
           {
             id: 'delivery_dashboard',
-            name: '01. Delivery Dashboard',
+            name: 'Delivery Dashboard',
             nameKh: 'ផ្ទាំងគ្រប់គ្រងដឹកជញ្ជូន',
             icon: <BarChart3 className="w-4 h-4" />,
             tab: 'delivery',
             subTab: 'DASHBOARD',
-            badge: 'LIVE',
-            description: 'Live KPIs, dispatch & performance',
           },
           {
             id: 'delivery_orders',
-            name: '02. Orders & Pipeline',
-            nameKh: 'ការបញ្ជាទិញ & ដំណើរការ',
+            name: 'Orders & Dispatch',
+            nameKh: 'ការបញ្ជាទិញ & បែងចែកអ្នកដឹក',
             icon: <Package className="w-4 h-4" />,
             tab: 'delivery',
             subTab: 'ORDERS',
-            description: 'Delivery orders, pipeline & status',
-          },
-          {
-            id: 'delivery_assignment',
-            name: '03. Dispatch Board',
-            nameKh: 'ក្តារបញ្ជូន & បែងចែកអ្នកដឹក',
-            icon: <CheckSquare className="w-4 h-4" />,
-            tab: 'delivery',
-            subTab: 'ASSIGNMENT',
-            description: 'Assign riders & bulk dispatch',
-          },
-          {
-            id: 'delivery_tracking',
-            name: '04. Live GPS Tracking',
-            nameKh: 'តាមដាន GPS ផ្ទាល់',
-            icon: <Navigation className="w-4 h-4" />,
-            tab: 'delivery',
-            subTab: 'TRACKING',
-            description: 'Real-time delivery map & timeline',
           },
           {
             id: 'delivery_routes',
-            name: '05. Multi-Stop Routes',
-            nameKh: 'ផ្លូវដឹកជញ្ជូនច្រើនចំណត',
+            name: 'Routes & Scheduling',
+            nameKh: 'ផ្លូវដឹក & ម៉ោងកំណត់',
             icon: <RouteIcon className="w-4 h-4" />,
             tab: 'delivery',
             subTab: 'ROUTES',
-            description: 'Route optimization & stops',
           },
           {
-            id: 'delivery_staff',
-            name: '06. Delivery Staff & Riders',
-            nameKh: 'អ្នកដឹកជញ្ជូន & អ្នកជិះ',
+            id: 'delivery_fleet',
+            name: 'Fleet & Drivers',
+            nameKh: 'អ្នកដឹក & យានជំនិះ',
             icon: <UserCheck className="w-4 h-4" />,
             tab: 'delivery',
-            subTab: 'STAFF',
-            description: 'Driver profiles, licenses & workloads',
-          },
-          {
-            id: 'delivery_vehicles',
-            name: '07. Fleet & Vehicles',
-            nameKh: 'យានជំនិះ & ការថែទាំ',
-            icon: <Truck className="w-4 h-4" />,
-            tab: 'delivery',
-            subTab: 'VEHICLES',
-            description: 'Bikes, vans & vehicle maintenance',
+            subTab: 'FLEET',
           },
           {
             id: 'delivery_zones',
-            name: '08. Delivery Zones',
+            name: 'Zones & Pricing',
             nameKh: 'តំបន់ដឹកជញ្ជូន & ថ្លៃសេវា',
             icon: <Layers className="w-4 h-4" />,
             tab: 'delivery',
             subTab: 'ZONES',
-            description: 'Zone boundaries & base pricing',
           },
           {
-            id: 'delivery_fees',
-            name: '09. Fee Surcharges',
-            nameKh: 'ច្បាប់គិតថ្លៃ & បន្ថែម',
-            icon: <SlidersHorizontal className="w-4 h-4" />,
-            tab: 'delivery',
-            subTab: 'FEES',
-            description: 'Distance, weight & peak surcharges',
-          },
-          {
-            id: 'delivery_timeslots',
-            name: '10. Time Slots',
-            nameKh: 'ម៉ោងកំណត់ដឹកជញ្ជូន',
-            icon: <Clock className="w-4 h-4" />,
-            tab: 'delivery',
-            subTab: 'TIMESLOTS',
-            description: 'Delivery windows & capacity limits',
-          },
-          {
-            id: 'delivery_addresses',
-            name: '11. Address Book',
-            nameKh: 'សៀវភៅអាសយដ្ឋានអតិថិជន',
-            icon: <MapPin className="w-4 h-4" />,
-            tab: 'delivery',
-            subTab: 'ADDRESSES',
-            description: 'Saved delivery addresses & GPS pins',
-          },
-          {
-            id: 'delivery_pod',
-            name: '12. Proof of Delivery (POD)',
-            nameKh: 'ភស្តុតាងនៃការប្រគល់ (POD)',
-            icon: <Shield className="w-4 h-4" />,
-            tab: 'delivery',
-            subTab: 'POD',
-            description: 'Digital signatures, photos & OTP',
-          },
-          {
-            id: 'delivery_returns',
-            name: '13. Returns & Restock',
-            nameKh: 'ការប្រគល់ត្រឡប់ & ស្តុក',
-            icon: <RotateCcw className="w-4 h-4" />,
-            tab: 'delivery',
-            subTab: 'RETURNS',
-            description: 'Failed deliveries & warehouse return',
-          },
-          {
-            id: 'delivery_cod',
-            name: '14. COD & Settlements',
-            nameKh: 'ទូទាត់ប្រាក់ COD & អ្នកដឹក',
+            id: 'delivery_finance',
+            name: 'COD & Proof of Delivery',
+            nameKh: 'ទូទាត់ COD & ភស្តុតាង (POD)',
             icon: <DollarSign className="w-4 h-4" />,
             tab: 'delivery',
-            subTab: 'COD',
-            description: 'Cash-on-delivery reconciliation',
+            subTab: 'FINANCE',
           },
           {
-            id: 'delivery_support',
-            name: '15. Support & Issues',
-            nameKh: 'សំបុត្រគាំទ្រ & ពាក្យបណ្តឹង',
+            id: 'delivery_service',
+            name: 'Support & Reports',
+            nameKh: 'សំបុត្រគាំទ្រ & របាយការណ៍',
             icon: <LifeBuoy className="w-4 h-4" />,
             tab: 'delivery',
-            subTab: 'SUPPORT',
-            description: 'Customer claims & tickets',
-          },
-          {
-            id: 'delivery_ratings',
-            name: '16. Ratings & Feedback',
-            nameKh: 'ការវាយតម្លៃអតិថិជន',
-            icon: <Star className="w-4 h-4" />,
-            tab: 'delivery',
-            subTab: 'RATINGS',
-            description: 'Driver performance & satisfaction',
-          },
-          {
-            id: 'delivery_reports',
-            name: '17. Operational Reports',
-            nameKh: 'របាយការណ៍ប្រតិបត្តិការ',
-            icon: <FileSpreadsheet className="w-4 h-4" />,
-            tab: 'delivery',
-            subTab: 'REPORTS',
-            description: 'Export trip logs & driver performance',
-          },
-          {
-            id: 'delivery_analytics',
-            name: '18. Funnel Analytics',
-            nameKh: 'ការវិភាគភស្តុភារ',
-            icon: <Sparkles className="w-4 h-4" />,
-            tab: 'delivery',
-            subTab: 'ANALYTICS',
-            description: 'On-time delivery rate & trends',
+            subTab: 'SERVICE',
           },
         ],
       },
@@ -438,20 +332,18 @@ export const SidebarNav: React.FC = () => {
         title: 'Product Management',
         titleKh: 'គ្រប់គ្រងទំនិញ & វដ្តជីវិត',
         icon: <Package className="w-4 h-4" />,
-        badge: 'PRO',
         items: [
           {
             id: 'prod_dashboard',
-            name: '01. Product Dashboard',
+            name: 'Product Dashboard',
             nameKh: 'ផ្ទាំងគ្រប់គ្រងទំនិញ & KPI',
             icon: <BarChart3 className="w-4 h-4" />,
             tab: 'products',
             subTab: 'dashboard',
-            badge: 'LIVE',
           },
           {
             id: 'prod_catalog',
-            name: '02. Product Catalog',
+            name: 'Product Catalog',
             nameKh: 'កាតាឡុកទំនិញ',
             icon: <Package className="w-4 h-4" />,
             tab: 'products',
@@ -459,7 +351,7 @@ export const SidebarNav: React.FC = () => {
           },
           {
             id: 'prod_attributes',
-            name: '03. Categories, Brands & Units',
+            name: 'Categories, Brands & Units',
             nameKh: 'ជំពូក ម៉ាកយីហោ & ខ្នាត',
             icon: <FolderTree className="w-4 h-4" />,
             tab: 'products',
@@ -467,7 +359,7 @@ export const SidebarNav: React.FC = () => {
           },
           {
             id: 'prod_variants',
-            name: '04. Variant Matrix',
+            name: 'Variant Matrix',
             nameKh: 'ម៉ាទ្រីសទំហំ & ពណ៌',
             icon: <Sparkles className="w-4 h-4" />,
             tab: 'products',
@@ -475,7 +367,7 @@ export const SidebarNav: React.FC = () => {
           },
           {
             id: 'prod_pricing',
-            name: '05. Pricing & Cost Studio',
+            name: 'Pricing & Cost Studio',
             nameKh: 'តម្លៃ & ថ្លៃដើមពេញលេញ',
             icon: <DollarSign className="w-4 h-4" />,
             tab: 'products',
@@ -483,7 +375,7 @@ export const SidebarNav: React.FC = () => {
           },
           {
             id: 'prod_tracking',
-            name: '06. Batches, Serials & Warranties',
+            name: 'Batches, Serials & Warranties',
             nameKh: 'ឡូត៍ លេខស៊េរី & ការធានា',
             icon: <Calendar className="w-4 h-4" />,
             tab: 'products',
@@ -491,7 +383,7 @@ export const SidebarNav: React.FC = () => {
           },
           {
             id: 'prod_manufacturing',
-            name: '07. Manufacturing & Bundles',
+            name: 'Manufacturing & Bundles',
             nameKh: 'ផលិតកម្ម BOM & កញ្ចប់ទំនិញ',
             icon: <Wrench className="w-4 h-4" />,
             tab: 'products',
@@ -499,7 +391,7 @@ export const SidebarNav: React.FC = () => {
           },
           {
             id: 'prod_barcodes',
-            name: '08. Barcode & Print Studio',
+            name: 'Barcode & Print Studio',
             nameKh: 'ស្ទូឌីយោបាកូដ & បោះពុម្ព',
             icon: <Barcode className="w-4 h-4" />,
             tab: 'products',
@@ -507,7 +399,7 @@ export const SidebarNav: React.FC = () => {
           },
           {
             id: 'prod_data',
-            name: '09. Data & Operations',
+            name: 'Data & Operations',
             nameKh: 'នាំចូល/ចេញ & កំណត់ហេតុ',
             icon: <FileSpreadsheet className="w-4 h-4" />,
             tab: 'products',
@@ -683,26 +575,26 @@ export const SidebarNav: React.FC = () => {
   const railItems: RailItem[] = useMemo(() => {
     if (isCustomerOnly) {
       return [
-        { id: 'dashboard' as NavTab, label: 'Dashboard', icon: <Home className="w-5 h-5" />, sub: 'My Overview' },
-        { id: 'sales' as NavTab, label: 'Orders', icon: <History className="w-5 h-5" />, sub: 'My Orders' },
-        { id: 'invoices' as NavTab, label: 'Invoices', icon: <FileText className="w-5 h-5" />, sub: 'My Invoices' },
-        { id: 'notifications' as NavTab, label: 'Alerts', icon: <Bell className="w-5 h-5" />, badge: unreadNotifCount, sub: 'Notifications' },
-        { id: 'profile' as NavTab, label: 'Profile', icon: <Users className="w-5 h-5" />, sub: 'My Account' },
-        { id: 'settings' as NavTab, label: 'Settings', icon: <Settings className="w-5 h-5" />, sub: 'Preferences' },
+        { id: 'dashboard' as NavTab, label: 'Dashboard', labelKh: 'ផ្ទាំងគ្រប់គ្រង', icon: <Home className="w-5 h-5" />, sub: 'My Overview', subKh: 'ទិដ្ឋភាពទូទៅ' },
+        { id: 'sales' as NavTab, label: 'Orders', labelKh: 'ការបញ្ជាទិញ', icon: <History className="w-5 h-5" />, sub: 'My Orders', subKh: 'ការបញ្ជាទិញរបស់ខ្ញុំ' },
+        { id: 'invoices' as NavTab, label: 'Invoices', labelKh: 'វិក្កយបត្រ', icon: <FileText className="w-5 h-5" />, sub: 'My Invoices', subKh: 'វិក្កយបត្ររបស់ខ្ញុំ' },
+        { id: 'notifications' as NavTab, label: 'Alerts', labelKh: 'ដំណឹង', icon: <Bell className="w-5 h-5" />, badge: unreadNotifCount, sub: 'Notifications', subKh: 'សារជូនដំណឹង' },
+        { id: 'profile' as NavTab, label: 'Profile', labelKh: 'គណនី', icon: <Users className="w-5 h-5" />, sub: 'My Account', subKh: 'គណនីរបស់ខ្ញុំ' },
+        { id: 'settings' as NavTab, label: 'Settings', labelKh: 'ការកំណត់', icon: <Settings className="w-5 h-5" />, sub: 'Preferences', subKh: 'ការកំណត់' },
       ];
     }
     return [
-      { id: 'dashboard' as NavTab, label: 'Dashboard', icon: <Home className="w-5 h-5" />, hotkey: 'F7', sub: 'Executive KPI' },
-      { id: 'pos' as NavTab, label: 'POS & Sales', icon: <ShoppingCart className="w-5 h-5" />, badge: totalCartCount, hotkey: 'F1', sub: 'Cashier Checkout' },
-      { id: 'products' as NavTab, label: 'Products', icon: <Package className="w-5 h-5" />, sub: 'Product Hub & 42 Mods' },
-      { id: 'delivery' as NavTab, label: 'Delivery', icon: <Truck className="w-5 h-5" />, hotkey: 'F7', sub: 'Fleet & Logistics' },
-      { id: 'inventory' as NavTab, label: 'Inventory', icon: <Boxes className="w-5 h-5" />, hotkey: 'F5', sub: 'Stock & Ledger' },
-      { id: 'customers' as NavTab, label: 'Customers', icon: <Users className="w-5 h-5" />, hotkey: 'F8', sub: 'Loyalty Program' },
-      { id: 'invoices' as NavTab, label: 'Invoices', icon: <FileText className="w-5 h-5" />, hotkey: 'F4', sub: 'Fiscal Tax Records' },
-      { id: 'notifications' as NavTab, label: 'Notifications', icon: <Bell className="w-5 h-5" />, badge: unreadNotifCount, hotkey: 'F9', sub: 'Alerts & Warnings' },
-      { id: 'security' as NavTab, label: 'Security & Audit', icon: <Shield className="w-5 h-5" />, hotkey: 'F10', sub: 'Audit Trail & Roles' },
-      { id: 'backup' as NavTab, label: 'Backup & Data', icon: <Database className="w-5 h-5" />, hotkey: 'F11', sub: 'Snapshots & Exports' },
-      { id: 'settings' as NavTab, label: 'Settings', icon: <Settings className="w-5 h-5" />, hotkey: 'F12', sub: 'Store & Branch Config' },
+      { id: 'dashboard' as NavTab, label: 'Dashboard', labelKh: 'ផ្ទាំងគ្រប់គ្រង', icon: <Home className="w-5 h-5" />, hotkey: 'F7', sub: 'Executive KPI', subKh: 'ទិន្នន័យប្រតិបត្តិការ' },
+      { id: 'pos' as NavTab, label: 'POS & Sales', labelKh: 'កន្លែងលក់ POS', icon: <ShoppingCart className="w-5 h-5" />, badge: totalCartCount, hotkey: 'F1', sub: 'Cashier Checkout', subKh: 'គិតប្រាក់' },
+      { id: 'products' as NavTab, label: 'Products', labelKh: 'គ្រប់គ្រងទំនិញ', icon: <Package className="w-5 h-5" />, sub: 'Product Hub', subKh: 'មជ្ឈមណ្ឌលទំនិញ' },
+      { id: 'delivery' as NavTab, label: 'Delivery', labelKh: 'ដឹកជញ្ជូន', icon: <Truck className="w-5 h-5" />, hotkey: 'F7', sub: 'Fleet & Logistics', subKh: 'ភស្តុភារ & អ្នកដឹក' },
+      { id: 'inventory' as NavTab, label: 'Inventory', labelKh: 'ស្តុកទំនិញ', icon: <Boxes className="w-5 h-5" />, hotkey: 'F5', sub: 'Stock & Ledger', subKh: 'ស្តុក & ចលនាទំនិញ' },
+      { id: 'customers' as NavTab, label: 'Customers', labelKh: 'អតិថិជន', icon: <Users className="w-5 h-5" />, hotkey: 'F8', sub: 'Loyalty Program', subKh: 'សន្សំពិន្ទុ' },
+      { id: 'invoices' as NavTab, label: 'Invoices', labelKh: 'វិក្កយបត្រ', icon: <FileText className="w-5 h-5" />, hotkey: 'F4', sub: 'Fiscal Tax Records', subKh: 'វិក្កយបត្រអេឡិចត្រូនិច' },
+      { id: 'notifications' as NavTab, label: 'Notifications', labelKh: 'ដំណឹង', icon: <Bell className="w-5 h-5" />, badge: unreadNotifCount, hotkey: 'F9', sub: 'Alerts & Warnings', subKh: 'សារជូនដំណឹង' },
+      { id: 'security' as NavTab, label: 'Security & Audit', labelKh: 'សុវត្ថិភាព', icon: <Shield className="w-5 h-5" />, hotkey: 'F10', sub: 'Audit Trail & Roles', subKh: 'កំណត់ហេតុ & សិទ្ធិ' },
+      { id: 'backup' as NavTab, label: 'Backup & Data', labelKh: 'បម្រុងទុក', icon: <Database className="w-5 h-5" />, hotkey: 'F11', sub: 'Snapshots & Exports', subKh: 'ទិន្នន័យបម្រុង' },
+      { id: 'settings' as NavTab, label: 'Settings', labelKh: 'ការកំណត់', icon: <Settings className="w-5 h-5" />, hotkey: 'F12', sub: 'Store & Branch Config', subKh: 'ការកំណត់ហាង & សាខា' },
     ];
   }, [totalCartCount, unreadNotifCount, isCustomerOnly]);
 
@@ -827,10 +719,10 @@ export const SidebarNav: React.FC = () => {
                   {/* Floating Hover Tooltip */}
                   <div className="absolute left-16 px-3 py-1.5 bg-gray-900 text-white text-xs font-semibold rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition whitespace-nowrap z-50 shadow-xl flex flex-col items-start leading-tight">
                     <div className="flex items-center space-x-2">
-                      <span className="font-bold">{item.label}</span>
+                      <span className="font-bold">{lang === 'kh' && item.labelKh ? item.labelKh : item.label}</span>
                       {item.hotkey && <span className="text-gray-400 font-mono text-[10px]">({item.hotkey})</span>}
                     </div>
-                    <span className="text-[10px] text-gray-400 font-normal">{item.sub}</span>
+                    <span className="text-[10px] text-gray-400 font-normal">{lang === 'kh' && item.subKh ? item.subKh : item.sub}</span>
                   </div>
                 </button>
               );
@@ -980,9 +872,21 @@ export const SidebarNav: React.FC = () => {
                           return false;
                         };
 
+                        const isDeliverySubActive = (subTab?: string) => {
+                          if (!subTab) return true;
+                          if (deliverySubTab === subTab) return true;
+                          if (subTab === 'ORDERS' && ['ORDERS', 'ASSIGNMENT', 'TRACKING'].includes(deliverySubTab)) return true;
+                          if (subTab === 'ROUTES' && ['ROUTES', 'TIMESLOTS'].includes(deliverySubTab)) return true;
+                          if (subTab === 'FLEET' && ['STAFF', 'VEHICLES', 'FLEET'].includes(deliverySubTab)) return true;
+                          if (subTab === 'ZONES' && ['ZONES', 'FEES', 'ADDRESSES'].includes(deliverySubTab)) return true;
+                          if (subTab === 'FINANCE' && ['COD', 'POD', 'RETURNS', 'FINANCE'].includes(deliverySubTab)) return true;
+                          if (subTab === 'SERVICE' && ['NOTIFICATIONS', 'SUPPORT', 'RATINGS', 'REPORTS', 'ANALYTICS', 'SERVICE'].includes(deliverySubTab)) return true;
+                          return false;
+                        };
+
                         const isActive =
                           item.tab === 'delivery'
-                            ? activeTab === 'delivery' && (!item.subTab || deliverySubTab === item.subTab)
+                            ? activeTab === 'delivery' && isDeliverySubActive(item.subTab)
                             : item.tab === 'products'
                             ? activeTab === 'products' && isProductSubActive(item.subTab)
                             : activeTab === item.tab;
@@ -1067,7 +971,7 @@ export const SidebarNav: React.FC = () => {
           {/* Bottom Brand Tagline matching reference footer */}
           <div className="pt-2 border-t border-gray-200/70 flex items-center justify-center space-x-1.5 text-slate-400">
             <span className="text-[11px] font-bold text-slate-700">SmartPOS</span>
-            <span className="text-[10px] text-slate-400">• Fast • Simple • Reliable</span>
+            <span className="text-[10px] text-slate-400">{lang === 'kh' ? '• រហ័ស • ងាយស្រួល • ទុកចិត្ត' : '• Fast • Simple • Reliable'}</span>
           </div>
         </div>
       </aside>

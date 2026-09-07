@@ -37,9 +37,9 @@ export const Navbar: React.FC = () => {
       case 'pos':
         return t.posTerminal;
       case 'products':
-        return t.products || 'Product Catalog';
+        return t.productManagement || t.products;
       case 'shifts':
-        return t.shiftsAndDrawer || 'Shifts & Cash Drawer';
+        return t.shifts || t.shiftsAndDrawer;
       case 'sales':
         return t.salesHistory;
       case 'invoices':
@@ -51,23 +51,29 @@ export const Navbar: React.FC = () => {
       case 'dashboard':
         return t.dashboard;
       case 'reports':
-        return 'Financial & Sales Reports Portal';
+        return t.reports;
       case 'customers':
-        return 'Customers & Loyalty';
+        return t.customers;
+      case 'delivery':
+        return t.delivery;
       case 'employees':
-        return 'Staff & Cashiers Directory';
+        return t.employees;
       case 'attendances':
-        return 'Staff Attendance & Time Clock';
+        return t.attendances;
+      case 'payroll':
+        return t.payroll;
+      case 'store-qr-codes':
+        return t.storeQrCodes;
       case 'notifications':
-        return 'Notification Center';
+        return t.notifications;
       case 'security':
-        return 'Security & Audit Trail';
+        return t.security;
       case 'backup':
-        return 'Database Backup & Snapshots';
+        return t.backup;
       case 'settings':
-        return 'System & Station Settings';
+        return t.settings;
       case 'profile':
-        return t.userProfile || 'User Profile & Station';
+        return t.profile || t.userProfile;
       default:
         return 'SmartPOS';
     }
@@ -91,7 +97,7 @@ export const Navbar: React.FC = () => {
               }
             }}
             className="w-10 h-10 rounded-xl text-gray-700 bg-gray-50/80 hover:text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 transition-all flex items-center justify-center border border-gray-200 shadow-xs shrink-0 cursor-pointer"
-            title={isSidebarCollapsed ? 'Expand Sidebar Navigation (☰)' : 'Collapse Sidebar Navigation (☰)'}
+            title={isSidebarCollapsed ? (lang === 'kh' ? 'ពង្រីករបាររុករក' : 'Expand Sidebar Navigation') : (lang === 'kh' ? 'បង្រួមរបាររុករក' : 'Collapse Sidebar Navigation')}
             aria-label="Toggle Sidebar Navigation"
           >
             <Menu className="w-5 h-5" strokeWidth={2.2} />
@@ -104,7 +110,7 @@ export const Navbar: React.FC = () => {
                 HQ-01
               </span>
             </div>
-            <span className="text-[11px] text-gray-400 hidden sm:block">Phnom Penh Headquarters Station</span>
+            <span className="text-[11px] text-gray-400 hidden sm:block">{t.hqStation}</span>
           </div>
         </div>
 

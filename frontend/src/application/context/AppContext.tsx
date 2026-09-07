@@ -13,6 +13,7 @@ export type NavTab =
   | 'purchases'
   | 'shifts'
   | 'customers'
+  | 'delivery'
   | 'employees'
   | 'attendances'
   | 'store-qr-codes'
@@ -63,6 +64,8 @@ interface AppContextType {
   logoutUser: () => void;
   lockSession: () => void;
   unlockSession: () => void;
+  isScanBeepEnabled: boolean;
+  toggleScanBeep: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -95,6 +98,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
+  const [isScanBeepEnabled, setIsScanBeepEnabled] = useState<boolean>(() => {
+    return localStorage.getItem('smartpos_scan_beep') !== 'false';
+  });
+  const toggleScanBeep = () => {
+    setIsScanBeepEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem('smartpos_scan_beep', String(next));
+      if (next) {
+        try {
+          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioCtx) {
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            gain.gain.setValueAtTime(0.15, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.12);
+          }
+        } catch (e) {}
+      }
+      return next;
+    });
+  };
 
   // Current User Profile State & Auth Session (Managed via HttpOnly Session Cookie)
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -322,6 +354,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         logoutUser,
         lockSession,
         unlockSession,
+        isScanBeepEnabled,
+        toggleScanBeep,
       }}
     >
       {children}

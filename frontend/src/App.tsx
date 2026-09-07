@@ -21,6 +21,7 @@ import { SecurityAuditView } from './features/security/SecurityAuditView';
 import { BackupManagementView } from './features/backup/BackupManagementView';
 import { SettingsView } from './features/settings/SettingsView';
 import { UserProfileView } from './features/profile/UserProfileView';
+import { DeliveryManagementView } from './features/delivery/DeliveryManagementView';
 import { CustomerFacingDisplay } from './features/pos/CustomerFacingDisplay';
 import { KeyboardShortcutsModal } from './presentation/components/KeyboardShortcutsModal';
 import { LoginView } from './features/auth/LoginView';
@@ -44,6 +45,7 @@ const MainContent: React.FC = () => {
       {activeTab === 'purchases' && <PurchasingPortalView />}
       {activeTab === 'shifts' && <ShiftManagementView />}
       {activeTab === 'customers' && <CustomerManagementView />}
+      {activeTab === 'delivery' && <DeliveryManagementView />}
       {activeTab === 'employees' && <EmployeeManagementView />}
       {activeTab === 'attendances' && <AttendanceKioskView />}
       {activeTab === 'store-qr-codes' && <StoreQrManagementView />}

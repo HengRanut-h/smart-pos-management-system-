@@ -31,6 +31,7 @@ import {
   Clock,
   QrCode,
   DollarSign,
+  ChevronsRight,
 } from 'lucide-react';
 
 interface NavItem {
@@ -69,7 +70,7 @@ export const SidebarNav: React.FC = () => {
   } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [collapsedGroups, setCollapsedGroups] = useState<{ [key: string]: boolean }>({});
+  const [openGroupId, setOpenGroupId] = useState<string | null>(null);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
 
   const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -82,10 +83,8 @@ export const SidebarNav: React.FC = () => {
   }, [activeTab]);
 
   const toggleGroup = (groupId: string) => {
-    setCollapsedGroups((prev) => ({
-      ...prev,
-      [groupId]: !prev[groupId],
-    }));
+    // Single open dropdown accordion: opening one closes any previously open dropdown automatically
+    setOpenGroupId((prev) => (prev === groupId ? null : groupId));
   };
 
   const isCustomerOnly = useMemo(() => {
@@ -163,20 +162,11 @@ export const SidebarNav: React.FC = () => {
 
     return [
       {
-        id: 'analytics',
-        title: 'Dashboard & KPI',
-        titleKh: 'ផ្ទាំងគ្រប់គ្រង & ទិន្នន័យ',
-        icon: <Home className="w-4 h-4" />,
+        id: 'reports_group',
+        title: 'General Reports',
+        titleKh: 'របាយការណ៍ទូទៅ',
+        icon: <FileBarChart className="w-4 h-4" />,
         items: [
-          {
-            id: 'dashboard',
-            name: 'Executive Dashboard',
-            nameKh: 'ផ្ទាំងគ្រប់គ្រងទូទៅ',
-            icon: <Home className="w-4 h-4" />,
-            tab: 'dashboard',
-            hotkey: 'F7',
-            description: 'Live revenue & sales metrics',
-          },
           {
             id: 'reports',
             name: 'Financial & Sales Reports',
@@ -229,6 +219,25 @@ export const SidebarNav: React.FC = () => {
             tab: 'purchases',
             hotkey: 'F6',
             description: 'Vendor orders & receiving',
+          },
+        ],
+      },
+      {
+        id: 'delivery_group',
+        title: 'Delivery & Logistics',
+        titleKh: 'ការដឹកជញ្ជូន & ភស្តុភារ',
+        icon: <Truck className="w-4 h-4" />,
+        badge: 'LIVE',
+        items: [
+          {
+            id: 'delivery',
+            name: 'Delivery Management',
+            nameKh: 'គ្រប់គ្រងការដឹកជញ្ជូន',
+            icon: <Truck className="w-4 h-4" />,
+            tab: 'delivery',
+            hotkey: 'F7',
+            badge: 'LIVE',
+            description: 'Orders, dispatch, tracking, zones & COD',
           },
         ],
       },
@@ -394,6 +403,16 @@ export const SidebarNav: React.FC = () => {
       },
     ];
   }, [totalCartCount, unreadNotifCount, isCustomerOnly]);
+  // When activeTab changes (e.g. user continues to another navigation item), auto-close previous dropdown
+  useEffect(() => {
+    const activeGroup = navGroups.find((g) => g.items.some((item) => item.tab === activeTab));
+    if (activeGroup) {
+      setOpenGroupId(activeGroup.id);
+    } else {
+      // If navigating to Dashboard or another top-level screen, close all dropdowns automatically
+      setOpenGroupId(null);
+    }
+  }, [activeTab, navGroups]);
 
   const railItems = useMemo(() => {
     if (isCustomerOnly) {
@@ -546,37 +565,14 @@ export const SidebarNav: React.FC = () => {
           </nav>
         </div>
 
-        {/* Bottom Rail: Live Shift Status & Language Switcher */}
+        {/* Bottom Rail: User Profile */}
         <div className="flex flex-col items-center space-y-2.5 w-full px-2 pt-2 border-t border-gray-100">
-          {/* Shift status pulse dot */}
           <button
-            onClick={() => handleSelectTab('shifts')}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center border transition relative group ${
-              isShiftOpen ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'
-            }`}
-            title={isShiftOpen ? 'Shift Open (F2)' : 'Drawer Closed (F2)'}
+            onClick={() => handleSelectTab('profile')}
+            className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs shadow-xs transition transform hover:scale-105"
+            title={`${currentUser?.first_name || 'Lead'} ${currentUser?.last_name || 'Admin'} (${currentUser?.primary_role || 'SuperAdministrator'})`}
           >
-            {isShiftOpen ? (
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </span>
-            ) : (
-              <Lock className="w-4 h-4 text-amber-600" />
-            )}
-
-            <div className="absolute left-14 px-2.5 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50 shadow-lg">
-              {isShiftOpen ? 'Shift Active (F2)' : 'Shift Closed (F2)'}
-            </div>
-          </button>
-
-          {/* Compact Language button */}
-          <button
-            onClick={() => setLang(lang === 'en' ? 'kh' : 'en')}
-            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center text-xs font-bold transition"
-            title={`Switch to ${lang === 'en' ? 'Khmer' : 'English'}`}
-          >
-            {lang === 'en' ? 'EN' : 'ខ្មែរ'}
+            {currentUser?.first_name?.charAt(0) || 'L'}{currentUser?.last_name?.charAt(0) || 'A'}
           </button>
         </div>
       </aside>
@@ -604,16 +600,6 @@ export const SidebarNav: React.FC = () => {
             >
               <SmartPosLogo variant="full" size="md" />
             </div>
-
-            {/* Collapse toggle button: ☰ fixed on far right */}
-            <button
-              onClick={toggleSidebarCollapse}
-              className="hidden lg:flex p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition"
-              title="Collapse to Rail Mode (☰)"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-
 
             {/* Mobile close button */}
             <button
@@ -646,61 +632,87 @@ export const SidebarNav: React.FC = () => {
             </div>
           </div>
 
+          {/* Top Primary Active Dashboard Pill (styled consistently like all other navigation items) */}
+          <div className="px-3 pt-2 pb-0.5">
+            <button
+              onClick={() => handleSelectTab('dashboard')}
+              className={`nav-item-pill ${activeTab === 'dashboard' ? 'is-active' : ''}`}
+            >
+              <div className="flex items-center space-x-2.5 min-w-0">
+                <span className={`${activeTab === 'dashboard' ? 'text-emerald-600' : 'text-slate-500'} shrink-0`}>
+                  <Home className="w-4 h-4" />
+                </span>
+                <span className={`text-[13px] truncate ${activeTab === 'dashboard' ? 'text-emerald-700 font-bold' : 'text-slate-800 font-medium'}`}>
+                  {lang === 'kh' ? 'ផ្ទាំងគ្រប់គ្រង' : 'Dashboard'}
+                </span>
+              </div>
+            </button>
+          </div>
+
           {/* Navigation Accordion Groups */}
-          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+          <div className="flex-1 overflow-y-auto px-3 py-1 space-y-1">
             {filteredGroups.map((group) => {
-              const isCollapsed = collapsedGroups[group.id];
+              const hasSubnav = group.items.length > 1;
+              const isCollapsed = searchQuery ? false : openGroupId !== group.id;
               const hasActiveChild = group.items.some((item) => activeTab === item.tab);
 
+              const handleGroupClick = () => {
+                if (hasSubnav) {
+                  toggleGroup(group.id);
+                } else if (group.items[0]) {
+                  handleSelectTab(group.items[0].tab);
+                }
+              };
+
               return (
-                <div key={group.id} className="space-y-1">
-                  {/* Group Header (Clickable Dropdown Toggle) */}
+                <div key={group.id} className="space-y-0.5">
+                  {/* Group Header (Clickable: toggles if has subnav, navigates directly if no subnav) */}
                   <button
-                    onClick={() => toggleGroup(group.id)}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 rounded-lg transition hover:bg-gray-50 select-none group"
+                    onClick={handleGroupClick}
+                    className={`nav-item-pill ${hasActiveChild ? 'is-active' : ''}`}
                   >
-                    <div className="flex items-center space-x-2">
-                      <span className={`${hasActiveChild ? 'text-emerald-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <span className={`${hasActiveChild ? 'text-emerald-600' : 'text-slate-500'} shrink-0`}>
                         {group.icon}
                       </span>
-                      <span className="uppercase tracking-wider text-[11px]">
+                      <span className={`text-[13px] truncate ${hasActiveChild ? 'text-emerald-700 font-bold' : 'text-slate-800 font-medium'}`}>
                         {lang === 'kh' ? group.titleKh : group.title}
                       </span>
                     </div>
-                    <div className="text-gray-400 group-hover:text-gray-600 transition">
-                      {isCollapsed ? (
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      ) : (
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      )}
-                    </div>
+
+                    {/* Only display arrow dropdown icon if this item actually has sub-navigation */}
+                    {hasSubnav && (
+                      <div className={`transition ml-2 shrink-0 ${hasActiveChild ? 'text-emerald-600' : 'text-slate-400'}`}>
+                        {isCollapsed ? (
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        )}
+                      </div>
+                    )}
                   </button>
 
-                  {/* Group Items */}
-                  {!isCollapsed && (
-                    <div className="space-y-1 pl-1">
+                  {/* Group Items (only render dropdown if it has sub-navigation and is open) */}
+                  {hasSubnav && !isCollapsed && (
+                    <div className="pl-3 pr-1 py-1 space-y-1">
                       {group.items.map((item) => {
                         const isActive = activeTab === item.tab;
                         return (
                           <button
                             key={item.id}
                             onClick={() => handleSelectTab(item.tab)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition text-left group ${
-                              isActive
-                                ? 'bg-emerald-50 text-emerald-800 font-semibold shadow-xs border border-emerald-200/60'
-                                : 'text-gray-600 hover:bg-gray-100/80 hover:text-gray-900'
-                            }`}
+                            className={`nav-subitem-pill ${isActive ? 'is-active' : ''}`}
                           >
-                            <div className="flex items-center space-x-2.5 min-w-0">
+                            <div className="flex items-center space-x-2 min-w-0">
                               <span
                                 className={`shrink-0 transition ${
-                                  isActive ? 'text-emerald-600' : 'text-gray-400 group-hover:text-gray-600'
+                                  isActive ? 'text-emerald-600' : 'text-slate-400'
                                 }`}
                               >
                                 {item.icon}
                               </span>
                               <div className="truncate">
-                                <span className="block truncate">
+                                <span className="block truncate text-[12px] font-medium">
                                   {lang === 'kh' && item.nameKh ? item.nameKh : item.name}
                                 </span>
                                 {item.description && (
@@ -726,7 +738,7 @@ export const SidebarNav: React.FC = () => {
                                 </span>
                               )}
                               {item.hotkey && (
-                                <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-600 transition">
+                                <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-white text-slate-400 border border-slate-200/60">
                                   {item.hotkey}
                                 </span>
                               )}
@@ -742,71 +754,38 @@ export const SidebarNav: React.FC = () => {
           </div>
         </div>
 
-        {/* BOTTOM: Shift Status & Language Switcher */}
+        {/* BOTTOM: User Profile & Brand Tagline */}
         <div className="p-3 border-t border-gray-200 bg-gray-50/50 space-y-2 shrink-0">
-          {/* Shift status card */}
+          {/* User Profile Card */}
           <div
-            onClick={() => handleSelectTab('shifts')}
+            onClick={() => handleSelectTab('profile')}
             className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition ${
-              isShiftOpen
-                ? 'bg-white border-emerald-200 hover:border-emerald-300'
-                : 'bg-white border-amber-200 hover:border-amber-300'
+              activeTab === 'profile'
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-900 shadow-xs'
+                : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 shadow-xs'
             }`}
+            title="View User Profile & Account"
           >
-            <div className="flex items-center space-x-2">
-              <span className="relative flex h-2.5 w-2.5">
-                {isShiftOpen ? (
-                  <>
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                  </>
-                ) : (
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-                )}
-              </span>
-              <div className="leading-tight">
-                <span className="text-[11px] font-bold text-gray-900 block">
-                  {isShiftOpen ? 'Cash Drawer Open' : 'Drawer Closed'}
+            <div className="flex items-center space-x-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
+                {currentUser?.first_name?.charAt(0) || 'L'}{currentUser?.last_name?.charAt(0) || 'A'}
+              </div>
+              <div className="leading-tight min-w-0">
+                <span className="block text-xs font-bold text-gray-900 truncate">
+                  {currentUser?.first_name || 'Lead'} {currentUser?.last_name || 'Admin'}
                 </span>
-                <span className="text-[9px] text-gray-400">Terminal #REG-01</span>
+                <span className="block text-[10px] text-emerald-600 font-semibold truncate">
+                  {currentUser?.primary_role || 'SuperAdministrator'}
+                </span>
               </div>
             </div>
-            <span className="font-mono text-[10px] text-gray-400 font-bold">F2</span>
+            <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
           </div>
 
-          {/* Language Switcher */}
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center space-x-1">
-              <button
-                onClick={() => setLang('en')}
-                className={`px-2 py-1 text-xs font-bold rounded-lg transition ${
-                  lang === 'en' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-200'
-                }`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => setLang('kh')}
-                className={`px-2 py-1 text-xs font-bold rounded-lg transition ${
-                  lang === 'kh' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-200'
-                }`}
-              >
-                ខ្មែរ
-              </button>
-            </div>
-
-            <button
-              onClick={() => handleSelectTab('profile')}
-              className="flex items-center space-x-1.5 px-2 py-1 rounded-lg hover:bg-gray-100 transition text-[11px] text-gray-500 hover:text-emerald-700"
-              title="View User Profile"
-            >
-              <div className="w-4 h-4 rounded-md bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-[8px] shadow-xs">
-                {currentUser?.first_name?.charAt(0) || 'L'}
-              </div>
-              <span className="font-bold text-gray-800 truncate max-w-[80px]">
-                {currentUser?.first_name || 'Admin'}
-              </span>
-            </button>
+          {/* Bottom Brand Tagline matching reference footer */}
+          <div className="pt-2 border-t border-gray-200/70 flex items-center justify-center space-x-1.5 text-slate-400">
+            <span className="text-[11px] font-bold text-slate-700">SmartPOS</span>
+            <span className="text-[10px] text-slate-400">• Fast • Simple • Reliable</span>
           </div>
         </div>
       </aside>

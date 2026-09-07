@@ -7,6 +7,8 @@ import {
   Lock,
   LogOut,
   Keyboard,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -24,6 +26,8 @@ export const Navbar: React.FC = () => {
     currentUser,
     logoutUser,
     lockSession,
+    isScanBeepEnabled,
+    toggleScanBeep,
   } = useApp();
 
   const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -76,8 +80,23 @@ export const Navbar: React.FC = () => {
       }`}
     >
       <div className="w-full px-4 sm:px-6 flex items-center justify-between">
-        {/* Left: Active Page Title & Station Badge (circled hamburger button removed) */}
+        {/* Left: Sidebar Toggle Button & Active Page Title & Station Badge */}
         <div className="flex items-center space-x-3">
+          <button
+            onClick={() => {
+              if (window.innerWidth < 1024) {
+                toggleMobileDrawer();
+              } else {
+                toggleSidebarCollapse();
+              }
+            }}
+            className="w-10 h-10 rounded-xl text-gray-700 bg-gray-50/80 hover:text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 transition-all flex items-center justify-center border border-gray-200 shadow-xs shrink-0 cursor-pointer"
+            title={isSidebarCollapsed ? 'Expand Sidebar Navigation (☰)' : 'Collapse Sidebar Navigation (☰)'}
+            aria-label="Toggle Sidebar Navigation"
+          >
+            <Menu className="w-5 h-5" strokeWidth={2.2} />
+          </button>
+
           <div>
             <div className="flex items-center space-x-2">
               <h1 className="font-bold text-base text-gray-900 leading-tight">{getPageTitle()}</h1>
@@ -89,94 +108,8 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Quick Action Buttons, User Profile Chip, Status & Menu Toggle on Far Right */}
+        {/* Right: Quick Action Buttons, Status & Actions */}
         <div className="flex items-center space-x-2.5">
-          {/* Quick POS Cart Access Button */}
-          <button
-            onClick={() => setActiveTab('pos')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-xs ${
-              activeTab === 'pos'
-                ? 'bg-emerald-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <ShoppingCart className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Cart</span>
-            {totalCartCount > 0 && (
-              <span className="bg-white text-emerald-700 px-1.5 py-0.2 rounded-full text-[10px] font-bold">
-                {totalCartCount}
-              </span>
-            )}
-          </button>
-
-          {/* Live Shift Pill */}
-          <button
-            onClick={() => setActiveTab('shifts')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
-              isShiftOpen
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'
-                : 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100'
-            }`}
-          >
-            {isShiftOpen ? (
-              <>
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="hidden sm:inline">{t.shiftOpen || 'Shift Open'}</span>
-              </>
-            ) : (
-              <>
-                <Lock className="w-3.5 h-3.5 text-amber-600" />
-                <span className="hidden sm:inline">{t.shiftClosed || 'Drawer Closed'}</span>
-              </>
-            )}
-          </button>
-
-          {/* User Profile Quick Chip */}
-          <div className="flex items-center space-x-1">
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`flex items-center space-x-2 p-1.5 sm:px-2.5 sm:py-1 rounded-xl text-xs font-bold transition border ${
-                activeTab === 'profile'
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800 shadow-xs'
-                  : 'bg-white border-gray-200/80 hover:bg-gray-50 text-gray-700 shadow-xs'
-              }`}
-              title="User Profile & Cashier Account"
-            >
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-[10px] shadow-xs">
-                {currentUser?.first_name?.charAt(0) || 'L'}{currentUser?.last_name?.charAt(0) || 'A'}
-              </div>
-              <div className="text-left hidden md:block leading-tight">
-                <span className="block text-xs font-bold text-gray-900 truncate max-w-[90px]">
-                  {currentUser?.first_name || 'Lead'} {currentUser?.last_name || 'Admin'}
-                </span>
-                <span className="block text-[9px] text-emerald-600 font-semibold truncate max-w-[90px]">
-                  {currentUser?.primary_role || 'Admin'}
-                </span>
-              </div>
-            </button>
-
-            {/* Quick Lock Station */}
-            <button
-              onClick={lockSession}
-              className="p-2 rounded-xl text-gray-600 hover:text-amber-700 hover:bg-amber-50 transition border border-gray-200/80 shadow-xs"
-              title="Lock Terminal Station"
-            >
-              <Lock className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Quick Logout */}
-            <button
-              onClick={logoutUser}
-              className="p-2 rounded-xl text-gray-600 hover:text-rose-600 hover:bg-rose-50 transition border border-gray-200/80 shadow-xs"
-              title="Log Out of System"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
           {/* Bilingual Switcher */}
           <div className="flex items-center bg-gray-100 p-1 rounded-xl">
             <Globe className="w-3.5 h-3.5 text-gray-500 ml-1.5 mr-1" />
@@ -198,31 +131,68 @@ export const Navbar: React.FC = () => {
             </button>
           </div>
 
+          {/* Quick POS Cart Access Button */}
+          <button
+            onClick={() => setActiveTab('pos')}
+            className={`relative w-10 h-10 rounded-xl transition-all flex items-center justify-center border shadow-xs shrink-0 cursor-pointer ${
+              activeTab === 'pos'
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-emerald-200'
+                : 'bg-gray-50/80 text-gray-700 border-gray-200 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700'
+            }`}
+            title="POS Cart & Checkout"
+            aria-label="POS Cart"
+          >
+            <ShoppingCart className="w-5 h-5" strokeWidth={2.2} />
+            {totalCartCount > 0 && (
+              <span
+                className={`absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center shadow-xs ${
+                  activeTab === 'pos'
+                    ? 'bg-white text-emerald-700 ring-2 ring-emerald-600'
+                    : 'bg-emerald-600 text-white'
+                }`}
+              >
+                {totalCartCount}
+              </span>
+            )}
+          </button>
+
+          {/* Beep Sound Scan Toggle Button */}
+          <button
+            onClick={toggleScanBeep}
+            className={`w-10 h-10 rounded-xl transition-all flex items-center justify-center border shadow-xs shrink-0 cursor-pointer ${
+              isScanBeepEnabled
+                ? 'bg-emerald-50/80 text-emerald-700 border-emerald-300 hover:bg-emerald-100/70 hover:border-emerald-400'
+                : 'bg-gray-50/80 text-gray-400 border-gray-200 hover:bg-gray-100 hover:text-gray-600'
+            }`}
+            title={isScanBeepEnabled ? 'Beep Sound Scan: ON (Click to Mute / Test)' : 'Beep Sound Scan: MUTED (Click to Enable)'}
+            aria-label="Toggle Barcode Scan Beep Sound"
+          >
+            {isScanBeepEnabled ? (
+              <Volume2 className="w-5 h-5 text-emerald-600" strokeWidth={2.2} />
+            ) : (
+              <VolumeX className="w-5 h-5 text-gray-400" strokeWidth={2.2} />
+            )}
+          </button>
+
           {/* Keyboard Shortcuts Guide Button */}
           <button
             onClick={() => {
               window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
             }}
-            className="p-2 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition flex items-center justify-center border border-gray-200/80 shadow-xs"
+            className="w-10 h-10 rounded-xl text-gray-700 bg-gray-50/80 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-all flex items-center justify-center border border-gray-200 shadow-xs shrink-0 cursor-pointer"
             title="Keyboard Shortcuts (Press ?)"
             aria-label="Keyboard Shortcuts"
           >
-            <Keyboard className="w-4 h-4 text-emerald-600" />
+            <Keyboard className="w-5 h-5 text-emerald-600" strokeWidth={2.2} />
           </button>
-          {/* Remaining Menu Toggle Button Fixed on Far Right */}
+
+          {/* Quick Logout */}
           <button
-            onClick={() => {
-              if (window.innerWidth < 1024) {
-                toggleMobileDrawer();
-              } else {
-                toggleSidebarCollapse();
-              }
-            }}
-            className="p-2 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition flex items-center justify-center ml-1 border border-gray-200/80 shadow-xs"
-            title="Toggle Sidebar Navigation (Expand / Collapse)"
-            aria-label="Toggle Navigation"
+            onClick={logoutUser}
+            className="w-10 h-10 rounded-xl text-gray-600 bg-gray-50/80 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition-all flex items-center justify-center border border-gray-200 shadow-xs shrink-0 cursor-pointer"
+            title="Log Out of System"
           >
-            <Menu className="w-5 h-5" />
+            <LogOut className="w-5 h-5" strokeWidth={2.2} />
           </button>
         </div>
 

@@ -21,6 +21,7 @@ import {
   Printer,
   Tag,
   Barcode,
+  ScanBarcode,
   Volume2,
   PauseCircle,
   PlayCircle,
@@ -60,6 +61,7 @@ export const POSTerminal: React.FC = () => {
     cartTax,
     cartTotal,
     setLastCompletedSale,
+    isScanBeepEnabled,
   } = useApp();
 
   const exchangeRate = 4100; // 1 USD = 4,100 KHR standard retail rate
@@ -224,6 +226,7 @@ export const POSTerminal: React.FC = () => {
 
   // Audio Beep for Barcode Scanning
   const playScanBeep = () => {
+    if (isScanBeepEnabled === false) return;
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
@@ -843,11 +846,11 @@ export const POSTerminal: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsBarcodeScannerModalOpen(true)}
-              className="flex items-center space-x-1.5 px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition shrink-0 group"
+              className="w-10 h-10 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs transition shrink-0 group"
               title="Open Barcode Scanner & Camera Hub"
+              aria-label="Scan Barcode"
             >
-              <Barcode className="w-4 h-4 text-emerald-200 group-hover:scale-110 transition" />
-              <span className="hidden sm:inline">Scan Barcode</span>
+              <ScanBarcode className="w-5 h-5 text-emerald-100 group-hover:scale-110 transition" />
             </button>
 
             <button
@@ -1103,22 +1106,55 @@ export const POSTerminal: React.FC = () => {
               cart.map((item) => (
                 <div
                   key={item.product.id}
-                  className="p-2.5 bg-gray-50/70 border border-gray-100 rounded-xl flex items-center justify-between"
+                  className="p-2.5 bg-gray-50/70 hover:bg-gray-50/90 border border-gray-100 hover:border-gray-200 rounded-xl flex items-center justify-between gap-2.5 transition group"
                 >
-                  <div className="flex-1 min-w-0 pr-2">
-                    <span className="font-bold text-xs text-gray-800 block truncate">
-                      {item.product.name}
-                    </span>
-                    <span className="text-[10px] text-gray-400 font-mono">
-                      ${item.unit_price.toFixed(2)} x {item.quantity}
-                    </span>
+                  {/* Product Thumbnail */}
+                  <div className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200/80 flex items-center justify-center relative shadow-2xs">
+                    {item.product.image_url ? (
+                      <img
+                        src={item.product.image_url}
+                        alt={item.product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className={`w-full h-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-extrabold text-xs uppercase ${
+                        item.product.image_url ? 'hidden' : 'flex'
+                      }`}
+                    >
+                      {item.product.name.slice(0, 2)}
+                    </div>
                   </div>
 
+                  {/* Product Meta */}
+                  <div className="flex-1 min-w-0 pr-1">
+                    <span className="font-bold text-xs text-gray-800 block truncate" title={item.product.name}>
+                      {item.product.name}
+                    </span>
+                    <div className="flex items-center space-x-1.5 mt-0.5">
+                      <span className="text-[10px] text-gray-400 font-mono">
+                        ${item.unit_price.toFixed(2)}
+                      </span>
+                      <span className="text-[10px] text-gray-300">•</span>
+                      <span className="text-[10px] text-gray-400 font-mono">
+                        {item.product.barcode || item.product.sku}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Quantity and Actions */}
                   <div className="flex items-center space-x-2 shrink-0">
-                    <div className="flex items-center border border-gray-200 rounded-lg bg-white">
+                    <div className="flex items-center border border-gray-200 rounded-lg bg-white shadow-2xs">
                       <button
                         onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                        className="p-1 hover:bg-gray-100 rounded text-gray-600 transition"
+                        className="p-1 hover:bg-gray-100 rounded text-gray-600 transition active:scale-95"
+                        title="Decrease quantity"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
@@ -1127,7 +1163,8 @@ export const POSTerminal: React.FC = () => {
                       </span>
                       <button
                         onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                        className="p-1 hover:bg-gray-100 rounded text-gray-600 transition"
+                        className="p-1 hover:bg-gray-100 rounded text-gray-600 transition active:scale-95"
+                        title="Increase quantity"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
@@ -1137,7 +1174,8 @@ export const POSTerminal: React.FC = () => {
                     </span>
                     <button
                       onClick={() => removeFromCart(item.product.id)}
-                      className="text-gray-400 hover:text-rose-600 transition p-1"
+                      className="text-gray-400 hover:text-rose-600 transition p-1 rounded-md hover:bg-rose-50"
+                      title="Remove from cart"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -1925,7 +1963,7 @@ export const POSTerminal: React.FC = () => {
         products={products}
         onScanProduct={(product, quantity = 1) => {
           addToCart(product, quantity);
-          setScannedNotification(`Scanned: ${quantity > 1 ? `${quantity}x ` : ''}${product.name} (${product.barcode || product.sku})`);
+          setScannedNotification(`Auto-Added: +${quantity} ${product.name} (${product.barcode || product.sku})`);
           setTimeout(() => setScannedNotification(null), 2500);
         }}
         playScanBeep={playScanBeep}

@@ -330,13 +330,13 @@ export const SidebarNav: React.FC = () => {
       {
         id: 'products_group',
         title: 'Product Management',
-        titleKh: 'គ្រប់គ្រងទំនិញ & វដ្តជីវិត',
+        titleKh: 'គ្រប់គ្រងទំនិញ',
         icon: <Package className="w-4 h-4" />,
         items: [
           {
             id: 'prod_dashboard',
             name: 'Product Dashboard',
-            nameKh: 'ផ្ទាំងគ្រប់គ្រងទំនិញ & KPI',
+            nameKh: 'ផ្ទាំងគ្រប់គ្រងទំនិញ',
             icon: <BarChart3 className="w-4 h-4" />,
             tab: 'products',
             subTab: 'dashboard',
@@ -351,59 +351,35 @@ export const SidebarNav: React.FC = () => {
           },
           {
             id: 'prod_attributes',
-            name: 'Categories, Brands & Units',
+            name: 'Categories & Attributes',
             nameKh: 'ជំពូក ម៉ាកយីហោ & ខ្នាត',
             icon: <FolderTree className="w-4 h-4" />,
             tab: 'products',
             subTab: 'attributes',
           },
           {
-            id: 'prod_variants',
-            name: 'Variant Matrix',
-            nameKh: 'ម៉ាទ្រីសទំហំ & ពណ៌',
-            icon: <Sparkles className="w-4 h-4" />,
-            tab: 'products',
-            subTab: 'variants',
-          },
-          {
             id: 'prod_pricing',
-            name: 'Pricing & Cost Studio',
-            nameKh: 'តម្លៃ & ថ្លៃដើមពេញលេញ',
+            name: 'Pricing & Costs',
+            nameKh: 'តម្លៃទំនិញ & ថ្លៃដើម',
             icon: <DollarSign className="w-4 h-4" />,
             tab: 'products',
             subTab: 'pricing',
           },
           {
             id: 'prod_tracking',
-            name: 'Batches, Serials & Warranties',
-            nameKh: 'ឡូត៍ លេខស៊េរី & ការធានា',
+            name: 'Batches & Warranties',
+            nameKh: 'ឡូត៍ទំនិញ ស៊េរី & ការធានា',
             icon: <Calendar className="w-4 h-4" />,
             tab: 'products',
             subTab: 'tracking',
           },
           {
             id: 'prod_manufacturing',
-            name: 'Manufacturing & Bundles',
-            nameKh: 'ផលិតកម្ម BOM & កញ្ចប់ទំនិញ',
+            name: 'Manufacturing & Operations',
+            nameKh: 'ផលិតកម្ម & ប្រតិបត្តិការ',
             icon: <Wrench className="w-4 h-4" />,
             tab: 'products',
             subTab: 'manufacturing',
-          },
-          {
-            id: 'prod_barcodes',
-            name: 'Barcode & Print Studio',
-            nameKh: 'ស្ទូឌីយោបាកូដ & បោះពុម្ព',
-            icon: <Barcode className="w-4 h-4" />,
-            tab: 'products',
-            subTab: 'barcodes',
-          },
-          {
-            id: 'prod_data',
-            name: 'Data & Operations',
-            nameKh: 'នាំចូល/ចេញ & កំណត់ហេតុ',
-            icon: <FileSpreadsheet className="w-4 h-4" />,
-            tab: 'products',
-            subTab: 'data',
           },
         ],
       },
@@ -864,11 +840,11 @@ export const SidebarNav: React.FC = () => {
                         const isProductSubActive = (subTab?: string) => {
                           if (!subTab) return true;
                           if (productSubTab === subTab) return true;
-                          if (subTab === 'attributes' && ['categories', 'brands', 'units'].includes(productSubTab)) return true;
-                          if (subTab === 'pricing' && ['landed_cost', 'promotions'].includes(productSubTab)) return true;
-                          if (subTab === 'tracking' && ['batches', 'serials', 'warranties'].includes(productSubTab)) return true;
-                          if (subTab === 'manufacturing' && ['bom', 'bundles', 'qc'].includes(productSubTab)) return true;
-                          if (subTab === 'data' && ['import_export', 'templates', 'audit_logs', 'returns', 'reviews'].includes(productSubTab)) return true;
+                          if (subTab === 'catalog' && ['catalog', 'variants', 'types', 'barcodes'].includes(productSubTab)) return true;
+                          if (subTab === 'attributes' && ['attributes', 'categories', 'brands', 'units'].includes(productSubTab)) return true;
+                          if (subTab === 'pricing' && ['pricing', 'landed_cost', 'promotions'].includes(productSubTab)) return true;
+                          if (subTab === 'tracking' && ['tracking', 'batches', 'serials', 'warranties'].includes(productSubTab)) return true;
+                          if (subTab === 'manufacturing' && ['manufacturing', 'bom', 'bundles', 'qc', 'data', 'import_export', 'templates', 'audit_logs', 'returns', 'reviews'].includes(productSubTab)) return true;
                           return false;
                         };
 

@@ -113,26 +113,28 @@ export const ProductManagementHub: React.FC = () => {
   );
 
   // Inner sub-tabs for consolidated modules
+  const [catalogTab, setCatalogTab] = useState<'catalog' | 'variants' | 'barcodes'>('catalog');
   const [attributesTab, setAttributesTab] = useState<'categories' | 'brands' | 'units'>('categories');
   const [variantsTab, setVariantsTab] = useState<'variants' | 'types'>('variants');
   const [pricingTab, setPricingTab] = useState<'pricing' | 'landed_cost' | 'promotions'>('pricing');
   const [trackingTab, setTrackingTab] = useState<'batches' | 'serials' | 'warranties'>('batches');
-  const [manufacturingTab, setManufacturingTab] = useState<'bom' | 'bundles' | 'qc'>('bom');
+  const [manufacturingTab, setManufacturingTab] = useState<'bom' | 'bundles' | 'qc' | 'import_export' | 'audit_logs' | 'templates' | 'reviews'>('bom');
   const [dataTab, setDataTab] = useState<'import_export' | 'templates' | 'audit_logs' | 'returns' | 'reviews'>('import_export');
 
   // Sync external navigation (from sidebar) with inner tabs
   useEffect(() => {
     if (!productSubTab) return;
     const tab = productSubTab as string;
-    if (['attributes', 'categories', 'brands', 'units'].includes(tab)) {
+    if (['catalog', 'variants', 'types', 'barcodes'].includes(tab)) {
+      setActiveSubView('catalog');
+      if (['variants', 'types'].includes(tab)) setCatalogTab('variants');
+      else if (tab === 'barcodes') setCatalogTab('barcodes');
+      else setCatalogTab('catalog');
+    } else if (['attributes', 'categories', 'brands', 'units'].includes(tab)) {
       setActiveSubView('attributes');
       if (tab === 'brands') setAttributesTab('brands');
       else if (tab === 'units') setAttributesTab('units');
       else setAttributesTab('categories');
-    } else if (['variants', 'types'].includes(tab)) {
-      setActiveSubView('variants');
-      if (tab === 'types') setVariantsTab('types');
-      else setVariantsTab('variants');
     } else if (['pricing', 'landed_cost', 'promotions'].includes(tab)) {
       setActiveSubView('pricing');
       if (tab === 'landed_cost') setPricingTab('landed_cost');
@@ -143,18 +145,14 @@ export const ProductManagementHub: React.FC = () => {
       if (tab === 'serials') setTrackingTab('serials');
       else if (tab === 'warranties') setTrackingTab('warranties');
       else setTrackingTab('batches');
-    } else if (['manufacturing', 'bom', 'bundles', 'qc'].includes(tab)) {
+    } else if (['manufacturing', 'bom', 'bundles', 'qc', 'data', 'import_export', 'templates', 'audit_logs', 'returns', 'reviews'].includes(tab)) {
       setActiveSubView('manufacturing');
       if (tab === 'bundles') setManufacturingTab('bundles');
       else if (tab === 'qc') setManufacturingTab('qc');
+      else if (tab === 'import_export') setManufacturingTab('import_export');
+      else if (tab === 'templates' || tab === 'audit_logs') setManufacturingTab('audit_logs');
+      else if (tab === 'reviews') setManufacturingTab('reviews');
       else setManufacturingTab('bom');
-    } else if (['data', 'import_export', 'templates', 'audit_logs', 'returns', 'reviews'].includes(tab)) {
-      setActiveSubView('data');
-      if (tab === 'templates') setDataTab('templates');
-      else if (tab === 'audit_logs') setDataTab('audit_logs');
-      else if (tab === 'returns') setDataTab('returns');
-      else if (tab === 'reviews') setDataTab('reviews');
-      else setDataTab('import_export');
     } else {
       setActiveSubView(tab as SubView);
     }
@@ -260,10 +258,10 @@ export const ProductManagementHub: React.FC = () => {
     if ((activeSubView === 'manufacturing' || activeSubView === 'qc' || manufacturingTab === 'qc') && qcInspections.length === 0) {
       productEnterpriseApi.getQcInspections().then(r => setQcInspections(r.data || [])).catch(console.error);
     }
-    if ((activeSubView === 'data' || activeSubView === 'reviews' || dataTab === 'reviews') && reviews.length === 0) {
+    if ((activeSubView === 'manufacturing' || activeSubView === 'data' || manufacturingTab === 'reviews' || dataTab === 'reviews') && reviews.length === 0) {
       productEnterpriseApi.getReviews().then(r => setReviews(r.data || [])).catch(console.error);
     }
-    if ((activeSubView === 'data' || activeSubView === 'audit_logs' || dataTab === 'audit_logs') && auditLogs.length === 0) {
+    if ((activeSubView === 'manufacturing' || activeSubView === 'data' || manufacturingTab === 'audit_logs' || dataTab === 'audit_logs') && auditLogs.length === 0) {
       productEnterpriseApi.getAuditLogs().then(r => setAuditLogs(r.data || [])).catch(console.error);
     }
   }, [activeSubView, trackingTab, manufacturingTab, dataTab]);
@@ -326,15 +324,15 @@ export const ProductManagementHub: React.FC = () => {
 
   // Consolidated Navigation Modules Configuration
   const navItems = [
-    { id: 'dashboard', label: 'Product Dashboard', labelKh: 'ផ្ទាំងគ្រប់គ្រងទំនិញ & KPI', icon: LayoutDashboard },
+    { id: 'dashboard', label: 'Product Dashboard', labelKh: 'ផ្ទាំងគ្រប់គ្រងទំនិញ', icon: LayoutDashboard },
     { id: 'catalog', label: 'Product Catalog', labelKh: 'កាតាឡុកទំនិញ', count: products.length, icon: Package },
-    { id: 'attributes', label: 'Categories, Brands & Units', labelKh: 'ជំពូក ម៉ាកយីហោ & ខ្នាត', icon: FolderTree },
-    { id: 'variants', label: 'Variant Matrix', labelKh: 'ម៉ាទ្រីសទំហំ & ពណ៌', icon: Sparkles },
-    { id: 'pricing', label: 'Pricing & Cost Studio', labelKh: 'តម្លៃ & ថ្លៃដើមពេញលេញ', icon: DollarSign },
-    { id: 'tracking', label: 'Batches, Serials & Warranties', labelKh: 'ឡូត៍ លេខស៊េរី & ការធានា', icon: Calendar },
-    { id: 'manufacturing', label: 'Manufacturing & Bundles', labelKh: 'ការផលិត & កញ្ចប់ទំនិញ', icon: Wrench },
-    { id: 'barcodes', label: 'Barcode & Print Studio', labelKh: 'បាកូដ & បោះពុម្ពស្លាក', icon: Barcode },
-    { id: 'data', label: 'Data & Operations', labelKh: 'ទិន្នន័យ នាំចូល/ចេញ & កំណត់ហេតុ', icon: FileSpreadsheet },
+    { id: 'attributes', label: 'Categories & Attributes', labelKh: 'ជំពូក ម៉ាកយីហោ & ខ្នាត', icon: FolderTree },
+    { id: 'pricing', label: 'Pricing & Costs', labelKh: 'តម្លៃទំនិញ & ថ្លៃដើម', icon: DollarSign },
+    { id: 'tracking', label: 'Batches & Warranties', labelKh: 'ឡូត៍ទំនិញ ស៊េរី & ការធានា', icon: Calendar },
+    { id: 'manufacturing', label: 'Manufacturing & Operations', labelKh: 'ផលិតកម្ម & ប្រតិបត្តិការ', icon: Wrench },
+    // Aliases for backward compatibility
+    { id: 'variants', label: 'Product Catalog', labelKh: 'កាតាឡុកទំនិញ', count: products.length, icon: Sparkles },
+    { id: 'barcodes', label: 'Product Catalog', labelKh: 'កាតាឡុកទំនិញ', count: products.length, icon: Barcode },
     // Aliases for backward compatibility
     { id: 'types', label: 'Variant Matrix', labelKh: 'ម៉ាទ្រីសទំហំ & ពណ៌', icon: Sparkles },
     { id: 'categories', label: 'Categories, Brands & Units', labelKh: 'ជំពូក ម៉ាកយីហោ & ខ្នាត', icon: FolderTree },
@@ -666,8 +664,48 @@ export const ProductManagementHub: React.FC = () => {
         )}
 
         {/* VIEW 2: CATALOG (Full Enterprise Table & Grid Modes) */}
-        {activeSubView === 'catalog' && (
-          <div className="space-y-4">
+                {/* VIEW 2: CATALOG (Consolidated: Catalog Table/Grid + Variant Matrix + Barcode Studio) */}
+        {(activeSubView === 'catalog' || activeSubView === 'variants' || activeSubView === 'types' || activeSubView === 'barcodes') && (
+          <div className="space-y-6">
+            {/* Inner Sub-Navigation Tabs */}
+            <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
+              <button
+                onClick={() => setCatalogTab('catalog')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  catalogTab === 'catalog'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Package className="w-4 h-4" />
+                <span>{lang === 'kh' ? `កាតាឡុកទំនិញ (${products.length})` : `Product Catalog (${products.length})`}</span>
+              </button>
+              <button
+                onClick={() => setCatalogTab('variants')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  catalogTab === 'variants'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>{lang === 'kh' ? 'ម៉ាទ្រីសទំហំ & ពណ៌' : 'Variant Matrix'}</span>
+              </button>
+              <button
+                onClick={() => setCatalogTab('barcodes')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  catalogTab === 'barcodes'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Barcode className="w-4 h-4" />
+                <span>{lang === 'kh' ? 'ស្ទូឌីយោបាកូដ & បោះពុម្ព' : 'Barcode & Print Studio'}</span>
+              </button>
+            </div>
+
+            {catalogTab === 'catalog' && (
+              <div className="space-y-4">
             {/* Filter & Controls Bar */}
             <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex flex-1 items-center space-x-2 flex-wrap gap-y-2">
@@ -1157,12 +1195,10 @@ export const ProductManagementHub: React.FC = () => {
               </div>
             )}
           </div>
-        )}
+            )}
 
-        {/* VIEW 3: 10 PRODUCT TYPES */}
-                {/* VIEW: VARIANTS & MATRIX */}
-        {(activeSubView === 'variants' || activeSubView === 'types') && (
-          <div className="space-y-6">
+            {catalogTab === 'variants' && (
+              <div className="space-y-6">
             <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
               <button
                 onClick={() => setVariantsTab('variants')}
@@ -1306,6 +1342,38 @@ export const ProductManagementHub: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+          </div>
+            )}
+          </div>
+            )}
+
+            {catalogTab === 'barcodes' && (
+              <div className="space-y-4">
+            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
+              <h3 className="text-xl font-black text-gray-900">Barcode Studio & Label Printing</h3>
+              <p className="text-xs text-gray-500 mt-0.5">EAN-13, Code-128, and QR label generation with thermal roll and sheet printer templates.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {products.map(p => (
+                <div key={p.id} className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex justify-between items-center">
+                  <div>
+                    <div className="font-extrabold text-gray-900 text-xs">{p.name}</div>
+                    <div className="font-mono text-gray-500 text-[11px] mt-1">{p.barcode}</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setBarcodeProduct(p);
+                      setIsBarcodeModalOpen(true);
+                    }}
+                    className="p-2.5 bg-gray-100 hover:bg-indigo-50 text-gray-600 hover:text-indigo-600 rounded-xl transition cursor-pointer"
+                    title="Print Label"
+                  >
+                    <Printer className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
             )}
@@ -1649,37 +1717,7 @@ export const ProductManagementHub: React.FC = () => {
         )}
 
         {/* VIEW 12: BARCODES & SKU */}
-        {activeSubView === 'barcodes' && (
-          <div className="space-y-4">
-            <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
-              <h3 className="text-xl font-black text-gray-900">Barcode Studio & Label Printing</h3>
-              <p className="text-xs text-gray-500 mt-0.5">EAN-13, Code-128, and QR label generation with thermal roll and sheet printer templates.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {products.map(p => (
-                <div key={p.id} className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex justify-between items-center">
-                  <div>
-                    <div className="font-extrabold text-gray-900 text-xs">{p.name}</div>
-                    <div className="font-mono text-gray-500 text-[11px] mt-1">{p.barcode}</div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setBarcodeProduct(p);
-                      setIsBarcodeModalOpen(true);
-                    }}
-                    className="p-2.5 bg-gray-100 hover:bg-indigo-50 text-gray-600 hover:text-indigo-600 rounded-xl transition cursor-pointer"
-                    title="Print Label"
-                  >
-                    <Printer className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* VIEW 13: SUPPLIERS */}
+                {/* VIEW 13: SUPPLIERS */}
         {activeSubView === 'suppliers' && (
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
@@ -1860,8 +1898,10 @@ export const ProductManagementHub: React.FC = () => {
 
         {/* VIEW 17: BUNDLES */}
                 {/* VIEW: MANUFACTURING & BUNDLES */}
-        {(activeSubView === 'manufacturing' || activeSubView === 'bom' || activeSubView === 'bundles' || activeSubView === 'qc') && (
+                {/* VIEW 6: MANUFACTURING & OPERATIONS (Consolidated: BOM, Bundles, QC, Import/Export, Audit Logs, Reviews) */}
+        {(activeSubView === 'manufacturing' || activeSubView === 'bom' || activeSubView === 'bundles' || activeSubView === 'qc' || activeSubView === 'data' || activeSubView === 'import_export' || activeSubView === 'templates' || activeSubView === 'audit_logs' || activeSubView === 'returns' || activeSubView === 'reviews') && (
           <div className="space-y-6">
+            {/* Inner Sub-Navigation Tabs */}
             <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
               <button
                 onClick={() => setManufacturingTab('bom')}
@@ -1872,7 +1912,7 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <Wrench className="w-4 h-4" />
-                <span>{lang === 'kh' ? 'បញ្ជីធាតុផ្សំផលិតកម្ម (BOM)' : 'Bill of Materials (BOM) Recipes'}</span>
+                <span>{lang === 'kh' ? 'បញ្ជីធាតុផ្សំ (BOM)' : 'Bill of Materials (BOM)'}</span>
               </button>
               <button
                 onClick={() => setManufacturingTab('bundles')}
@@ -1894,7 +1934,40 @@ export const ProductManagementHub: React.FC = () => {
                 }`}
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>{lang === 'kh' ? `ការត្រួតពិនិត្យគុណភាព (${qcInspections.length})` : `Quality Control Inspections (${qcInspections.length})`}</span>
+                <span>{lang === 'kh' ? `ការត្រួតពិនិត្យគុណភាព (${qcInspections.length})` : `QC Inspections (${qcInspections.length})`}</span>
+              </button>
+              <button
+                onClick={() => setManufacturingTab('import_export')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  manufacturingTab === 'import_export'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>{lang === 'kh' ? 'នាំចូល & នាំចេញកាតាឡុក' : 'Import & Export'}</span>
+              </button>
+              <button
+                onClick={() => setManufacturingTab('audit_logs')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  manufacturingTab === 'audit_logs'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <History className="w-4 h-4" />
+                <span>{lang === 'kh' ? `គំរូទិន្នន័យ & កំណត់ហេតុ (${auditLogs.length})` : `Templates & Audit Trail (${auditLogs.length})`}</span>
+              </button>
+              <button
+                onClick={() => setManufacturingTab('reviews')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  manufacturingTab === 'reviews'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Star className="w-4 h-4" />
+                <span>{lang === 'kh' ? `ការវាយតម្លៃ (${reviews.length})` : `Reviews (${reviews.length})`}</span>
               </button>
             </div>
 
@@ -2013,50 +2086,8 @@ export const ProductManagementHub: React.FC = () => {
             </div>
           </div>
             )}
-          </div>
-        )}
 
-        {/* VIEW 21: REVIEWS & RATINGS */}
-                {/* VIEW: DATA & OPERATIONS */}
-        {(activeSubView === 'data' || activeSubView === 'import_export' || activeSubView === 'templates' || activeSubView === 'audit_logs' || activeSubView === 'returns' || activeSubView === 'reviews') && (
-          <div className="space-y-6">
-            <div className="flex items-center space-x-2 border-b border-gray-200 pb-3 overflow-x-auto scrollbar-none">
-              <button
-                onClick={() => setDataTab('import_export')}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  dataTab === 'import_export'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                }`}
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-                <span>{lang === 'kh' ? 'នាំចូល & នាំចេញកាតាឡុក' : 'Catalog Import & Export'}</span>
-              </button>
-              <button
-                onClick={() => setDataTab('templates')}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  dataTab === 'templates'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                }`}
-              >
-                <History className="w-4 h-4" />
-                <span>{lang === 'kh' ? `គំរូទិន្នន័យ & កំណត់ហេតុ (${auditLogs.length})` : `Templates & Audit Trail (${auditLogs.length})`}</span>
-              </button>
-              <button
-                onClick={() => setDataTab('reviews')}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  dataTab === 'reviews'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                }`}
-              >
-                <Star className="w-4 h-4" />
-                <span>{lang === 'kh' ? `ការវាយតម្លៃរបស់អតិថិជន (${reviews.length})` : `Customer Reviews (${reviews.length})`}</span>
-              </button>
-            </div>
-
-            {dataTab === 'import_export' && (
+            {manufacturingTab === 'import_export' && (
 
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
@@ -2104,7 +2135,7 @@ export const ProductManagementHub: React.FC = () => {
           </div>
             )}
 
-            {dataTab === 'templates' && (
+            {(manufacturingTab === 'audit_logs' || manufacturingTab === 'templates') && (
 
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
@@ -2146,7 +2177,7 @@ export const ProductManagementHub: React.FC = () => {
           </div>
             )}
 
-            {dataTab === 'reviews' && (
+            {manufacturingTab === 'reviews' && (
 
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">

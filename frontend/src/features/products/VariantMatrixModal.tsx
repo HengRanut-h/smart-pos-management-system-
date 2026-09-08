@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Plus, Trash2, Sparkles, Check, Layers } from 'lucide-react';
 import { ProductVariant, EnterpriseProduct } from '../../foundation/types/productEnterprise';
 import { productEnterpriseApi } from '../../data-access/productEnterpriseApi';
+import { useApp } from '../../application/context/AppContext';
 
 interface VariantMatrixModalProps {
   product: EnterpriseProduct;
@@ -16,6 +17,7 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
   onClose,
   onSaved,
 }) => {
+  const { notify } = useApp();
   const [attributeNames, setAttributeNames] = useState<string[]>(['Size', 'Color']);
   const [attributeValues, setAttributeValues] = useState<Record<string, string[]>>({
     Size: ['S', 'M', 'L', 'XL'],
@@ -111,11 +113,12 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
         default_price: product.selling_price,
       });
 
+      notify.success('Variant matrix generated and saved successfully!', 'Variants Saved');
       onSaved();
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save variants', err);
-      alert('Error saving variant matrix.');
+      notify.error(err?.response?.data?.message || 'Error saving variant matrix.');
     } finally {
       setIsSaving(false);
     }

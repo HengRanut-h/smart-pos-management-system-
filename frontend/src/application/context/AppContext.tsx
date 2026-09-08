@@ -3,6 +3,8 @@ import { Language, translations } from '../../foundation/i18n/translations';
 import { getProducts, getCurrentShift, getUserProfile, getSystemSettings, logoutApi } from '../../data-access/posApi';
 import { Product, CartItem, Sale, Shift, UserProfile, SystemSettings } from '../../foundation/types';
 
+import { useNotification, NotificationMethods } from './NotificationContext';
+
 export type NavTab =
   | 'pos'
   | 'dashboard'
@@ -77,11 +79,13 @@ interface AppContextType {
   unlockSession: () => void;
   isScanBeepEnabled: boolean;
   toggleScanBeep: () => void;
+  notify: NotificationMethods;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { notify } = useNotification();
   const [lang, setLangState] = useState<Language>(() => {
     return (localStorage.getItem('smartpos_lang') as Language) || 'en';
   });
@@ -382,6 +386,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         unlockSession,
         isScanBeepEnabled,
         toggleScanBeep,
+        notify,
       }}
     >
       {children}

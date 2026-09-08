@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const SalesHistoryView: React.FC = () => {
-  const { t, lang } = useApp();
+  const { t, lang, notify } = useApp();
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,14 +36,19 @@ export const SalesHistoryView: React.FC = () => {
   }, []);
 
   const handleVoid = async (id: number) => {
-    const reason = prompt('Please enter reason for voiding this sale:');
+    const reason = prompt(lang === 'kh' ? 'សូមបញ្ចូលមូលហេតុនៃការលុបចោលការលក់នេះ:' : 'Please enter reason for voiding this sale:');
     if (!reason) return;
     try {
       await voidSale(id, reason);
-      alert('Sale voided successfully! Compensating inventory movement created.');
+      notify.success(
+        lang === 'kh'
+          ? 'ការលក់ត្រូវបានលុបចោលជោគជ័យ! ចលនាសន្និធិត្រូវបានកែតម្រូវឡើងវិញ។'
+          : 'Sale voided successfully! Compensating inventory movement created.',
+        'Sale Voided'
+      );
       fetchSales();
     } catch (err: any) {
-      alert('Void failed: ' + (err.response?.data?.message || err.message));
+      notify.error('Void failed: ' + (err.response?.data?.message || err.message));
     }
   };
 

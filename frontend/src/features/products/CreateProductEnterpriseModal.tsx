@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { EnterpriseProduct, ProductType } from '../../foundation/types/productEnterprise';
 import { productEnterpriseApi } from '../../data-access/productEnterpriseApi';
+import { useApp } from '../../application/context/AppContext';
 
 interface CreateProductEnterpriseModalProps {
   product?: EnterpriseProduct | null;
@@ -35,6 +36,7 @@ export const CreateProductEnterpriseModal: React.FC<CreateProductEnterpriseModal
   brands,
   units,
 }) => {
+  const { lang, notify } = useApp();
   const [activeTab, setActiveTab] = useState<'general' | 'pricing' | 'inventory' | 'media_seo'>('general');
   const [name, setName] = useState('');
   const [sku, setSku] = useState('');
@@ -166,11 +168,17 @@ export const CreateProductEnterpriseModal: React.FC<CreateProductEnterpriseModal
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      alert('Product name is required');
+      notify.warning(
+        lang === 'kh' ? 'សូមបញ្ចូលឈ្មោះទំនិញ' : 'Product name is required',
+        'Validation Warning'
+      );
       return;
     }
     if (!sku.trim()) {
-      alert('SKU is required');
+      notify.warning(
+        lang === 'kh' ? 'សូមបញ្ចូលកូដ SKU ទំនិញ' : 'SKU is required',
+        'Validation Warning'
+      );
       return;
     }
 
@@ -215,15 +223,23 @@ export const CreateProductEnterpriseModal: React.FC<CreateProductEnterpriseModal
 
       if (product?.id) {
         await productEnterpriseApi.updateProduct(product.id, payload);
+        notify.success(
+          lang === 'kh' ? `ផលិតផល "${name}" ត្រូវបានកែប្រែជោគជ័យ!` : `Product "${name}" updated successfully!`,
+          'Product Updated'
+        );
       } else {
         await productEnterpriseApi.createProduct(payload);
+        notify.success(
+          lang === 'kh' ? `ផលិតផល "${name}" ត្រូវបានបង្កើតជោគជ័យ!` : `Product "${name}" created successfully!`,
+          'Product Created'
+        );
       }
 
       onSaved();
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to save product. Please check input values.');
+      notify.error(err?.response?.data?.message || 'Failed to save product. Please check input values.');
     } finally {
       setIsSaving(false);
     }

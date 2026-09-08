@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Hash, Check } from 'lucide-react';
 import { EnterpriseProduct } from '../../foundation/types/productEnterprise';
 import { productEnterpriseApi } from '../../data-access/productEnterpriseApi';
+import { useApp } from '../../application/context/AppContext';
 
 interface SerialNumberModalProps {
   product: EnterpriseProduct;
@@ -16,6 +17,7 @@ export const SerialNumberModal: React.FC<SerialNumberModalProps> = ({
   onClose,
   onSaved,
 }) => {
+  const { notify } = useApp();
   const [serialNumber, setSerialNumber] = useState(`SN-${product.sku || 'ITEM'}-${Math.floor(100000 + Math.random() * 900000)}`);
   const [imei, setImei] = useState(`86${Math.floor(1000000000000 + Math.random() * 9000000000000)}`);
   const [macAddress, setMacAddress] = useState('00:1B:44:11:3A:B7');
@@ -36,11 +38,12 @@ export const SerialNumberModal: React.FC<SerialNumberModalProps> = ({
         warranty_months: warrantyMonths,
         status,
       });
+      notify.success(`Serial number "${serialNumber}" registered successfully!`, 'Serial Number Saved');
       onSaved();
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error registering serial number');
+      notify.error(err?.response?.data?.message || 'Error registering serial number');
     } finally {
       setIsSaving(false);
     }

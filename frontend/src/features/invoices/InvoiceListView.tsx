@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export const InvoiceListView: React.FC = () => {
-  const { t } = useApp();
+  const { t, lang, notify } = useApp();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,12 +56,18 @@ export const InvoiceListView: React.FC = () => {
     setIsGenerating(true);
     try {
       const newInv = await generateInvoiceFromSale(saleId);
+      notify.success(
+        lang === 'kh'
+          ? `វិក្កយបត្រ ${newInv.invoice_number} ត្រូវបានបង្កើតជោគជ័យ!`
+          : `Tax invoice ${newInv.invoice_number} generated successfully!`,
+        'Invoice Created'
+      );
       await loadData();
       setIsGenerateModalOpen(false);
       setSelectedInvoice(newInv);
     } catch (err: any) {
       console.error('Failed to generate invoice', err);
-      alert(err.response?.data?.message || 'Failed to generate tax invoice.');
+      notify.error(err.response?.data?.message || 'Failed to generate tax invoice.');
     } finally {
       setIsGenerating(false);
     }

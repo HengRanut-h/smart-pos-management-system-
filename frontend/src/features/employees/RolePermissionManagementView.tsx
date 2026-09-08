@@ -33,17 +33,15 @@ interface RolePermissionManagementViewProps {
 }
 
 export const RolePermissionManagementView: React.FC<RolePermissionManagementViewProps> = ({ onBack }) => {
-  const { lang } = useApp();
+  const { lang, notify } = useApp();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [roles, setRoles] = useState<RoleItem[]>([]);
   const [permissions, setPermissions] = useState<PermissionItem[]>([]);
   const [groupedPermissions, setGroupedPermissions] = useState<Record<string, PermissionItem[]>>({});
-
   const [selectedRole, setSelectedRole] = useState<RoleItem | null>(null);
   const [activePermissionIds, setActivePermissionIds] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -120,12 +118,15 @@ export const RolePermissionManagementView: React.FC<RolePermissionManagementView
       const updated = await syncRolePermissions(selectedRole.id, activePermissionIds);
       setRoles(roles.map((r) => (r.id === updated.id ? updated : r)));
       setSelectedRole(updated);
-
-      setSaveSuccessMsg(`Permissions for role "${updated.name}" updated successfully!`);
-      setTimeout(() => setSaveSuccessMsg(null), 3000);
+      notify.success(
+        lang === 'kh'
+          ? `សិទ្ធិតួនាទី "${updated.name}" ត្រូវបានកែប្រែជោគជ័យ!`
+          : `Permissions for role "${updated.name}" updated successfully!`,
+        'Permissions Saved'
+      );
     } catch (err: any) {
       console.error('Failed to save role permissions', err);
-      alert(err.response?.data?.message || 'Failed to update role permissions');
+      notify.error(err.response?.data?.message || 'Failed to update role permissions');
     } finally {
       setIsSaving(false);
     }
@@ -151,11 +152,15 @@ export const RolePermissionManagementView: React.FC<RolePermissionManagementView
       setNewRoleCode('');
       setNewRoleDesc('');
 
-      setSaveSuccessMsg(`Role "${created.name}" created successfully!`);
-      setTimeout(() => setSaveSuccessMsg(null), 3000);
+      notify.success(
+        lang === 'kh'
+          ? `តួនាទី "${created.name}" ត្រូវបានបង្កើតជោគជ័យ!`
+          : `Role "${created.name}" created successfully!`,
+        'Role Created'
+      );
     } catch (err: any) {
       console.error('Failed to create role', err);
-      alert(err.response?.data?.message || 'Failed to create role');
+      notify.error(err.response?.data?.message || 'Failed to create role');
     } finally {
       setIsSubmittingRole(false);
     }
@@ -176,11 +181,13 @@ export const RolePermissionManagementView: React.FC<RolePermissionManagementView
       setSelectedRole(updated);
       setIsEditRoleModalOpen(false);
 
-      setSaveSuccessMsg(`Role details updated successfully!`);
-      setTimeout(() => setSaveSuccessMsg(null), 3000);
+      notify.success(
+        lang === 'kh' ? 'ព័ត៌មានតួនាទីត្រូវបានកែប្រែជោគជ័យ!' : 'Role details updated successfully!',
+        'Role Updated'
+      );
     } catch (err: any) {
       console.error('Failed to update role', err);
-      alert(err.response?.data?.message || 'Failed to update role');
+      notify.error(err.response?.data?.message || 'Failed to update role');
     } finally {
       setIsSubmittingRole(false);
     }
@@ -188,7 +195,10 @@ export const RolePermissionManagementView: React.FC<RolePermissionManagementView
 
   const handleDeleteRole = async (role: RoleItem) => {
     if (['SUPER_ADMIN', 'ADMIN', 'CASHIER'].includes(role.code.toUpperCase())) {
-      alert('System protected roles cannot be deleted.');
+      notify.warning(
+        lang === 'kh' ? 'តួនាទីការពាររបស់ប្រព័ន្ធមិនអាចលុបបានទេ!' : 'System protected roles cannot be deleted.',
+        'Protected Role'
+      );
       return;
     }
 
@@ -201,11 +211,15 @@ export const RolePermissionManagementView: React.FC<RolePermissionManagementView
       if (selectedRole?.id === role.id && remaining.length > 0) {
         handleSelectRole(remaining[0]);
       }
-      setSaveSuccessMsg(`Role "${role.name}" deleted successfully.`);
-      setTimeout(() => setSaveSuccessMsg(null), 3000);
+      notify.success(
+        lang === 'kh'
+          ? `តួនាទី "${role.name}" ត្រូវបានលុបជោគជ័យ!`
+          : `Role "${role.name}" deleted successfully.`,
+        'Role Deleted'
+      );
     } catch (err: any) {
       console.error('Failed to delete role', err);
-      alert(err.response?.data?.message || 'Failed to delete role');
+      notify.error(err.response?.data?.message || 'Failed to delete role');
     }
   };
 
@@ -476,14 +490,6 @@ export const RolePermissionManagementView: React.FC<RolePermissionManagementView
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Success Toast Notification */}
-      {saveSuccessMsg && (
-        <div className="fixed bottom-6 right-6 z-50 bg-emerald-900 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-2 border border-emerald-700 animate-bounce">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <span className="text-xs font-bold">{saveSuccessMsg}</span>
         </div>
       )}
 

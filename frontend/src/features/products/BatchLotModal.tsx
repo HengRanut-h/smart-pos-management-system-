@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Calendar, Check } from 'lucide-react';
 import { EnterpriseProduct } from '../../foundation/types/productEnterprise';
 import { productEnterpriseApi } from '../../data-access/productEnterpriseApi';
+import { useApp } from '../../application/context/AppContext';
 
 interface BatchLotModalProps {
   product: EnterpriseProduct;
@@ -16,6 +17,7 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
   onClose,
   onSaved,
 }) => {
+  const { notify } = useApp();
   const [batchNumber, setBatchNumber] = useState(`BATCH-${Date.now().toString().slice(-6)}`);
   const [lotNumber, setLotNumber] = useState(`LOT-${new Date().getFullYear()}-01`);
   const [mfgDate, setMfgDate] = useState(new Date().toISOString().split('T')[0]);
@@ -44,11 +46,12 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
         cost_per_unit: costPerUnit,
         status: 'ACTIVE',
       });
+      notify.success('Batch / Lot created successfully!', 'Batch Created');
       onSaved();
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error creating batch');
+      notify.error(err?.response?.data?.message || 'Error creating batch');
     } finally {
       setIsSaving(false);
     }

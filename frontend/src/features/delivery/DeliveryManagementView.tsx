@@ -119,7 +119,7 @@ export type DeliverySubTab =
   | 'ANALYTICS';
 
 export const DeliveryManagementView: React.FC = () => {
-  const { lang, t, products, deliverySubTab, setDeliverySubTab } = useApp();
+  const { lang, t, products, deliverySubTab, setDeliverySubTab, notify } = useApp();
 
   const [activeTab, setActiveTab] = useState<DeliverySubTab>(
     (deliverySubTab as DeliverySubTab) || 'DASHBOARD'
@@ -289,9 +289,19 @@ export const DeliveryManagementView: React.FC = () => {
   ) => {
     try {
       await updateDeliveryStatus(deliveryId, nextStatus, notes);
+      notify.success(
+        lang === 'kh'
+          ? `ស្ថានភាពដឹកជញ្ជូនត្រូវបានផ្លាស់ប្តូរទៅជា ${nextStatus}`
+          : `Delivery status updated to ${nextStatus}`,
+        lang === 'kh' ? 'ដឹកជញ្ជូន' : 'Delivery Update'
+      );
       await loadAllData();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to advance delivery status', err);
+      notify.error(
+        err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការផ្លាស់ប្តូរស្ថានភាព' : 'Failed to update delivery status'),
+        lang === 'kh' ? 'កំហុស' : 'Delivery Error'
+      );
     }
   };
 
@@ -299,9 +309,19 @@ export const DeliveryManagementView: React.FC = () => {
     const nextStatus = currentStatus === 'AVAILABLE' ? 'BREAK' : 'AVAILABLE';
     try {
       await updateDriverStatus(driverId, nextStatus);
+      notify.success(
+        lang === 'kh'
+          ? `ស្ថានភាពអ្នកដឹកត្រូវបានប្តូរទៅជា ${nextStatus}`
+          : `Rider status updated to ${nextStatus}`,
+        lang === 'kh' ? 'អ្នកដឹកជញ្ជូន' : 'Rider Status'
+      );
       await loadAllData();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to toggle rider status', err);
+      notify.error(
+        err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការផ្លាស់ប្តូរស្ថានភាពអ្នកដឹក' : 'Failed to update rider status'),
+        lang === 'kh' ? 'កំហុស' : 'Rider Error'
+      );
     }
   };
 
@@ -319,12 +339,22 @@ export const DeliveryManagementView: React.FC = () => {
         estimated_delivery_minutes: Number(zoneEstMinutes),
         area_description: zoneDesc,
       });
+      notify.success(
+        lang === 'kh'
+          ? `តំបន់ដឹកជញ្ជូន "${zoneName}" ត្រូវបានបង្កើតដោយជោគជ័យ!`
+          : `Delivery zone "${zoneName}" created successfully!`,
+        lang === 'kh' ? 'តំបន់ដឹកជញ្ជូន' : 'Delivery Zone'
+      );
       setIsZoneModalOpen(false);
       setZoneName('');
       setZoneCode('');
       await loadAllData();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to create zone', err);
+      notify.error(
+        err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបង្កើតតំបន់ដឹកជញ្ជូន' : 'Failed to create delivery zone'),
+        lang === 'kh' ? 'កំហុស' : 'Zone Error'
+      );
     }
   };
 
@@ -340,14 +370,24 @@ export const DeliveryManagementView: React.FC = () => {
         driver_license_number: newDriverLicense,
         employee_id: selectedEmployeeId ? Number(selectedEmployeeId) : undefined,
       });
+      notify.success(
+        lang === 'kh'
+          ? `អ្នកដឹកជញ្ជូន "${newDriverName}" ត្រូវបានចុះឈ្មោះដោយជោគជ័យ!`
+          : `Driver "${newDriverName}" registered successfully!`,
+        lang === 'kh' ? 'អ្នកដឹកជញ្ជូន' : 'Delivery Driver'
+      );
       setIsDriverModalOpen(false);
       setNewDriverName('');
       setNewDriverPhone('');
       setNewDriverPlate('');
       setNewDriverLicense('');
       await loadAllData();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to create driver', err);
+      notify.error(
+        err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការចុះឈ្មោះអ្នកដឹក' : 'Failed to register driver'),
+        lang === 'kh' ? 'កំហុស' : 'Driver Error'
+      );
     }
   };
 
@@ -1693,8 +1733,19 @@ export const DeliveryManagementView: React.FC = () => {
           onClose={() => setIsVehicleModalOpen(false)}
           drivers={drivers}
           onSave={async (payload) => {
-            await createDeliveryVehicle(payload);
-            await loadAllData();
+            try {
+              await createDeliveryVehicle(payload);
+              notify.success(
+                lang === 'kh' ? 'យានយន្តត្រូវបានចុះឈ្មោះដោយជោគជ័យ!' : 'Vehicle registered successfully!',
+                lang === 'kh' ? 'យានយន្ត' : 'Vehicle Fleet'
+              );
+              await loadAllData();
+            } catch (err: any) {
+              notify.error(
+                err?.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការចុះឈ្មោះយានយន្ត' : 'Failed to register vehicle'),
+                lang === 'kh' ? 'កំហុស' : 'Vehicle Error'
+              );
+            }
           }}
         />
       )}
@@ -1707,8 +1758,19 @@ export const DeliveryManagementView: React.FC = () => {
           drivers={drivers}
           vehicles={vehicles}
           onCreateRoute={async (payload) => {
-            await createDeliveryRoute(payload);
-            await loadAllData();
+            try {
+              await createDeliveryRoute(payload);
+              notify.success(
+                lang === 'kh' ? 'ផ្លូវដឹកជញ្ជូនត្រូវបានបង្កើតដោយជោគជ័យ!' : 'Delivery route created successfully!',
+                lang === 'kh' ? 'ផ្លូវដឹកជញ្ជូន' : 'Route Planning'
+              );
+              await loadAllData();
+            } catch (err: any) {
+              notify.error(
+                err?.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបង្កើតផ្លូវដឹកជញ្ជូន' : 'Failed to create route'),
+                lang === 'kh' ? 'កំហុស' : 'Route Error'
+              );
+            }
           }}
         />
       )}
@@ -1724,8 +1786,19 @@ export const DeliveryManagementView: React.FC = () => {
           drivers={drivers}
           vehicles={vehicles}
           onAssign={async (payload) => {
-            await bulkAssignDeliveries(payload);
-            await loadAllData();
+            try {
+              await bulkAssignDeliveries(payload);
+              notify.success(
+                lang === 'kh' ? 'ការបញ្ជូនការបញ្ជាទិញជាច្រើនបានជោគជ័យ!' : 'Bulk deliveries assigned successfully!',
+                lang === 'kh' ? 'ដឹកជញ្ជូន' : 'Bulk Dispatch'
+              );
+              await loadAllData();
+            } catch (err: any) {
+              notify.error(
+                err?.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបញ្ជូន' : 'Failed to assign deliveries'),
+                lang === 'kh' ? 'កំហុស' : 'Dispatch Error'
+              );
+            }
           }}
         />
       )}
@@ -1736,13 +1809,24 @@ export const DeliveryManagementView: React.FC = () => {
           onClose={() => setTicketModalDelivery(null)}
           delivery={ticketModalDelivery}
           onSubmit={async (payload) => {
-            await createDeliverySupportTicket({
-              delivery_id: ticketModalDelivery.id,
-              customer_id: ticketModalDelivery.customer_id,
-              driver_id: ticketModalDelivery.driver_id,
-              ...payload,
-            });
-            await loadAllData();
+            try {
+              await createDeliverySupportTicket({
+                delivery_id: ticketModalDelivery.id,
+                customer_id: ticketModalDelivery.customer_id,
+                driver_id: ticketModalDelivery.driver_id,
+                ...payload,
+              });
+              notify.success(
+                lang === 'kh' ? 'សំបុត្រជំនួយត្រូវបានបង្កើតដោយជោគជ័យ!' : 'Support ticket opened successfully!',
+                lang === 'kh' ? 'ជំនួយការ' : 'Support Ticket'
+              );
+              await loadAllData();
+            } catch (err: any) {
+              notify.error(
+                err?.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបង្កើតសំបុត្រជំនួយ' : 'Failed to create support ticket'),
+                lang === 'kh' ? 'កំហុស' : 'Ticket Error'
+              );
+            }
           }}
         />
       )}
@@ -1753,13 +1837,24 @@ export const DeliveryManagementView: React.FC = () => {
           onClose={() => setRateModalDelivery(null)}
           delivery={rateModalDelivery}
           onSubmit={async (payload) => {
-            await submitDeliveryRating({
-              delivery_id: rateModalDelivery.id,
-              customer_id: rateModalDelivery.customer_id,
-              driver_id: rateModalDelivery.driver_id,
-              ...payload,
-            });
-            await loadAllData();
+            try {
+              await submitDeliveryRating({
+                delivery_id: rateModalDelivery.id,
+                customer_id: rateModalDelivery.customer_id,
+                driver_id: rateModalDelivery.driver_id,
+                ...payload,
+              });
+              notify.success(
+                lang === 'kh' ? 'ការវាយតម្លៃត្រូវបានបញ្ជូនដោយជោគជ័យ!' : 'Delivery rating submitted successfully!',
+                lang === 'kh' ? 'ការវាយតម្លៃ' : 'Customer Review'
+              );
+              await loadAllData();
+            } catch (err: any) {
+              notify.error(
+                err?.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបញ្ជូនការវាយតម្លៃ' : 'Failed to submit rating'),
+                lang === 'kh' ? 'កំហុស' : 'Review Error'
+              );
+            }
           }}
         />
       )}

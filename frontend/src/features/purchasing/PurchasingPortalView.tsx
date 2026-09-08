@@ -5,7 +5,7 @@ import { getSuppliers, createSupplier, getPurchases, createPurchaseOrder, approv
 import { Truck, Plus, RefreshCw, CheckCircle2, AlertCircle, Eye, Check, ArrowDownToLine, Users, FileText } from 'lucide-react';
 
 export const PurchasingPortalView: React.FC = () => {
-  const { t, products } = useApp();
+  const { t, products, lang, notify } = useApp();
   const [activeSubTab, setActiveSubTab] = useState<'orders' | 'suppliers'>('orders');
   const [purchases, setPurchases] = useState<PurchaseOrder[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -68,7 +68,9 @@ export const PurchasingPortalView: React.FC = () => {
         email: supEmail,
         address: supAddress,
       });
-      setMessage({ text: 'Supplier registered successfully!', type: 'success' });
+      const msg = lang === 'kh' ? 'អ្នកផ្គត់ផ្គង់ត្រូវបានចុះឈ្មោះដោយជោគជ័យ!' : 'Supplier registered successfully!';
+      setMessage({ text: msg, type: 'success' });
+      notify.success(msg, lang === 'kh' ? 'អ្នកផ្គត់ផ្គង់' : 'Supplier');
       setShowCreateSupplierModal(false);
       setSupName('');
       setSupContact('');
@@ -77,7 +79,9 @@ export const PurchasingPortalView: React.FC = () => {
       setSupAddress('');
       loadData();
     } catch (err: any) {
-      setMessage({ text: err.response?.data?.message || 'Failed to create supplier', type: 'error' });
+      const errorMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការចុះឈ្មោះអ្នកផ្គត់ផ្គង់' : 'Failed to create supplier');
+      setMessage({ text: errorMsg, type: 'error' });
+      notify.error(errorMsg, lang === 'kh' ? 'កំហុស' : 'Supplier Error');
     }
   };
 
@@ -91,21 +95,29 @@ export const PurchasingPortalView: React.FC = () => {
         items: poItems,
         notes: poNotes,
       });
-      setMessage({ text: 'Purchase order created successfully!', type: 'success' });
+      const msg = lang === 'kh' ? 'ការបញ្ជាទិញទំនិញត្រូវបានបង្កើតដោយជោគជ័យ!' : 'Purchase order created successfully!';
+      setMessage({ text: msg, type: 'success' });
+      notify.success(msg, lang === 'kh' ? 'ការបញ្ជាទិញ' : 'Purchase Order');
       setShowCreatePOModal(false);
       loadData();
     } catch (err: any) {
-      setMessage({ text: err.response?.data?.message || 'Failed to create purchase order', type: 'error' });
+      const errorMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបង្កើតការបញ្ជាទិញ' : 'Failed to create purchase order');
+      setMessage({ text: errorMsg, type: 'error' });
+      notify.error(errorMsg, lang === 'kh' ? 'កំហុស' : 'Purchase Order Error');
     }
   };
 
   const handleApprovePO = async (id: number) => {
     try {
       await approvePurchaseOrder(id);
-      setMessage({ text: `Purchase Order #${id} approved!`, type: 'success' });
+      const msg = lang === 'kh' ? `ការបញ្ជាទិញ #${id} ត្រូវបានអនុម័ត!` : `Purchase Order #${id} approved!`;
+      setMessage({ text: msg, type: 'success' });
+      notify.success(msg, lang === 'kh' ? 'ការបញ្ជាទិញ' : 'Purchase Order');
       loadData();
     } catch (err: any) {
-      setMessage({ text: err.response?.data?.message || 'Approval failed', type: 'error' });
+      const errorMsg = err.response?.data?.message || (lang === 'kh' ? 'ការអនុម័តបានបរាជ័យ' : 'Approval failed');
+      setMessage({ text: errorMsg, type: 'error' });
+      notify.error(errorMsg, lang === 'kh' ? 'កំហុស' : 'Approval Error');
     }
   };
 
@@ -132,16 +144,22 @@ export const PurchasingPortalView: React.FC = () => {
         }));
 
       if (itemsToReceive.length === 0) {
-        setMessage({ text: 'Please specify quantities to receive', type: 'error' });
+        const warnMsg = lang === 'kh' ? 'សូមបញ្ជាក់ចំនួនទំនិញដែលត្រូវទទួល' : 'Please specify quantities to receive';
+        setMessage({ text: warnMsg, type: 'error' });
+        notify.warning(warnMsg, lang === 'kh' ? 'ការព្រមាន' : 'Receive Goods');
         return;
       }
 
       await receivePurchaseGoods(selectedPO.id, itemsToReceive);
-      setMessage({ text: 'Goods received and inventory automatically incremented!', type: 'success' });
+      const msg = lang === 'kh' ? 'ទំនិញត្រូវបានទទួល ហើយស្តុកត្រូវបានបន្ថែមដោយស្វ័យប្រវត្តិ!' : 'Goods received and inventory automatically incremented!';
+      setMessage({ text: msg, type: 'success' });
+      notify.success(msg, lang === 'kh' ? 'ទទួលទំនិញ' : 'Receive Goods');
       setShowReceiveModal(false);
       loadData();
     } catch (err: any) {
-      setMessage({ text: err.response?.data?.message || 'Failed to receive goods', type: 'error' });
+      const errorMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការទទួលទំនិញ' : 'Failed to receive goods');
+      setMessage({ text: errorMsg, type: 'error' });
+      notify.error(errorMsg, lang === 'kh' ? 'កំហុស' : 'Receive Error');
     }
   };
 

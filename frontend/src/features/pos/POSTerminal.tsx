@@ -72,6 +72,7 @@ export const POSTerminal: React.FC = () => {
     cartTotal,
     setLastCompletedSale,
     isScanBeepEnabled,
+    notify,
   } = useApp();
 
   const exchangeRate = 4100; // 1 USD = 4,100 KHR standard retail rate
@@ -674,9 +675,16 @@ export const POSTerminal: React.FC = () => {
       setIsQuickAddOpen(false);
       setIsCustomerModalOpen(false);
       setQuickAddForm({ name: '', phone: '', email: '' });
+      notify.success(
+        lang === 'kh' ? 'អតិថិជនត្រូវបានចុះឈ្មោះដោយជោគជ័យ!' : 'Customer registered successfully!',
+        lang === 'kh' ? 'អតិថិជន' : 'Customer'
+      );
     } catch (err) {
       console.error('Failed to create customer', err);
-      alert('Failed to register customer');
+      notify.error(
+        lang === 'kh' ? 'បរាជ័យក្នុងការចុះឈ្មោះអតិថិជន' : 'Failed to register customer',
+        lang === 'kh' ? 'កំហុស' : 'Customer'
+      );
     }
   };
 
@@ -775,6 +783,12 @@ export const POSTerminal: React.FC = () => {
         isDeliveryRequested,
         deliveryFee: currentDeliveryFee,
       });
+      notify.success(
+        lang === 'kh'
+          ? `ការទូទាត់ជោគជ័យ #${sale.sale_number} ($${sale.total_amount || finalPayableTotal.toFixed(2)})`
+          : `Sale #${sale.sale_number} completed successfully! ($${sale.total_amount || finalPayableTotal.toFixed(2)})`,
+        lang === 'kh' ? 'ការទូទាត់' : 'Checkout Complete'
+      );
       clearCart();
       setSelectedCustomer(null);
       setAppliedCoupon(null);
@@ -807,6 +821,12 @@ export const POSTerminal: React.FC = () => {
       const updatedQueue = [...offlineQueue, queuedSale];
       setOfflineQueue(updatedQueue);
       localStorage.setItem('smartpos_offline_sales', JSON.stringify(updatedQueue));
+      notify.warning(
+        lang === 'kh'
+          ? `ការទូទាត់ត្រូវបានរក្សាទុកក្នុងម៉ាស៊ីន (#${queuedSale.local_id})`
+          : `Offline sale queued (#${queuedSale.local_id}) - will sync when online`,
+        lang === 'kh' ? 'ការទូទាត់ក្រៅបណ្ដាញ' : 'Offline Sale'
+      );
 
       setCompletedSuccess({
         sale_number: queuedSale.local_id,
@@ -868,10 +888,16 @@ export const POSTerminal: React.FC = () => {
       }
       setOfflineQueue(remaining);
       localStorage.setItem('smartpos_offline_sales', JSON.stringify(remaining));
-      alert('Offline sales synced successfully!');
+      notify.success(
+        lang === 'kh' ? 'ការលក់ក្រៅបណ្ដាញបានធ្វើសមកាលកម្មដោយជោគជ័យ!' : 'Offline sales synced successfully!',
+        lang === 'kh' ? 'សមកាលកម្ម' : 'Sync Complete'
+      );
     } catch (err) {
       console.error('Failed to sync offline sales', err);
-      alert('Some sales could not be synced. Will retry when connection stabilizes.');
+      notify.warning(
+        lang === 'kh' ? 'ការលក់មួយចំនួនមិនអាចធ្វើសមកាលកម្មបានទេ។ នឹងព្យាយាមម្ដងទៀតនៅពេលមានការតភ្ជាប់ឡើងវិញ។' : 'Some sales could not be synced. Will retry when connection stabilizes.',
+        lang === 'kh' ? 'ការព្រមាន' : 'Sync Warning'
+      );
     } finally {
       setIsSyncingOffline(false);
     }
@@ -1913,7 +1939,14 @@ export const POSTerminal: React.FC = () => {
                     {splitKhqr > 0 && splitKhqrData && (
                       <button
                         type="button"
-                        onClick={() => alert(`Bakong KHQR for $${splitKhqr.toFixed(2)} active!`)}
+                        onClick={() =>
+                          notify.info(
+                            lang === 'kh'
+                              ? `បាគង KHQR ទឹកប្រាក់ $${splitKhqr.toFixed(2)} បានដំណើរការ!`
+                              : `Bakong KHQR for $${splitKhqr.toFixed(2)} active!`,
+                            'Bakong KHQR'
+                          )
+                        }
                         className="px-2 py-1 bg-red-100 text-red-700 rounded-lg text-[10px] font-bold shrink-0"
                       >
                         View QR

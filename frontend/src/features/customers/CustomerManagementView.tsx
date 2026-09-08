@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const CustomerManagementView: React.FC = () => {
-  const { lang } = useApp();
+  const { lang, notify } = useApp();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,12 +54,18 @@ export const CustomerManagementView: React.FC = () => {
     setIsSaving(true);
     try {
       await createCustomer(formData);
+      notify.success(
+        lang === 'kh'
+          ? `អតិថិជន "${formData.name}" ត្រូវបានចុះឈ្មោះជោគជ័យ!`
+          : `Customer "${formData.name}" registered successfully!`,
+        'Customer Created'
+      );
       setIsModalOpen(false);
       setFormData({ name: '', phone: '', email: '', address: '' });
       await fetchCustomerList();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to create customer', err);
-      alert('Failed to register customer. Please try again.');
+      notify.error(err?.response?.data?.message || 'Failed to register customer. Please try again.');
     } finally {
       setIsSaving(false);
     }

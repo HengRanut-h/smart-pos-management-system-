@@ -5,7 +5,7 @@ import { getRegisters, getCurrentShift, openShift, recordCashMovement, closeShif
 import { Coins, Plus, RefreshCw, CheckCircle2, AlertTriangle, ArrowDownRight, ArrowUpRight, Lock, Unlock, FileCheck, DollarSign } from 'lucide-react';
 
 export const ShiftManagementView: React.FC = () => {
-  const { t } = useApp();
+  const { t, lang, notify } = useApp();
   const [registers, setRegisters] = useState<PosRegister[]>([]);
   const [selectedRegisterId, setSelectedRegisterId] = useState<number>(1);
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
@@ -62,11 +62,15 @@ export const ShiftManagementView: React.FC = () => {
         opening_cash: openFloat,
         notes: openNotes,
       });
-      setMessage({ text: 'Shift opened and cash drawer initialized!', type: 'success' });
+      const msg = lang === 'kh' ? 'វេនការងារត្រូវបានបើក និងថតប្រាក់ត្រូវបានចាប់ផ្តើម!' : 'Shift opened and cash drawer initialized!';
+      setMessage({ text: msg, type: 'success' });
+      notify.success(msg, lang === 'kh' ? 'វេនការងារ' : 'Shift Management');
       setShowOpenModal(false);
       loadData();
     } catch (err: any) {
-      setMessage({ text: err.response?.data?.message || 'Failed to open shift', type: 'error' });
+      const errorMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបើកវេនការងារ' : 'Failed to open shift');
+      setMessage({ text: errorMsg, type: 'error' });
+      notify.error(errorMsg, lang === 'kh' ? 'កំហុស' : 'Shift Error');
     }
   };
 
@@ -80,11 +84,15 @@ export const ShiftManagementView: React.FC = () => {
         amount: movementAmount,
         reason: movementReason,
       });
-      setMessage({ text: 'Cash movement logged in drawer ledger!', type: 'success' });
+      const msg = lang === 'kh' ? 'ប្រតិបត្តិការសាច់ប្រាក់ត្រូវបានកត់ត្រាក្នុងបញ្ជីថតប្រាក់!' : 'Cash movement logged in drawer ledger!';
+      setMessage({ text: msg, type: 'success' });
+      notify.success(msg, lang === 'kh' ? 'សាច់ប្រាក់' : 'Cash Drawer');
       setShowMovementModal(false);
       loadData();
     } catch (err: any) {
-      setMessage({ text: err.response?.data?.message || 'Movement failed', type: 'error' });
+      const errorMsg = err.response?.data?.message || (lang === 'kh' ? 'ប្រតិបត្តិការបានបរាជ័យ' : 'Movement failed');
+      setMessage({ text: errorMsg, type: 'error' });
+      notify.error(errorMsg, lang === 'kh' ? 'កំហុស' : 'Cash Drawer Error');
     }
   };
 
@@ -99,10 +107,14 @@ export const ShiftManagementView: React.FC = () => {
       });
       setLatestZReport(report);
       setShowCloseModal(false);
-      setMessage({ text: `Shift closed! Z-Report generated: ${report.reconciliation_result}`, type: 'success' });
+      const msg = lang === 'kh' ? `វេនការងារត្រូវបានបិទ! Z-Report: ${report.reconciliation_result}` : `Shift closed! Z-Report generated: ${report.reconciliation_result}`;
+      setMessage({ text: msg, type: 'success' });
+      notify.success(msg, lang === 'kh' ? 'បិទវេនការងារ' : 'Shift Closed');
       loadData();
     } catch (err: any) {
-      setMessage({ text: err.response?.data?.message || 'Failed to close shift', type: 'error' });
+      const errorMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបិទវេនការងារ' : 'Failed to close shift');
+      setMessage({ text: errorMsg, type: 'error' });
+      notify.error(errorMsg, lang === 'kh' ? 'កំហុស' : 'Shift Close Error');
     }
   };
 

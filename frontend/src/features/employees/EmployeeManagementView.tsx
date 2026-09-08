@@ -57,7 +57,7 @@ const SAMPLE_STAFF_AVATARS = [
 ];
 
 export const EmployeeManagementView: React.FC = () => {
-  const { lang, t, setActiveTab, currentUser } = useApp();
+  const { lang, t, setActiveTab, currentUser, notify } = useApp();
 
   const isSuperAdmin = useMemo(() => {
     if (!currentUser) return false;
@@ -99,7 +99,6 @@ export const EmployeeManagementView: React.FC = () => {
   const [formRoleId, setFormRoleId] = useState<number>(4); // default Cashier
   const [formError, setFormError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
 
   // Image Lightbox Preview Modal State
   const [previewImageModal, setPreviewImageModal] = useState<{
@@ -139,11 +138,12 @@ export const EmployeeManagementView: React.FC = () => {
       const res = await uploadEmployeeAvatar(file);
       if (res.success && res.avatar_url) {
         setFormAvatarUrl(res.avatar_url);
-        showToast('Employee photo uploaded successfully!');
+        notify.success('Employee photo uploaded successfully!', 'Photo Uploaded');
       }
     } catch (err: any) {
       console.error('Failed to upload employee avatar', err);
       setFormError(err.response?.data?.message || 'Failed to upload photo file.');
+      notify.error(err.response?.data?.message || 'Failed to upload photo file.');
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -165,11 +165,6 @@ export const EmployeeManagementView: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 4000);
-  };
 
   // KPI Calculations
   const metrics = useMemo(() => {
@@ -298,7 +293,12 @@ export const EmployeeManagementView: React.FC = () => {
         });
 
         setEmployees((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
-        showToast(`Staff member "${updated.first_name} ${updated.last_name}" updated.`);
+        notify.success(
+          lang === 'kh'
+            ? `បុគ្គលិក "${updated.first_name} ${updated.last_name}" ត្រូវបានកែប្រែជោគជ័យ!`
+            : `Staff member "${updated.first_name} ${updated.last_name}" updated successfully.`,
+          'Staff Updated'
+        );
       } else {
         // Create
         const created = await createEmployee({
@@ -318,13 +318,20 @@ export const EmployeeManagementView: React.FC = () => {
         });
 
         setEmployees((prev) => [created, ...prev]);
-        showToast(`Staff member "${created.first_name} ${created.last_name}" created.`);
+        notify.success(
+          lang === 'kh'
+            ? `បុគ្គលិក "${created.first_name} ${created.last_name}" ត្រូវបានបង្កើតជោគជ័យ!`
+            : `Staff member "${created.first_name} ${created.last_name}" created successfully.`,
+          'Staff Created'
+        );
       }
 
       setIsModalOpen(false);
     } catch (err: any) {
       console.error('Failed to save employee', err);
-      setFormError(err.response?.data?.message || err.message || 'Failed to save staff record.');
+      const msg = err.response?.data?.message || err.message || 'Failed to save staff record.';
+      setFormError(msg);
+      notify.error(msg);
     } finally {
       setIsSaving(false);
     }
@@ -336,12 +343,17 @@ export const EmployeeManagementView: React.FC = () => {
     try {
       await deleteEmployee(employeeToDelete.id);
       setEmployees((prev) => prev.filter((e) => e.id !== employeeToDelete.id));
-      showToast(`Employee "${employeeToDelete.first_name} ${employeeToDelete.last_name}" deleted.`);
+      notify.success(
+        lang === 'kh'
+          ? `បុគ្គលិក "${employeeToDelete.first_name} ${employeeToDelete.last_name}" ត្រូវបានលុបជោគជ័យ!`
+          : `Employee "${employeeToDelete.first_name} ${employeeToDelete.last_name}" deleted successfully.`,
+        'Staff Deleted'
+      );
       setIsDeleteModalOpen(false);
       setEmployeeToDelete(null);
     } catch (err) {
       console.error('Failed to delete employee', err);
-      alert('Failed to delete employee record.');
+      notify.error('Failed to delete employee record.');
     }
   };
 
@@ -363,13 +375,6 @@ export const EmployeeManagementView: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Toast Alert */}
-      {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-emerald-700 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 animate-fade-in border border-emerald-500">
-          <CheckCircle2 className="w-5 h-5 text-emerald-200" />
-          <span className="font-semibold text-sm">{toastMessage}</span>
-        </div>
-      )}
 
       {/* 1. Header & Main Actions */}
       <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">

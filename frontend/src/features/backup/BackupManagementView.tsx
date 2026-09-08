@@ -69,7 +69,7 @@ import {
 type BackupTab = 'DASHBOARD' | 'SCHEDULE' | 'RESTORE' | 'MAINTENANCE' | 'IMPORT_EXPORT' | 'TELEGRAM';
 
 export const BackupManagementView: React.FC = () => {
-  const { lang, backupSubTab, setBackupSubTab } = useApp();
+  const { lang, backupSubTab, setBackupSubTab, notify } = useApp();
 
   // Active sub-tab linked to sidebar navigation
   const activeTab = (backupSubTab || 'DASHBOARD') as BackupTab;
@@ -109,13 +109,7 @@ export const BackupManagementView: React.FC = () => {
   const [isPruning, setIsPruning] = useState(false);
 
   const [restoreConfirmModal, setRestoreConfirmModal] = useState<BackupRecordItem | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [telegramTestPreview, setTelegramTestPreview] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 4000);
-  };
 
   const loadAllData = async () => {
     setIsLoading(true);
@@ -159,15 +153,16 @@ export const BackupManagementView: React.FC = () => {
         storage: newBackupStorage,
         retention_days: newBackupRetention,
       });
-      showToast(
+      notify.success(
         lang === 'kh'
           ? `ច្បាប់ចម្លងបម្រុងទុក ${res.data.backup_code} ត្រូវបានបង្កើតដោយជោគជ័យ!`
-          : `Backup snapshot ${res.data.backup_code} created successfully!`
+          : `Backup snapshot ${res.data.backup_code} created successfully!`,
+        'Backup Created'
       );
       setIsCreateModalOpen(false);
       await loadAllData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to create backup snapshot.');
+      notify.error(err.response?.data?.message || 'Failed to create backup snapshot.');
     } finally {
       setIsCreating(false);
     }
@@ -177,14 +172,15 @@ export const BackupManagementView: React.FC = () => {
     setVerifyingId(record.id);
     try {
       const res = await verifyBackupSnapshot(record.id);
-      showToast(
+      notify.success(
         lang === 'kh'
           ? `ការផ្ទៀងផ្ទាត់សុចរិតភាព SHA-256 ជោគជ័យ: ${res.data.message}`
-          : `SHA-256 verification passed: ${res.data.message}`
+          : `SHA-256 verification passed: ${res.data.message}`,
+        'Integrity Verified'
       );
       await loadAllData();
     } catch (err: any) {
-      alert('Verification error.');
+      notify.error('Verification error.');
     } finally {
       setVerifyingId(null);
     }
@@ -196,15 +192,16 @@ export const BackupManagementView: React.FC = () => {
     setRestoringId(rec.id);
     try {
       const res = await restoreBackupSnapshot(rec.id);
-      showToast(
+      notify.success(
         lang === 'kh'
           ? `ការស្ដារឡើងវិញជោគជ័យ! ច្បាប់ចម្លងការពារ: ${res.safety_backup || 'បម្រុងទុក'}`
-          : `Database restored successfully! Safety fallback snapshot: ${res.safety_backup || 'Saved'}`
+          : `Database restored successfully! Safety fallback snapshot: ${res.safety_backup || 'Saved'}`,
+        'Database Restored'
       );
       setRestoreConfirmModal(null);
       await loadAllData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to restore database.');
+      notify.error(err.response?.data?.message || 'Failed to restore database.');
     } finally {
       setRestoringId(null);
     }
@@ -219,10 +216,10 @@ export const BackupManagementView: React.FC = () => {
 
     try {
       await deleteBackupSnapshot(record.id);
-      showToast(lang === 'kh' ? 'ច្បាប់ចម្លងត្រូវបានលុបជោគជ័យ!' : 'Snapshot deleted successfully.');
+      notify.success(lang === 'kh' ? 'ច្បាប់ចម្លងត្រូវបានលុបជោគជ័យ!' : 'Snapshot deleted successfully.');
       await loadAllData();
     } catch (err) {
-      alert('Failed to delete snapshot.');
+      notify.error('Failed to delete snapshot.');
     }
   };
 
@@ -256,13 +253,13 @@ export const BackupManagementView: React.FC = () => {
     setIsSavingSchedule(true);
     try {
       const res = await saveBackupSchedule(editingSchedule);
-      showToast(res.message || (lang === 'kh' ? 'កាលវិភាគត្រូវបានរក្សាទុក!' : 'Schedule saved successfully.'));
+      notify.success(res.message || (lang === 'kh' ? 'កាលវិភាគត្រូវបានរក្សាទុក!' : 'Schedule saved successfully.'), 'Schedule Saved');
       setIsScheduleModalOpen(false);
       setEditingSchedule(null);
       const schedData = await getBackupSchedules();
       setSchedules(schedData);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to save schedule.');
+      notify.error(err.response?.data?.message || 'Failed to save schedule.');
     } finally {
       setIsSavingSchedule(false);
     }
@@ -272,10 +269,10 @@ export const BackupManagementView: React.FC = () => {
     setTogglingScheduleId(id);
     try {
       const res = await toggleBackupScheduleStatus(id);
-      showToast(res.message);
+      notify.success(res.message);
       setSchedules((prev) => prev.map((s) => (s.id === id ? res.data : s)));
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to toggle schedule status.');
+      notify.error(err.response?.data?.message || 'Failed to toggle schedule status.');
     } finally {
       setTogglingScheduleId(null);
     }
@@ -285,7 +282,7 @@ export const BackupManagementView: React.FC = () => {
     setRunningScheduleId(id);
     try {
       const res = await runBackupScheduleNow(id);
-      showToast(res.message);
+      notify.success(res.message, 'Schedule Executed');
       const [schedData, recData] = await Promise.all([
         getBackupSchedules().catch(() => []),
         getBackupRecords().catch(() => ({ data: [] })),
@@ -293,7 +290,7 @@ export const BackupManagementView: React.FC = () => {
       setSchedules(schedData);
       if (recData?.data) setRecords(recData.data);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to trigger backup schedule.');
+      notify.error(err.response?.data?.message || 'Failed to trigger backup schedule.');
     } finally {
       setRunningScheduleId(null);
     }
@@ -306,10 +303,10 @@ export const BackupManagementView: React.FC = () => {
     setDeletingScheduleId(id);
     try {
       const res = await deleteBackupSchedule(id);
-      showToast(res.message);
+      notify.success(res.message);
       setSchedules((prev) => prev.filter((s) => s.id !== id));
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to delete schedule.');
+      notify.error(err.response?.data?.message || 'Failed to delete schedule.');
     } finally {
       setDeletingScheduleId(null);
     }
@@ -322,11 +319,11 @@ export const BackupManagementView: React.FC = () => {
     setIsPruning(true);
     try {
       const res = await pruneExpiredBackups();
-      showToast(res.message);
+      notify.success(res.message, 'Retention Pruning Complete');
       const recData = await getBackupRecords();
       if (recData?.data) setRecords(recData.data);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to prune expired backups.');
+      notify.error(err.response?.data?.message || 'Failed to prune expired backups.');
     } finally {
       setIsPruning(false);
     }
@@ -336,10 +333,10 @@ export const BackupManagementView: React.FC = () => {
     setIsOptimizing(true);
     try {
       const res = await runDatabaseOptimization();
-      showToast(lang === 'kh' ? 'ការសម្អាត និងបង្កើនល្បឿន DB ជោគជ័យ!' : res.message);
+      notify.success(lang === 'kh' ? 'ការសម្អាត និងបង្កើនល្បឿន DB ជោគជ័យ!' : res.message, 'Database Optimized');
       await loadAllData();
     } catch (err) {
-      alert('Optimization failed.');
+      notify.error('Optimization failed.');
     } finally {
       setIsOptimizing(false);
     }
@@ -350,14 +347,15 @@ export const BackupManagementView: React.FC = () => {
     try {
       const res = await sendTelegramTestAlert();
       setTelegramTestPreview(res.preview_text);
-      showToast(
+      notify.success(
         lang === 'kh'
           ? 'សារតេស្តតេឡេក្រាមត្រូវបានផ្ញើជោគជ័យ!'
-          : 'Telegram test alert dispatched successfully!'
+          : 'Telegram test alert dispatched successfully!',
+        'Test Alert Dispatched'
       );
       await loadAllData();
     } catch (err) {
-      alert('Failed to send Telegram test alert.');
+      notify.error('Failed to send Telegram test alert.');
     } finally {
       setIsTestingTelegram(false);
     }
@@ -373,9 +371,9 @@ export const BackupManagementView: React.FC = () => {
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-      showToast(lang === 'kh' ? `នាំចេញទិន្នន័យ ${type} ជោគជ័យ!` : `Exported ${res.count} ${type} records successfully!`);
+      notify.success(lang === 'kh' ? `នាំចេញទិន្នន័យ ${type} ជោគជ័យ!` : `Exported ${res.count} ${type} records successfully!`, 'Export Complete');
     } catch (err) {
-      alert('Export failed.');
+      notify.error('Export failed.');
     }
   };
 
@@ -383,13 +381,14 @@ export const BackupManagementView: React.FC = () => {
     setSendingTelegramId(record.id);
     try {
       const res = await sendBackupSnapshotToTelegram(record.id);
-      showToast(
+      notify.success(
         lang === 'kh'
           ? `ឯកសារ '${record.filename}' ត្រូវបានផ្ញើទៅកាន់ Telegram ដោយជោគជ័យ!`
-          : `Backup file '${record.filename}' sent to Telegram successfully!`
+          : `Backup file '${record.filename}' sent to Telegram successfully!`,
+        'Dispatched to Telegram'
       );
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to send backup file to Telegram.');
+      notify.error(err?.response?.data?.message || 'Failed to send backup file to Telegram.');
     } finally {
       setSendingTelegramId(null);
     }
@@ -399,13 +398,14 @@ export const BackupManagementView: React.FC = () => {
     setIsSendingExportTelegram(type);
     try {
       const res = await sendExportDataToTelegram(type);
-      showToast(
+      notify.success(
         lang === 'kh'
           ? `ឯកសារនាំចេញ ${type} ត្រូវបានផ្ញើទៅកាន់ Telegram ដោយជោគជ័យ!`
-          : `Exported ${type} file dispatched directly to Telegram!`
+          : `Exported ${type} file dispatched directly to Telegram!`,
+        'Dispatched to Telegram'
       );
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to send export to Telegram.');
+      notify.error(err?.response?.data?.message || 'Failed to send export to Telegram.');
     } finally {
       setIsSendingExportTelegram(null);
     }
@@ -413,13 +413,6 @@ export const BackupManagementView: React.FC = () => {
 
   return (
     <div className="flex-1 bg-gray-50 flex flex-col h-full overflow-hidden">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-3 text-sm font-medium animate-bounce">
-          <CheckCircle2 className="w-5 h-5" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
 
       {/* Header Bar */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shrink-0">

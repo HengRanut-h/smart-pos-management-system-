@@ -73,7 +73,7 @@ const generateValidEan13 = (prefix = '200') => {
 };
 
 export const ProductCatalogView: React.FC = () => {
-  const { lang, t, refreshProducts: refreshGlobalProducts } = useApp();
+  const { lang, t, refreshProducts: refreshGlobalProducts, notify } = useApp();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Array<{ id: number; name: string }>>([]);
@@ -136,14 +136,13 @@ export const ProductCatalogView: React.FC = () => {
   const [formError, setFormError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [successToast, setSuccessToast] = useState('');
 
   const handleLocalImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image file size must be less than 5MB.');
+      notify.warning('Image file size must be less than 5MB.', 'File Too Large');
       return;
     }
 
@@ -152,11 +151,11 @@ export const ProductCatalogView: React.FC = () => {
       const res = await uploadProductImage(file);
       if (res.image_url) {
         setFormImageUrl(res.image_url);
-        showToast('Product photo uploaded successfully!');
+        notify.success('Product photo uploaded successfully!', 'Photo Uploaded');
       }
     } catch (err: any) {
       console.error('Failed to upload image', err);
-      alert(err.response?.data?.message || 'Failed to upload product image file.');
+      notify.error(err.response?.data?.message || 'Failed to upload product image file.');
     } finally {
       setIsUploadingImage(false);
     }
@@ -183,11 +182,6 @@ export const ProductCatalogView: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
-
-  const showToast = (msg: string) => {
-    setSuccessToast(msg);
-    setTimeout(() => setSuccessToast(''), 4000);
-  };
 
   // KPI Calculations
   const metrics = useMemo(() => {
@@ -350,7 +344,10 @@ export const ProductCatalogView: React.FC = () => {
         });
 
         setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-        showToast(`Product "${updated.name}" updated successfully!`);
+        notify.success(
+          lang === 'kh' ? `ផលិតផល "${updated.name}" ត្រូវបានកែប្រែជោគជ័យ!` : `Product "${updated.name}" updated successfully!`,
+          'Product Updated'
+        );
       } else {
         // Create
         const created = await createProduct({
@@ -369,7 +366,10 @@ export const ProductCatalogView: React.FC = () => {
         });
 
         setProducts((prev) => [created, ...prev]);
-        showToast(`Product "${created.name}" added to catalog!`);
+        notify.success(
+          lang === 'kh' ? `ផលិតផល "${created.name}" ត្រូវបានបញ្ចូលក្នុងកាតាឡុក!` : `Product "${created.name}" added to catalog!`,
+          'Product Created'
+        );
       }
 
       refreshGlobalProducts();
@@ -378,6 +378,7 @@ export const ProductCatalogView: React.FC = () => {
       console.error('Failed to save product', err);
       const errMsg = err.response?.data?.message || err.message || 'An error occurred while saving product.';
       setFormError(errMsg);
+      notify.error(errMsg);
     } finally {
       setIsSaving(false);
     }
@@ -389,13 +390,16 @@ export const ProductCatalogView: React.FC = () => {
     try {
       await deleteProduct(productToDelete.id);
       setProducts((prev) => prev.filter((p) => p.id !== productToDelete.id));
-      showToast(`Product "${productToDelete.name}" removed from catalog.`);
+      notify.success(
+        lang === 'kh' ? `ផលិតផល "${productToDelete.name}" ត្រូវបានលុបចេញពីកាតាឡុក!` : `Product "${productToDelete.name}" removed from catalog.`,
+        'Product Deleted'
+      );
       refreshGlobalProducts();
       setIsDeleteModalOpen(false);
       setProductToDelete(null);
     } catch (err) {
       console.error('Failed to delete product', err);
-      alert('Failed to delete product.');
+      notify.error('Failed to delete product.');
     }
   };
 
@@ -439,13 +443,6 @@ export const ProductCatalogView: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Toast alert */}
-      {successToast && (
-        <div className="fixed top-20 right-6 z-50 bg-emerald-700 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 animate-fade-in border border-emerald-500">
-          <CheckCircle2 className="w-5 h-5 text-emerald-200" />
-          <span className="font-semibold text-sm">{successToast}</span>
-        </div>
-      )}
 
       {/* 1. Header & Main Action Bar */}
       <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">

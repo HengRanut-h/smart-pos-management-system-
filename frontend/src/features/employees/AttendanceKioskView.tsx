@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 
 export const AttendanceKioskView: React.FC = () => {
-  const { lang } = useApp();
+  const { lang, notify } = useApp();
 
   const [showReportPortal, setShowReportPortal] = useState<boolean>(false);
 
@@ -289,9 +289,13 @@ export const AttendanceKioskView: React.FC = () => {
       });
       setIsManualModalOpen(false);
       setManualNotes('');
+      notify.success(
+        lang === 'kh' ? 'ការកត់ត្រាវត្តមានដោយផ្ទាល់ត្រូវបានរក្សាទុកជោគជ័យ!' : 'Manual attendance entry recorded successfully!',
+        'Attendance Recorded'
+      );
       loadAttendanceData(selectedDate);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to save manual attendance entry.');
+      notify.error(err.response?.data?.message || 'Failed to save manual attendance entry.');
     } finally {
       setIsSavingManual(false);
     }
@@ -300,7 +304,10 @@ export const AttendanceKioskView: React.FC = () => {
   // Export Attendance CSV
   const handleExportCsv = () => {
     if (attendances.length === 0) {
-      alert('No attendance data available to export.');
+      notify.warning(
+        lang === 'kh' ? 'មិនមានទិន្នន័យវត្តមានសម្រាប់នាំចេញទេ' : 'No attendance data available to export.',
+        'Export Empty'
+      );
       return;
     }
 
@@ -330,6 +337,10 @@ export const AttendanceKioskView: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    notify.success(
+      lang === 'kh' ? 'ឯកសារ CSV ត្រូវបានទាញយកជោគជ័យ!' : 'Attendance CSV exported successfully!',
+      'Export Downloaded'
+    );
   };
 
   // Filtered Roster

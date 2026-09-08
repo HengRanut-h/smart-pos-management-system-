@@ -33,7 +33,7 @@ interface StaffPayrollViewProps {
 }
 
 export const StaffPayrollView: React.FC<StaffPayrollViewProps> = ({ onBack }) => {
-  const { lang } = useApp();
+  const { lang, notify } = useApp();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [reportData, setReportData] = useState<AttendanceReportResponse | null>(null);
@@ -70,7 +70,6 @@ export const StaffPayrollView: React.FC<StaffPayrollViewProps> = ({ onBack }) =>
   const [editOtMultiplier, setEditOtMultiplier] = useState<number | ''>(1.50);
   const [editLatePenalty, setEditLatePenalty] = useState<number | ''>(0.05);
   const [isSavingSalary, setIsSavingSalary] = useState<boolean>(false);
-  const [salarySaveSuccess, setSalarySaveSuccess] = useState<string | null>(null);
 
   // Filter state
   const [preset, setPreset] = useState<string>('this_month');
@@ -163,13 +162,17 @@ export const StaffPayrollView: React.FC<StaffPayrollViewProps> = ({ onBack }) =>
       };
 
       await updateEmployee(editingEmpSalaryModal.employee_id, payload);
-      setSalarySaveSuccess('Employee pay rates & role updated successfully!');
-      setTimeout(() => setSalarySaveSuccess(null), 3000);
+      notify.success(
+        lang === 'kh'
+          ? 'អត្រាប្រាក់បៀវត្សរ៍ និងតួនាទីបុគ្គលិកត្រូវបានកែប្រែជោគជ័យ!'
+          : 'Employee pay rates & role updated successfully!',
+        'Salary Settings Saved'
+      );
       await fetchReport();
       setEditingEmpSalaryModal(null);
     } catch (err: any) {
       console.error('Failed to update employee salary', err);
-      alert(err.response?.data?.message || 'Failed to update employee pay rate settings.');
+      notify.error(err.response?.data?.message || 'Failed to update employee pay rate settings.');
     } finally {
       setIsSavingSalary(false);
     }
@@ -735,14 +738,6 @@ export const StaffPayrollView: React.FC<StaffPayrollViewProps> = ({ onBack }) =>
           </table>
         </div>
       </div>
-
-      {/* Success Toast Notification */}
-      {salarySaveSuccess && (
-        <div className="fixed bottom-6 right-6 z-50 bg-emerald-900 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-2 border border-emerald-700 animate-bounce">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <span className="text-xs font-bold">{salarySaveSuccess}</span>
-        </div>
-      )}
 
       {/* 5. Printable A4 Employee Payslip Modal */}
       {selectedPayslipEmp && (

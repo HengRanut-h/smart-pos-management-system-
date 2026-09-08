@@ -27,7 +27,7 @@ import {
 import { RoleItem } from '../../foundation/types';
 
 export const AdminUserRoleAssignmentView: React.FC = () => {
-  const { lang, currentUser } = useApp();
+  const { lang, currentUser, notify } = useApp();
 
   const [users, setUsers] = useState<AdminUserItem[]>([]);
   const [roles, setRoles] = useState<RoleItem[]>([]);
@@ -86,8 +86,7 @@ export const AdminUserRoleAssignmentView: React.FC = () => {
   }, []);
 
   const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 4000);
+    notify.success(msg, lang === 'kh' ? 'សន្តិសុខ និងតួនាទី' : 'Role Assignment');
   };
 
   // KPIs
@@ -173,11 +172,15 @@ export const AdminUserRoleAssignmentView: React.FC = () => {
         setIsAssignModalOpen(false);
         loadData();
       } else {
-        setModalError(res.message || 'Failed to update role.');
+        const errorMsg = res.message || 'Failed to update role.';
+        setModalError(errorMsg);
+        notify.error(errorMsg, lang === 'kh' ? 'កំហុសតួនាទី' : 'Role Error');
       }
     } catch (err: any) {
       console.error('Failed to assign role', err);
-      setModalError(err.response?.data?.message || 'Server error while assigning role.');
+      const errorMsg = err.response?.data?.message || 'Server error while assigning role.';
+      setModalError(errorMsg);
+      notify.error(errorMsg, lang === 'kh' ? 'កំហុសតួនាទី' : 'Role Error');
     } finally {
       setIsSubmitting(false);
     }
@@ -185,12 +188,6 @@ export const AdminUserRoleAssignmentView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-3 text-sm font-medium animate-bounce">
-          <CheckCircle2 className="w-5 h-5" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">

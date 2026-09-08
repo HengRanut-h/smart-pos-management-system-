@@ -42,7 +42,7 @@ import {
 } from 'lucide-react';
 
 export const UserLoginAuditView: React.FC = () => {
-  const { lang, currentUser } = useApp();
+  const { lang, currentUser, notify } = useApp();
 
   // Data states
   const [audits, setAudits] = useState<UserLoginAuditItem[]>([]);
@@ -71,8 +71,7 @@ export const UserLoginAuditView: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+    notify.success(msg, lang === 'kh' ? 'សន្តិសុខ' : 'Login Audit');
   };
 
   const fetchStats = async () => {
@@ -159,7 +158,10 @@ export const UserLoginAuditView: React.FC = () => {
         setIsDetailModalOpen(false);
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to terminate session.');
+      notify.error(
+        err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបញ្ចប់វគ្គការងារ' : 'Failed to terminate session.'),
+        lang === 'kh' ? 'កំហុស' : 'Security'
+      );
     } finally {
       setTerminatingId(null);
     }
@@ -228,13 +230,6 @@ export const UserLoginAuditView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-3 text-sm font-medium animate-bounce">
-          <CheckCircle2 className="w-5 h-5" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
 
       {/* 1. Summary Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

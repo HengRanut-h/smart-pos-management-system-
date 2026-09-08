@@ -38,7 +38,7 @@ interface TelegramBotConfigSectionProps {
 }
 
 export const TelegramBotConfigSection: React.FC<TelegramBotConfigSectionProps> = ({ onSaved }) => {
-  const { lang } = useApp();
+  const { lang, notify } = useApp();
 
   // Telegram Config State
   const [botConfig, setBotConfig] = useState<TelegramBotConfig | null>(null);
@@ -67,17 +67,11 @@ export const TelegramBotConfigSection: React.FC<TelegramBotConfigSectionProps> =
   const [isTesting, setIsTesting] = useState(false);
   const [isSendingTestFile, setIsSendingTestFile] = useState(false);
   const [testPreview, setTestPreview] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [tokenStatus, setTokenStatus] = useState<{
     verified: boolean;
     bot?: { id: number; username: string; first_name: string };
     error?: string;
   } | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 4000);
-  };
 
   // Fetch settings & logs
   const loadData = async () => {
@@ -141,7 +135,10 @@ export const TelegramBotConfigSection: React.FC<TelegramBotConfigSectionProps> =
   // Verify Bot Token with Telegram
   const handleVerifyToken = async () => {
     if (!botToken.trim()) {
-      alert(lang === 'kh' ? 'សូមបញ្ចូល Bot Token ជាមុនសិន!' : 'Please enter a Telegram Bot Token first!');
+      notify.warning(
+        lang === 'kh' ? 'សូមបញ្ចូល Bot Token ជាមុនសិន!' : 'Please enter a Telegram Bot Token first!',
+        'Missing Token'
+      );
       return;
     }
     setIsVerifying(true);
@@ -159,10 +156,11 @@ export const TelegramBotConfigSection: React.FC<TelegramBotConfigSectionProps> =
         if (res.bot.first_name && (!botName || botName === 'SmartPOS Alert Bot')) {
           setBotName(res.bot.first_name);
         }
-        showToast(
+        notify.success(
           lang === 'kh'
             ? `Bot Token ត្រឹមត្រូវ! បានភ្ជាប់ជាមួយ @${res.bot.username}`
-            : `Token verified successfully! Live Telegram Bot: @${res.bot.username}`
+            : `Token verified successfully! Live Telegram Bot: @${res.bot.username}`,
+          'Telegram Connected'
         );
       } else {
         setTokenStatus({
@@ -176,6 +174,7 @@ export const TelegramBotConfigSection: React.FC<TelegramBotConfigSectionProps> =
         verified: false,
         error: msg,
       });
+      notify.error(msg, 'Verification Error');
     } finally {
       setIsVerifying(false);
     }
@@ -184,7 +183,10 @@ export const TelegramBotConfigSection: React.FC<TelegramBotConfigSectionProps> =
   // Save Settings
   const handleSave = async () => {
     if (!botToken.trim()) {
-      alert(lang === 'kh' ? 'សូមបញ្ចូល Bot Token មុនពេលរក្សាទុក!' : 'Please enter a Telegram Bot Token before saving!');
+      notify.warning(
+        lang === 'kh' ? 'សូមបញ្ចូល Bot Token មុនពេលរក្សាទុក!' : 'Please enter a Telegram Bot Token before saving!',
+        'Missing Token'
+      );
       return;
     }
     setIsSaving(true);
@@ -202,15 +204,16 @@ export const TelegramBotConfigSection: React.FC<TelegramBotConfigSectionProps> =
         attach_backup_file: attachBackupFile,
         chat_id: chatId.trim(),
       });
-      showToast(
+      notify.success(
         lang === 'kh'
           ? 'ការកំណត់ Telegram Bot ត្រូវបានរក្សាទុកដោយជោគជ័យ!'
-          : 'Telegram Bot settings saved successfully!'
+          : 'Telegram Bot settings saved successfully!',
+        'Bot Settings Saved'
       );
       if (onSaved) onSaved();
       await loadData();
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to save settings.');
+      notify.error(err?.response?.data?.message || 'Failed to save settings.');
     } finally {
       setIsSaving(false);
     }
@@ -222,15 +225,16 @@ export const TelegramBotConfigSection: React.FC<TelegramBotConfigSectionProps> =
     try {
       const res = await sendTelegramTestAlert(chatId.trim() || undefined, botToken.trim() || undefined);
       setTestPreview(res.preview_text);
-      showToast(
+      notify.success(
         lang === 'kh'
           ? 'សារតេស្តតេឡេក្រាមត្រូវបានផ្ញើជោគជ័យ!'
-          : 'Telegram test alert dispatched successfully!'
+          : 'Telegram test alert dispatched successfully!',
+        'Test Alert Sent'
       );
       await loadData();
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Failed to send Telegram test alert.';
-      alert(msg);
+      notify.error(msg);
     } finally {
       setIsTesting(false);
     }
@@ -241,15 +245,16 @@ export const TelegramBotConfigSection: React.FC<TelegramBotConfigSectionProps> =
     setIsSendingTestFile(true);
     try {
       const res = await sendExportDataToTelegram('products', chatId.trim() || undefined);
-      showToast(
+      notify.success(
         lang === 'kh'
           ? `ឯកសារ '${res.file_name || 'smartpos_products_export.json'}' ត្រូវបានផ្ញើទៅកាន់ Telegram ដោយជោគជ័យ!`
-          : `Document '${res.file_name || 'smartpos_products_export.json'}' delivered to Telegram successfully!`
+          : `Document '${res.file_name || 'smartpos_products_export.json'}' delivered to Telegram successfully!`,
+        'File Dispatched'
       );
       await loadData();
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Failed to send test document to Telegram.';
-      alert(msg);
+      notify.error(msg);
     } finally {
       setIsSendingTestFile(false);
     }
@@ -257,13 +262,6 @@ export const TelegramBotConfigSection: React.FC<TelegramBotConfigSectionProps> =
 
   return (
     <div className="space-y-6">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 bg-emerald-700 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-3 text-xs font-semibold animate-in fade-in slide-in-from-top-4">
-          <CheckCircle2 className="w-4 h-4 text-emerald-200" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
 
       {/* Main Banner */}
       <div className="bg-gradient-to-r from-sky-600 via-sky-700 to-indigo-700 p-6 rounded-3xl text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">

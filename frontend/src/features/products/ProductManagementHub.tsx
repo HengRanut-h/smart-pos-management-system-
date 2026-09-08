@@ -105,7 +105,7 @@ export type SubView =
   | 'audit_logs';
 
 export const ProductManagementHub: React.FC = () => {
-  const { lang, t, productSubTab, setProductSubTab } = useApp();
+  const { lang, t, productSubTab, setProductSubTab, notify } = useApp();
 
   // Navigation State
   const [activeSubView, setActiveSubView] = useState<SubView>(
@@ -306,20 +306,34 @@ export const ProductManagementHub: React.FC = () => {
     if (!confirm('Are you sure you want to delete this product?')) return;
     try {
       await productEnterpriseApi.deleteProduct(id);
+      notify.success(
+        lang === 'kh' ? 'ផលិតផលត្រូវបានលុបជោគជ័យ!' : 'Product deleted successfully!',
+        'Product Deleted'
+      );
       loadAllData();
-    } catch (err) {
-      alert('Error deleting product');
+    } catch (err: any) {
+      notify.error(err?.response?.data?.message || 'Error deleting product');
     }
   };
 
   const handleBulkDelete = async () => {
     if (!selectedProductIds.length) return;
     if (!confirm(`Delete ${selectedProductIds.length} selected products?`)) return;
-    for (const id of selectedProductIds) {
-      await productEnterpriseApi.deleteProduct(id).catch(console.error);
+    try {
+      for (const id of selectedProductIds) {
+        await productEnterpriseApi.deleteProduct(id).catch(console.error);
+      }
+      notify.success(
+        lang === 'kh'
+          ? `បានលុប ${selectedProductIds.length} ផលិតផលដែលបានជ្រើសរើស!`
+          : `Deleted ${selectedProductIds.length} selected products successfully!`,
+        'Bulk Delete'
+      );
+      setSelectedProductIds([]);
+      loadAllData();
+    } catch (err: any) {
+      notify.error('Failed to delete selected products.');
     }
-    setSelectedProductIds([]);
-    loadAllData();
   };
 
   // Consolidated Navigation Modules Configuration
@@ -2122,7 +2136,7 @@ export const ProductManagementHub: React.FC = () => {
                 <div className="space-y-2.5 pt-2">
                   <button
                     onClick={() => {
-                      alert('Exporting catalog CSV...');
+                      notify.info('Exporting product catalog CSV...', 'Catalog Export');
                     }}
                     className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm flex items-center justify-center space-x-2 cursor-pointer transition"
                   >

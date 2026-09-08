@@ -87,7 +87,14 @@ import {
   X,
   Layers,
   Store,
+  Info,
+  RotateCcw,
+  Zap,
+  Play,
+  AlertTriangle,
 } from 'lucide-react';
+import { useNotification } from '../../application/context/NotificationContext';
+import { DEFAULT_NOTIFICATION_POLICY, NotificationPolicyConfig } from '../../foundation/types/notification';
 
 export const SettingsView: React.FC = () => {
   const { lang, setLang, settingsSubTab, setSettingsSubTab, updateStoreSettingsState, setActiveTab } = useApp();
@@ -98,7 +105,15 @@ export const SettingsView: React.FC = () => {
   // Core Data States
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [savedSuccessMsg, setSavedSuccessMsg] = useState<string | null>(null);
+
+  // Global Notification Policy Architecture State
+  const { policyConfig, updatePolicyConfig, resetPolicyConfig, notify } = useNotification();
+  const [tempPolicyConfig, setTempPolicyConfig] = useState<NotificationPolicyConfig>(policyConfig);
+  const [isSavingPolicy, setIsSavingPolicy] = useState(false);
+
+  useEffect(() => {
+    setTempPolicyConfig(policyConfig);
+  }, [policyConfig]);
 
   // Global & Company
   const [globalSettings, setGlobalSettings] = useState<Record<string, any>>({});
@@ -187,8 +202,7 @@ export const SettingsView: React.FC = () => {
 
   // Show Toast
   const triggerSuccess = (msg: string) => {
-    setSavedSuccessMsg(msg);
-    setTimeout(() => setSavedSuccessMsg(null), 3500);
+    notify.success(msg);
   };
 
   // Initial Load
@@ -259,7 +273,7 @@ export const SettingsView: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      alert('Logo image must be less than 5 MB.');
+      notify.warning('Logo image must be less than 5 MB.', 'Image Size Warning');
       return;
     }
     setIsUploadingLogo(true);
@@ -273,7 +287,7 @@ export const SettingsView: React.FC = () => {
         triggerSuccess(lang === 'kh' ? 'ឡូហ្គោត្រូវបានបង្ហោះជោគជ័យ!' : 'Store logo uploaded successfully!');
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to upload logo.');
+      notify.error(err.response?.data?.message || 'Failed to upload logo.');
     } finally {
       setIsUploadingLogo(false);
     }
@@ -288,7 +302,7 @@ export const SettingsView: React.FC = () => {
       updateStoreSettingsState(fieldsToSave as any);
       triggerSuccess(lang === 'kh' ? 'ការកំណត់ត្រូវបានរក្សាទុកដោយជោគជ័យ!' : 'System settings saved successfully!');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to save settings.');
+      notify.error(err.response?.data?.message || 'Failed to save settings.');
     } finally {
       setIsSaving(false);
     }
@@ -303,7 +317,7 @@ export const SettingsView: React.FC = () => {
       setCompany(updated);
       triggerSuccess(lang === 'kh' ? 'ព័ត៌មានក្រុមហ៊ុនត្រូវបានធ្វើបច្ចុប្បន្នភាព!' : 'Company profile updated successfully!');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update company.');
+      notify.error(err.response?.data?.message || 'Failed to update company.');
     } finally {
       setIsSaving(false);
     }
@@ -318,7 +332,7 @@ export const SettingsView: React.FC = () => {
       setBranchOverrides((prev) => ({ ...prev, ...newOverrides }));
       triggerSuccess(lang === 'kh' ? 'ការកំណត់ដោយឡែកសាខាត្រូវបានរក្សាទុក!' : 'Branch-specific overrides saved!');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to save branch overrides.');
+      notify.error(err.response?.data?.message || 'Failed to save branch overrides.');
     } finally {
       setIsSaving(false);
     }
@@ -327,7 +341,7 @@ export const SettingsView: React.FC = () => {
   // Branch CRUD
   const handleSaveBranchModal = async () => {
     if (!branchForm.code || !branchForm.name) {
-      alert('Branch Code and Name are required.');
+      notify.warning('Branch Code and Name are required.', 'Required Fields');
       return;
     }
     setIsSaving(true);
@@ -344,7 +358,7 @@ export const SettingsView: React.FC = () => {
       }
       setIsBranchModalOpen(false);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to save branch.');
+      notify.error(err.response?.data?.message || 'Failed to save branch.');
     } finally {
       setIsSaving(false);
     }
@@ -358,7 +372,7 @@ export const SettingsView: React.FC = () => {
       if (selectedBranchId === id) setSelectedBranchId(null);
       triggerSuccess(lang === 'kh' ? 'បានលុបសាខារួចរាល់!' : 'Branch deleted successfully!');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to delete branch.');
+      notify.error(err.response?.data?.message || 'Failed to delete branch.');
     }
   };
 
@@ -366,7 +380,7 @@ export const SettingsView: React.FC = () => {
   const handleSaveTerminal = async () => {
     const branchId = selectedBranchId || 1;
     if (!terminalForm.terminal_code || !terminalForm.terminal_name) {
-      alert('Terminal Code and Name are required.');
+      notify.warning('Terminal Code and Name are required.', 'Required Fields');
       return;
     }
     setIsSaving(true);
@@ -384,7 +398,7 @@ export const SettingsView: React.FC = () => {
       setIsTerminalModalOpen(false);
       triggerSuccess(lang === 'kh' ? 'បានរក្សាទុកឧបករណ៍ POS!' : 'POS Terminal saved!');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to save POS Terminal.');
+      notify.error(err.response?.data?.message || 'Failed to save POS Terminal.');
     } finally {
       setIsSaving(false);
     }
@@ -397,7 +411,7 @@ export const SettingsView: React.FC = () => {
       setTerminals((prev) => prev.filter((t) => t.id !== id));
       triggerSuccess('Terminal removed.');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to remove terminal.');
+      notify.error(err.response?.data?.message || 'Failed to remove terminal.');
     }
   };
 
@@ -405,7 +419,7 @@ export const SettingsView: React.FC = () => {
   const handleSavePrinter = async () => {
     const branchId = selectedBranchId || 1;
     if (!printerForm.printer_name) {
-      alert('Printer name is required.');
+      notify.warning('Printer name is required.', 'Required Fields');
       return;
     }
     setIsSaving(true);
@@ -423,7 +437,7 @@ export const SettingsView: React.FC = () => {
       setIsPrinterModalOpen(false);
       triggerSuccess(lang === 'kh' ? 'ម៉ាស៊ីនបោះពុម្ពត្រូវបានរក្សាទុក!' : 'Printer hardware saved!');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to save printer.');
+      notify.error(err.response?.data?.message || 'Failed to save printer.');
     } finally {
       setIsSaving(false);
     }
@@ -436,7 +450,7 @@ export const SettingsView: React.FC = () => {
       setPrinters((prev) => prev.filter((p) => p.id !== id));
       triggerSuccess('Printer removed.');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to delete printer.');
+      notify.error(err.response?.data?.message || 'Failed to delete printer.');
     }
   };
 
@@ -447,7 +461,7 @@ export const SettingsView: React.FC = () => {
       setSequences((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
       triggerSuccess(lang === 'kh' ? 'ទម្រង់លេខកូដត្រូវបានធ្វើបច្ចុប្បន្នភាព!' : 'Numbering sequence updated!');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to save sequence.');
+      notify.error(err.response?.data?.message || 'Failed to save sequence.');
     }
   };
 
@@ -466,7 +480,7 @@ export const SettingsView: React.FC = () => {
       setIsAssignUserModalOpen(false);
       triggerSuccess(lang === 'kh' ? 'បានចាត់តាំងបុគ្គលិកទៅសាខា!' : 'Staff assigned to branch!');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to assign staff.');
+      notify.error(err.response?.data?.message || 'Failed to assign staff.');
     }
   };
 
@@ -477,14 +491,14 @@ export const SettingsView: React.FC = () => {
       setBranchUsers((prev) => prev.filter((u) => u.id !== id));
       triggerSuccess('Staff assignment removed.');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to remove staff.');
+      notify.error(err.response?.data?.message || 'Failed to remove staff.');
     }
   };
 
   // Holiday Actions
   const handleSaveHoliday = async () => {
     if (!holidayForm.name || !holidayForm.holiday_date) {
-      alert('Holiday name and date are required.');
+      notify.warning('Holiday name and date are required.', 'Required Fields');
       return;
     }
     try {
@@ -496,7 +510,7 @@ export const SettingsView: React.FC = () => {
       setIsHolidayModalOpen(false);
       triggerSuccess(lang === 'kh' ? 'បានបន្ថែមថ្ងៃឈប់សម្រាក!' : 'Holiday added!');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to save holiday.');
+      notify.error(err.response?.data?.message || 'Failed to save holiday.');
     }
   };
 
@@ -507,7 +521,7 @@ export const SettingsView: React.FC = () => {
       setHolidays((prev) => prev.filter((h) => h.id !== id));
       triggerSuccess('Holiday removed.');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to remove holiday.');
+      notify.error(err.response?.data?.message || 'Failed to remove holiday.');
     }
   };
 
@@ -602,12 +616,6 @@ export const SettingsView: React.FC = () => {
 
       {/* Main Content Panel */}
       <div className="flex-1 overflow-y-auto p-6">
-          {savedSuccessMsg && (
-            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl flex items-center gap-2 text-xs font-semibold animate-in fade-in">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>{savedSuccessMsg}</span>
-            </div>
-          )}
 
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-64 text-slate-400 space-y-3">
@@ -1903,28 +1911,539 @@ export const SettingsView: React.FC = () => {
                 </div>
               )}
 
-              {/* 13. NOTIFICATIONS MATRIX */}
+              {/* 13. NOTIFICATIONS & GLOBAL POLICY */}
               {currentTab === 'NOTIFICATIONS' && (
-                <div className="space-y-6 max-w-5xl">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-lg font-bold text-slate-900">
-                        {lang === 'kh' ? 'ម៉ាទ្រីសការជូនដំណឹង' : 'System Notification Matrix'}
-                      </h2>
-                      <p className="text-xs text-slate-500">
-                        Configure dispatch channels (Email, Telegram, SMS, In-App) per system event
-                      </p>
+                <div className="space-y-8 max-w-5xl">
+                  {/* Part 1: Global Notification Auto-Close & Behavior Policy (All Modules) */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-lg">🔔</span>
+                          <h2 className="text-base font-bold text-slate-900">
+                            {lang === 'kh'
+                              ? 'ឥរិយាបថជូនដំណឹងទូទៅ — គ្រប់ម៉ូឌុល (Global Notification Behavior)'
+                              : 'Global Notification Behavior — All Modules'}
+                          </h2>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">
+                            Unified Policy
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                          {lang === 'kh'
+                            ? 'កំណត់រយៈពេល auto-close របារ progress bar និងការបិទដោយដៃដែលត្រូវបានអនុវត្តលើគ្រប់ ៤២ ម៉ូឌុលនៃប្រព័ន្ធ SmartPOS'
+                            : 'Centralized rules controlling auto-close timing, animated progress bars, and manual dismissal inherited across all 42 SmartPOS modules.'}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center space-x-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (window.confirm(lang === 'kh' ? 'តើអ្នកចង់កំណត់គោលការណ៍ជូនដំណឹងទៅជាទម្រង់លំនាំដើមវិញ?' : 'Reset notification policy to enterprise defaults?')) {
+                              await resetPolicyConfig();
+                              setTempPolicyConfig(DEFAULT_NOTIFICATION_POLICY);
+                              notify.info(lang === 'kh' ? 'គោលការណ៍ជូនដំណឹងត្រូវបានកំណត់ឡើងវិញ' : 'Notification policy reset to enterprise defaults.', 'Reset Complete');
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition flex items-center space-x-1.5 cursor-pointer shadow-2xs"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5 text-slate-600" />
+                          <span>{lang === 'kh' ? 'កំណត់ឡើងវិញ' : 'Reset Defaults'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setIsSavingPolicy(true);
+                            try {
+                              await updatePolicyConfig(tempPolicyConfig);
+                              notify.success(
+                                lang === 'kh' ? 'គោលការណ៍ជូនដំណឹងត្រូវបានរក្សាទុកជោគជ័យ!' : 'Notification policy saved and applied across all modules!',
+                                'Policy Updated'
+                              );
+                            } catch {
+                              notify.error('Failed to save notification policy.');
+                            } finally {
+                              setIsSavingPolicy(false);
+                            }
+                          }}
+                          disabled={isSavingPolicy}
+                          className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                        >
+                          <Save className="w-3.5 h-3.5" />
+                          <span>{isSavingPolicy ? (lang === 'kh' ? 'កំពុងរក្សាទុក...' : 'Saving...') : (lang === 'kh' ? 'រក្សាទុកគោលការណ៍' : 'Save Policy')}</span>
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => saveSettingsNotificationMatrix(notificationMatrix, selectedBranchId ? selectedBranchId : undefined).then(() => triggerSuccess('Notification rules saved!'))}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-2 transition"
-                    >
-                      <Save className="w-4 h-4" />
-                      Save Matrix
-                    </button>
+
+                    {/* Policy Table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden">
+                        <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                          <tr>
+                            <th className="px-4 py-3">Notification Type</th>
+                            <th className="px-4 py-3 text-center">Auto-Close</th>
+                            <th className="px-4 py-3 text-center">Duration</th>
+                            <th className="px-4 py-3 text-center">Progress Bar</th>
+                            <th className="px-4 py-3 text-center">Manual Close</th>
+                            <th className="px-4 py-3 text-center">Live Preview & Test</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                          {/* 1. SUCCESS */}
+                          <tr className="hover:bg-slate-50/70 transition">
+                            <td className="px-4 py-3.5">
+                              <div className="flex items-center space-x-2.5">
+                                <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+                                  <CheckCircle2 className="w-4 h-4" />
+                                </span>
+                                <div>
+                                  <div className="font-bold text-emerald-900 flex items-center gap-1.5">
+                                    <span>Success</span>
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                      ✅ Standard
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-400">Creation, updates, completions</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <label className="inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={tempPolicyConfig.success.auto_close}
+                                  onChange={(e) =>
+                                    setTempPolicyConfig({
+                                      ...tempPolicyConfig,
+                                      success: { ...tempPolicyConfig.success, auto_close: e.target.checked },
+                                    })
+                                  }
+                                  className="w-4 h-4 text-emerald-600 rounded cursor-pointer"
+                                />
+                              </label>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <div className="inline-flex items-center space-x-1.5">
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={60}
+                                  disabled={!tempPolicyConfig.success.auto_close}
+                                  value={(tempPolicyConfig.success.duration || 4000) / 1000}
+                                  onChange={(e) =>
+                                    setTempPolicyConfig({
+                                      ...tempPolicyConfig,
+                                      success: {
+                                        ...tempPolicyConfig.success,
+                                        duration: Math.max(1, Number(e.target.value)) * 1000,
+                                      },
+                                    })
+                                  }
+                                  className="w-16 px-2 py-1 text-center bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold disabled:opacity-40"
+                                />
+                                <span className="text-slate-400 font-semibold">sec</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <label className="inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  disabled={!tempPolicyConfig.success.auto_close}
+                                  checked={tempPolicyConfig.success.progress_bar}
+                                  onChange={(e) =>
+                                    setTempPolicyConfig({
+                                      ...tempPolicyConfig,
+                                      success: { ...tempPolicyConfig.success, progress_bar: e.target.checked },
+                                    })
+                                  }
+                                  className="w-4 h-4 text-emerald-600 rounded disabled:opacity-40 cursor-pointer"
+                                />
+                              </label>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">
+                                Yes (Always)
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  notify.success(
+                                    lang === 'kh' ? 'ផលិតផល "Coca Cola 330ml" ត្រូវបានបង្កើតជោគជ័យ!' : 'Product "Coca Cola 330ml" created successfully.',
+                                    { title: lang === 'kh' ? 'បានបង្កើតផលិតផល' : 'Product Created', ...tempPolicyConfig.success }
+                                  )
+                                }
+                                className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg font-bold text-xs transition border border-emerald-200 cursor-pointer flex items-center space-x-1 mx-auto shadow-2xs"
+                              >
+                                <Play className="w-3 h-3" />
+                                <span>{lang === 'kh' ? 'តេស្ត' : 'Test'}</span>
+                              </button>
+                            </td>
+                          </tr>
+
+                          {/* 2. INFORMATION */}
+                          <tr className="hover:bg-slate-50/70 transition">
+                            <td className="px-4 py-3.5">
+                              <div className="flex items-center space-x-2.5">
+                                <span className="p-1.5 rounded-lg bg-sky-50 text-sky-600">
+                                  <Info className="w-4 h-4" />
+                                </span>
+                                <div>
+                                  <div className="font-bold text-sky-900 flex items-center gap-1.5">
+                                    <span>Information</span>
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-sky-100 text-sky-800">
+                                      ℹ️ Info
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-400">Shift drawer opening, status cues</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <label className="inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={tempPolicyConfig.information.auto_close}
+                                  onChange={(e) =>
+                                    setTempPolicyConfig({
+                                      ...tempPolicyConfig,
+                                      information: { ...tempPolicyConfig.information, auto_close: e.target.checked },
+                                    })
+                                  }
+                                  className="w-4 h-4 text-sky-600 rounded cursor-pointer"
+                                />
+                              </label>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <div className="inline-flex items-center space-x-1.5">
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={60}
+                                  disabled={!tempPolicyConfig.information.auto_close}
+                                  value={(tempPolicyConfig.information.duration || 5000) / 1000}
+                                  onChange={(e) =>
+                                    setTempPolicyConfig({
+                                      ...tempPolicyConfig,
+                                      information: {
+                                        ...tempPolicyConfig.information,
+                                        duration: Math.max(1, Number(e.target.value)) * 1000,
+                                      },
+                                    })
+                                  }
+                                  className="w-16 px-2 py-1 text-center bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold disabled:opacity-40"
+                                />
+                                <span className="text-slate-400 font-semibold">sec</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <label className="inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  disabled={!tempPolicyConfig.information.auto_close}
+                                  checked={tempPolicyConfig.information.progress_bar}
+                                  onChange={(e) =>
+                                    setTempPolicyConfig({
+                                      ...tempPolicyConfig,
+                                      information: { ...tempPolicyConfig.information, progress_bar: e.target.checked },
+                                    })
+                                  }
+                                  className="w-4 h-4 text-sky-600 rounded disabled:opacity-40 cursor-pointer"
+                                />
+                              </label>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">
+                                Yes (Always)
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  notify.info(
+                                    lang === 'kh' ? 'ថតប្រាក់ត្រូវបានបើកដោយប្រធានសាខាសម្រាប់វេនលក់ថ្មី។' : 'Cash drawer opened by Branch Manager for new shift.',
+                                    { title: lang === 'kh' ? 'ព័ត៌មានប្រតិបត្តិការ' : 'Shift Information', ...tempPolicyConfig.information }
+                                  )
+                                }
+                                className="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-lg font-bold text-xs transition border border-sky-200 cursor-pointer flex items-center space-x-1 mx-auto shadow-2xs"
+                              >
+                                <Play className="w-3 h-3" />
+                                <span>{lang === 'kh' ? 'តេស្ត' : 'Test'}</span>
+                              </button>
+                            </td>
+                          </tr>
+
+                          {/* 3. WARNING */}
+                          <tr className="hover:bg-slate-50/70 transition">
+                            <td className="px-4 py-3.5">
+                              <div className="flex items-center space-x-2.5">
+                                <span className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
+                                  <AlertTriangle className="w-4 h-4" />
+                                </span>
+                                <div>
+                                  <div className="font-bold text-amber-900 flex items-center gap-1.5">
+                                    <span>Warning</span>
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                                      ⚠️ Alert
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-400">Low stock, threshold warnings, expiring items</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <label className="inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={tempPolicyConfig.warning.auto_close}
+                                  onChange={(e) =>
+                                    setTempPolicyConfig({
+                                      ...tempPolicyConfig,
+                                      warning: { ...tempPolicyConfig.warning, auto_close: e.target.checked },
+                                    })
+                                  }
+                                  className="w-4 h-4 text-amber-600 rounded cursor-pointer"
+                                />
+                              </label>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <div className="inline-flex items-center space-x-1.5">
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={60}
+                                  disabled={!tempPolicyConfig.warning.auto_close}
+                                  value={(tempPolicyConfig.warning.duration || 7000) / 1000}
+                                  onChange={(e) =>
+                                    setTempPolicyConfig({
+                                      ...tempPolicyConfig,
+                                      warning: {
+                                        ...tempPolicyConfig.warning,
+                                        duration: Math.max(1, Number(e.target.value)) * 1000,
+                                      },
+                                    })
+                                  }
+                                  className="w-16 px-2 py-1 text-center bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold disabled:opacity-40"
+                                />
+                                <span className="text-slate-400 font-semibold">sec</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <label className="inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  disabled={!tempPolicyConfig.warning.auto_close}
+                                  checked={tempPolicyConfig.warning.progress_bar}
+                                  onChange={(e) =>
+                                    setTempPolicyConfig({
+                                      ...tempPolicyConfig,
+                                      warning: { ...tempPolicyConfig.warning, progress_bar: e.target.checked },
+                                    })
+                                  }
+                                  className="w-4 h-4 text-amber-500 rounded disabled:opacity-40 cursor-pointer"
+                                />
+                              </label>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">
+                                Yes (Always)
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  notify.warning(
+                                    lang === 'kh' ? 'ផលិតផល "Coca Cola 330ml" នៅសល់ក្រោមចំនួនកំណត់អប្បបរមា (នៅសល់តែ ៣ កំប៉ុង)។' : 'Product "Coca Cola 330ml" is below minimum stock (only 3 units left).',
+                                    { title: lang === 'kh' ? 'ការព្រមានស្តុកទាប' : 'Low Stock Warning', ...tempPolicyConfig.warning }
+                                  )
+                                }
+                                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg font-bold text-xs transition border border-amber-200 cursor-pointer flex items-center space-x-1 mx-auto shadow-2xs"
+                              >
+                                <Play className="w-3 h-3" />
+                                <span>{lang === 'kh' ? 'តេស្ត' : 'Test'}</span>
+                              </button>
+                            </td>
+                          </tr>
+
+                          {/* 4. ERROR */}
+                          <tr className="hover:bg-slate-50/70 transition">
+                            <td className="px-4 py-3.5">
+                              <div className="flex items-center space-x-2.5">
+                                <span className="p-1.5 rounded-lg bg-rose-50 text-rose-600">
+                                  <AlertCircle className="w-4 h-4" />
+                                </span>
+                                <div>
+                                  <div className="font-bold text-rose-900 flex items-center gap-1.5">
+                                    <span>Error</span>
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-100 text-rose-800">
+                                      ❌ Failure
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-400">Failed operations, API exceptions, validation errors</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <label className="inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={tempPolicyConfig.error.auto_close}
+                                  onChange={(e) =>
+                                    setTempPolicyConfig({
+                                      ...tempPolicyConfig,
+                                      error: { ...tempPolicyConfig.error, auto_close: e.target.checked },
+                                    })
+                                  }
+                                  className="w-4 h-4 text-rose-600 rounded cursor-pointer"
+                                />
+                              </label>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <div className="inline-flex items-center space-x-1.5">
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={60}
+                                  disabled={!tempPolicyConfig.error.auto_close}
+                                  value={(tempPolicyConfig.error.duration || 8000) / 1000}
+                                  onChange={(e) =>
+                                    setTempPolicyConfig({
+                                      ...tempPolicyConfig,
+                                      error: {
+                                        ...tempPolicyConfig.error,
+                                        duration: Math.max(1, Number(e.target.value)) * 1000,
+                                      },
+                                    })
+                                  }
+                                  className="w-16 px-2 py-1 text-center bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold disabled:opacity-40"
+                                />
+                                <span className="text-slate-400 font-semibold">sec</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <label className="inline-flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  disabled={!tempPolicyConfig.error.auto_close}
+                                  checked={tempPolicyConfig.error.progress_bar}
+                                  onChange={(e) =>
+                                    setTempPolicyConfig({
+                                      ...tempPolicyConfig,
+                                      error: { ...tempPolicyConfig.error, progress_bar: e.target.checked },
+                                    })
+                                  }
+                                  className="w-4 h-4 text-rose-600 rounded disabled:opacity-40 cursor-pointer"
+                                />
+                              </label>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">
+                                Yes (Always)
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  notify.error(
+                                    lang === 'kh' ? 'ការបម្រុងទុកទិន្នន័យបានបរាជ័យ: កំហុសសរសេរលើថាសរឹង។' : 'Database backup failed: Disk write permission error.',
+                                    { title: lang === 'kh' ? 'ការបម្រុងទុកបរាជ័យ' : 'Backup Failed', ...tempPolicyConfig.error }
+                                  )
+                                }
+                                className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg font-bold text-xs transition border border-rose-200 cursor-pointer flex items-center space-x-1 mx-auto shadow-2xs"
+                              >
+                                <Play className="w-3 h-3" />
+                                <span>{lang === 'kh' ? 'តេស្ត' : 'Test'}</span>
+                              </button>
+                            </td>
+                          </tr>
+
+                          {/* 5. CRITICAL */}
+                          <tr className="hover:bg-red-50/40 transition bg-red-50/10">
+                            <td className="px-4 py-3.5">
+                              <div className="flex items-center space-x-2.5">
+                                <span className="p-1.5 rounded-lg bg-red-100 text-red-700 animate-pulse">
+                                  <ShieldCheck className="w-4 h-4" />
+                                </span>
+                                <div>
+                                  <div className="font-bold text-red-950 flex items-center gap-1.5">
+                                    <span>Critical</span>
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-black uppercase bg-red-600 text-white">
+                                      🚨 Urgent
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-400">Security breaches, integrity failure, license/cash lock</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <div className="flex flex-col items-center">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-800 border border-red-200">
+                                  No (Manual)
+                                </span>
+                                <span className="text-[9px] text-slate-400 mt-0.5">Remains until handled</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <span className="text-slate-400 font-mono text-xs">—</span>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <span className="text-slate-400 font-mono text-xs">—</span>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700">
+                                Yes (Manual Dismiss)
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  notify.critical(
+                                    lang === 'kh'
+                                      ? '🚨 ការជូនដំណឹងសន្តិសុខធ្ងន់ធ្ងរ: បានរកឃើញការប៉ុនប៉ងបញ្ចូលកូដ PIN ខុសចំនួន ៥ ដងជាប់គ្នានៅលើម៉ាស៊ីន POS 02!'
+                                      : '🚨 Critical security event detected: 5 consecutive failed supervisor PIN attempts on POS Terminal 02.',
+                                    { title: lang === 'kh' ? 'ព្រឹត្តិការណ៍សន្តិសុខធ្ងន់ធ្ងរ' : 'Critical Security Alert', ...tempPolicyConfig.critical }
+                                  )
+                                }
+                                className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition cursor-pointer flex items-center space-x-1 mx-auto shadow-xs"
+                              >
+                                <Play className="w-3 h-3" />
+                                <span>{lang === 'kh' ? 'តេស្ត Critical' : 'Test Critical'}</span>
+                              </button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
 
-                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+                  {/* Part 2: System Event Channel Matrix */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-base font-bold text-slate-900">
+                          {lang === 'kh' ? 'ម៉ាទ្រីសបញ្ជូនសារតាមបណ្តាញ (Dispatch Channel Matrix)' : 'System Event Dispatch Channel Matrix'}
+                        </h2>
+                        <p className="text-xs text-slate-500">
+                          Configure dispatch channels (Email, Telegram, SMS, In-App) per system event
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => saveSettingsNotificationMatrix(notificationMatrix, selectedBranchId ? selectedBranchId : undefined).then(() => notify.success('Notification channels saved!', 'Matrix Updated'))}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-2 transition"
+                      >
+                        <Save className="w-4 h-4" />
+                        Save Matrix
+                      </button>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
                     <table className="w-full text-left text-xs">
                       <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                         <tr>
@@ -1960,7 +2479,8 @@ export const SettingsView: React.FC = () => {
                     </table>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
               {/* 14. AUDIT TRAIL */}
               {currentTab === 'AUDIT' && (

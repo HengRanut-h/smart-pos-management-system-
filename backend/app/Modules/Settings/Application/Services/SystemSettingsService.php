@@ -82,6 +82,9 @@ class SystemSettingsService
         'security_pin_length' => '4',
         'master_security_pin' => '1234',
 
+        // Notification Policy Architecture
+        'notification_toast_config' => '{"success":{"auto_close":true,"duration":4000,"progress_bar":true},"information":{"auto_close":true,"duration":5000,"progress_bar":true},"warning":{"auto_close":true,"duration":7000,"progress_bar":true},"error":{"auto_close":true,"duration":8000,"progress_bar":true},"critical":{"auto_close":false,"duration":null,"progress_bar":false}}',
+
         // Defaults
         'default_warehouse_id' => '1',
         'default_branch_id' => '1',

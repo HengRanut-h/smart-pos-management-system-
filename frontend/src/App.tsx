@@ -1,5 +1,7 @@
 import React from 'react';
+import { NotificationProvider } from './application/context/NotificationContext';
 import { AppProvider, useApp } from './application/context/AppContext';
+import { GlobalToastContainer } from './presentation/components/GlobalToastContainer';
 import { Navbar } from './presentation/components/Navbar';
 import { SidebarNav } from './presentation/components/SidebarNav';
 import { POSTerminal } from './features/pos/POSTerminal';
@@ -177,9 +179,12 @@ export const App: React.FC = () => {
   }
 
   return (
-    <AppProvider>
-      <AppShell />
-    </AppProvider>
+    <NotificationProvider>
+      <GlobalToastContainer />
+      <AppProvider>
+        <AppShell />
+      </AppProvider>
+    </NotificationProvider>
   );
 };
 

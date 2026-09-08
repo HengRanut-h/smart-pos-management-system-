@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Package, Plus, Trash2, Check } from 'lucide-react';
 import { EnterpriseProduct } from '../../foundation/types/productEnterprise';
 import { productEnterpriseApi } from '../../data-access/productEnterpriseApi';
+import { useApp } from '../../application/context/AppContext';
 
 interface BundleBomModalProps {
   product: EnterpriseProduct;
@@ -20,6 +21,7 @@ export const BundleBomModal: React.FC<BundleBomModalProps> = ({
   onSaved,
   mode,
 }) => {
+  const { notify } = useApp();
   const [items, setItems] = useState<Array<{ id: number; quantity: number; unit_price: number; scrap?: number }>>([]);
   const [selectedProductId, setSelectedProductId] = useState<number>(
     allProducts.find(p => p.id !== product.id)?.id || 1
@@ -71,11 +73,15 @@ export const BundleBomModal: React.FC<BundleBomModalProps> = ({
         }));
         await productEnterpriseApi.saveBomItems(product.id, payload);
       }
+      notify.success(
+        mode === 'BUNDLE' ? 'Bundle items saved successfully!' : 'Bill of Materials (BOM) saved successfully!',
+        'Saved'
+      );
       onSaved();
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error saving items');
+      notify.error(err?.response?.data?.message || 'Error saving items');
     } finally {
       setIsSaving(false);
     }

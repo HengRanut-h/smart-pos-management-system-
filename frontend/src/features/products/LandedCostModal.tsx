@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Calculator, Check, Percent } from 'lucide-react';
 import { EnterpriseProduct } from '../../foundation/types/productEnterprise';
 import { productEnterpriseApi } from '../../data-access/productEnterpriseApi';
+import { useApp } from '../../application/context/AppContext';
 
 interface LandedCostModalProps {
   product: EnterpriseProduct;
@@ -16,6 +17,7 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
   onClose,
   onSaved,
 }) => {
+  const { notify } = useApp();
   const [baseCost, setBaseCost] = useState(product.cost_price || 0);
   const [shippingCost, setShippingCost] = useState(product.shipping_cost || 0);
   const [importTax, setImportTax] = useState(product.import_tax || 0);
@@ -31,7 +33,7 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
   );
 
   const suggestedSellingPrice = parseFloat(
-    (targetMargin < 100 ? totalLandedCost / (1 - targetMargin / 100) : totalLandedCost * 1.5).toFixed(2)
+    (totalLandedCost / (1 - targetMargin / 100)).toFixed(2)
   );
 
   const projectedProfit = parseFloat((suggestedSellingPrice - totalLandedCost).toFixed(2));
@@ -39,7 +41,8 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      await productEnterpriseApi.updateLandedCost(product.id, {
+      await productEnterpriseApi.updateProduct(product.id, {
+        cost_price: totalLandedCost,
         shipping_cost: shippingCost,
         import_tax: importTax,
         handling_cost: handlingCost,
@@ -52,11 +55,12 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
         });
       }
 
+      notify.success('Landed cost and pricing updated successfully!', 'Cost Updated');
       onSaved();
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error updating landed cost');
+      notify.error(err?.response?.data?.message || 'Error updating landed cost');
     } finally {
       setIsSaving(false);
     }

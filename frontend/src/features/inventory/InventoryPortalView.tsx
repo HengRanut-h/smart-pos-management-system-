@@ -5,7 +5,7 @@ import { getStocks, getStockMovements, adjustStock, transferStock } from '../../
 import { Package, ArrowDownUp, RefreshCw, AlertTriangle, ArrowRight, ArrowDownLeft, ArrowUpRight, Search, CheckCircle2 } from 'lucide-react';
 
 export const InventoryPortalView: React.FC = () => {
-  const { t, products } = useApp();
+  const { t, products, lang, notify } = useApp();
   const [activeSubTab, setActiveSubTab] = useState<'stocks' | 'movements'>('stocks');
   const [stocks, setStocks] = useState<StockItem[]>([]);
   const [movements, setMovements] = useState<StockMovementItem[]>([]);
@@ -59,11 +59,15 @@ export const InventoryPortalView: React.FC = () => {
         type: adjustType,
         reason: adjustReason,
       });
-      setMessage({ text: 'Stock adjustment completed successfully!', type: 'success' });
+      const msg = lang === 'kh' ? 'ការកែតម្រូវស្តុកត្រូវបានបញ្ចប់ដោយជោគជ័យ!' : 'Stock adjustment completed successfully!';
+      setMessage({ text: msg, type: 'success' });
+      notify.success(msg, lang === 'kh' ? 'ស្តុកទំនិញ' : 'Stock Adjustment');
       setShowAdjustModal(false);
       loadData();
     } catch (err: any) {
-      setMessage({ text: err.response?.data?.message || 'Failed to adjust stock', type: 'error' });
+      const errorMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការកែតម្រូវស្តុក' : 'Failed to adjust stock');
+      setMessage({ text: errorMsg, type: 'error' });
+      notify.error(errorMsg, lang === 'kh' ? 'កំហុស' : 'Stock Error');
     }
   };
 
@@ -78,11 +82,15 @@ export const InventoryPortalView: React.FC = () => {
         quantity: transferQty,
         notes: transferNotes,
       });
-      setMessage({ text: 'Stock transfer completed successfully!', type: 'success' });
+      const msg = lang === 'kh' ? 'ការផ្ទេរស្តុកត្រូវបានបញ្ចប់ដោយជោគជ័យ!' : 'Stock transfer completed successfully!';
+      setMessage({ text: msg, type: 'success' });
+      notify.success(msg, lang === 'kh' ? 'ផ្ទេរស្តុក' : 'Stock Transfer');
       setShowTransferModal(false);
       loadData();
     } catch (err: any) {
-      setMessage({ text: err.response?.data?.message || 'Failed to transfer stock', type: 'error' });
+      const errorMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការផ្ទេរស្តុក' : 'Failed to transfer stock');
+      setMessage({ text: errorMsg, type: 'error' });
+      notify.error(errorMsg, lang === 'kh' ? 'កំហុស' : 'Transfer Error');
     }
   };
 

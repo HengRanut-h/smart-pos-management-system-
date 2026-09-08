@@ -220,7 +220,17 @@ export const getAuditLogs = async (params?: { entity_type?: string; action?: str
   return res.data?.data?.data || res.data?.data || [];
 };
 
-// Backup APIs
+// Backup APIs (Legacy & Comprehensive Hub)
+import {
+  BackupRecordItem,
+  BackupScheduleItem,
+  DatabaseHealthStats,
+  BackupDashboardData,
+  TelegramBotConfig,
+  TelegramUserItem,
+  TelegramLogItem,
+} from '../foundation/types/backup';
+
 export const getBackupStatus = async (): Promise<BackupStatus> => {
   const res = await apiClient.get('/backup/status');
   return res.data.data;
@@ -231,10 +241,131 @@ export const createBackup = async (): Promise<any> => {
   return res.data;
 };
 
-export const exportBackupData = async (type: 'sales' | 'products'): Promise<any> => {
-  const res = await apiClient.get(`/backup/export/${type}`);
+export const exportBackupData = async (type: 'sales' | 'products' | 'customers'): Promise<any> => {
+  const res = await apiClient.get(`/backups/export/${type}`);
   return res.data;
 };
+
+export const getBackupDashboard = async (): Promise<BackupDashboardData> => {
+  const res = await apiClient.get('/backups/dashboard');
+  return res.data.data;
+};
+
+export const getBackupRecords = async (params?: {
+  type?: string;
+  status?: string;
+  search?: string;
+  page?: number;
+  per_page?: number;
+}): Promise<{ data: BackupRecordItem[]; pagination: { total: number; current_page: number; last_page: number } }> => {
+  const res = await apiClient.get('/backups/records', { params });
+  return {
+    data: res.data.data,
+    pagination: res.data.pagination,
+  };
+};
+
+export const createBackupSnapshot = async (options?: {
+  type?: string;
+  storage?: string;
+  compression?: string;
+  encryption?: string;
+  retention_days?: number;
+}): Promise<{ success: boolean; message: string; data: BackupRecordItem }> => {
+  const res = await apiClient.post('/backups/create', options);
+  return res.data;
+};
+
+export const verifyBackupSnapshot = async (id: number): Promise<{ success: boolean; data: any }> => {
+  const res = await apiClient.post(`/backups/${id}/verify`);
+  return res.data;
+};
+
+export const restoreBackupSnapshot = async (id: number): Promise<{ success: boolean; message: string; safety_backup?: string }> => {
+  const res = await apiClient.post(`/backups/${id}/restore`);
+  return res.data;
+};
+
+export const deleteBackupSnapshot = async (id: number): Promise<{ success: boolean; message: string }> => {
+  const res = await apiClient.delete(`/backups/${id}`);
+  return res.data;
+};
+
+export const getBackupSchedules = async (): Promise<BackupScheduleItem[]> => {
+  const res = await apiClient.get('/backups/schedules/all');
+  return res.data.data;
+};
+
+export const saveBackupSchedule = async (data: Partial<BackupScheduleItem>): Promise<{ success: boolean; message: string; data: BackupScheduleItem }> => {
+  const res = await apiClient.post('/backups/schedules/save', data);
+  return res.data;
+};
+
+export const toggleBackupScheduleStatus = async (id: number): Promise<{ success: boolean; message: string; data: BackupScheduleItem }> => {
+  const res = await apiClient.post(`/backups/schedules/${id}/toggle`);
+  return res.data;
+};
+
+export const runBackupScheduleNow = async (id: number): Promise<{ success: boolean; message: string; data: any }> => {
+  const res = await apiClient.post(`/backups/schedules/${id}/run-now`);
+  return res.data;
+};
+
+export const deleteBackupSchedule = async (id: number): Promise<{ success: boolean; message: string }> => {
+  const res = await apiClient.delete(`/backups/schedules/${id}`);
+  return res.data;
+};
+
+export const pruneExpiredBackups = async (): Promise<{ success: boolean; message: string; data: { pruned_count: number; pruned_bytes: number; pruned_bytes_formatted: string } }> => {
+  const res = await apiClient.post('/backups/schedules/prune-expired');
+  return res.data;
+};
+
+export const getDatabaseMaintenanceStats = async (): Promise<DatabaseHealthStats> => {
+  const res = await apiClient.get('/backups/maintenance/stats');
+  return res.data.data;
+};
+
+export const runDatabaseOptimization = async (): Promise<{ success: boolean; message: string }> => {
+  const res = await apiClient.post('/backups/maintenance/optimize');
+  return res.data;
+};
+
+export const getTelegramBotSettings = async (): Promise<{ bot: TelegramBotConfig; users: TelegramUserItem[]; configured_chat_id: string }> => {
+  const res = await apiClient.get('/backups/telegram/settings');
+  return res.data.data;
+};
+
+export const verifyTelegramBotToken = async (botToken: string): Promise<{ success: boolean; message: string; bot?: any }> => {
+  const res = await apiClient.post('/backups/telegram/verify', { bot_token: botToken });
+  return res.data;
+};
+
+export const saveTelegramBotSettings = async (data: Partial<TelegramBotConfig> & { chat_id?: string; admin_username?: string }): Promise<{ success: boolean; message: string; data: any }> => {
+  const res = await apiClient.post('/backups/telegram/settings', data);
+  return res.data;
+};
+
+export const sendTelegramTestAlert = async (chatId?: string, botToken?: string): Promise<{ success: boolean; message: string; preview_text: string }> => {
+  const res = await apiClient.post('/backups/telegram/test-alert', { chat_id: chatId, bot_token: botToken });
+  return res.data;
+};
+
+export const getTelegramLogs = async (): Promise<TelegramLogItem[]> => {
+  const res = await apiClient.get('/backups/telegram/logs');
+  return res.data.data;
+};
+
+export const sendBackupSnapshotToTelegram = async (id: number, chatId?: string): Promise<{ success: boolean; message: string; file_name?: string }> => {
+  const res = await apiClient.post(`/backups/${id}/send-telegram`, { chat_id: chatId });
+  return res.data;
+};
+
+export const sendExportDataToTelegram = async (type: string, chatId?: string): Promise<{ success: boolean; message: string; file_name?: string }> => {
+  const res = await apiClient.post(`/backups/export/${type}/send-telegram`, { chat_id: chatId });
+  return res.data;
+};
+
 
 // Settings APIs
 export const getSystemSettings = async (): Promise<SystemSettings> => {
@@ -649,3 +780,238 @@ export const assignUserRole = async (
   const res = await apiClient.post(`/admin/users/${userId}/role`, payload);
   return res.data;
 };
+
+// ==========================================
+// User Login Audit & Session Security APIs
+// ==========================================
+import {
+  UserLoginAuditItem,
+  LoginAuditStats,
+  LoginAuditFilterParams,
+} from '../foundation/types/loginAudit';
+
+export const getLoginAudits = async (
+  params?: LoginAuditFilterParams
+): Promise<{
+  data: UserLoginAuditItem[];
+  pagination: { total: number; current_page: number; last_page: number; per_page: number };
+}> => {
+  const res = await apiClient.get('/audit-logs/login', { params });
+  return {
+    data: res.data?.data || [],
+    pagination: res.data?.pagination || { total: 0, current_page: 1, last_page: 1, per_page: 25 },
+  };
+};
+
+export const getLoginAuditStats = async (): Promise<LoginAuditStats> => {
+  const res = await apiClient.get('/audit-logs/login/stats');
+  return res.data?.data || {
+    total_logins: 0,
+    successful_logins: 0,
+    failed_attempts: 0,
+    suspicious_logins: 0,
+    active_sessions: 0,
+    success_rate: 100,
+    today_total: 0,
+    today_failed: 0,
+  };
+};
+
+export const getActiveLoginSessions = async (): Promise<UserLoginAuditItem[]> => {
+  const res = await apiClient.get('/audit-logs/login/active-sessions');
+  return res.data?.data || [];
+};
+
+export const forceLogoutLoginSession = async (
+  auditId: number
+): Promise<{ success: boolean; message: string }> => {
+  const res = await apiClient.post(`/audit-logs/login/force-logout/${auditId}`);
+  return res.data;
+};
+
+export const getLoginAuditExportUrl = (params?: {
+  status?: string;
+  date_from?: string;
+  date_to?: string;
+}): string => {
+  const query = new URLSearchParams();
+  if (params?.status && params.status !== 'ALL') query.append('status', params.status);
+  if (params?.date_from) query.append('date_from', params.date_from);
+  if (params?.date_to) query.append('date_to', params.date_to);
+  const baseUrl = (apiClient.defaults.baseURL || '/api/v1').replace(/\/$/, '');
+  return `${baseUrl}/audit-logs/login/export?${query.toString()}`;
+};
+
+// ==========================================
+// System & Branch Settings Management APIs
+// ==========================================
+import {
+  CompanyInfo,
+  BranchItem,
+  BranchPosTerminalItem,
+  BranchPrinterItem,
+  BranchNumberSequenceItem,
+  BranchBusinessHourItem,
+  BranchHolidayItem,
+  BranchUserItem,
+  SystemAuditLogItem,
+  NotificationSettingRow,
+} from '../foundation/types/settings';
+
+export const getSystemSettingsDetailed = async (): Promise<Record<string, any>> => {
+  const res = await apiClient.get('/settings/system');
+  return res.data?.data || {};
+};
+
+export const updateSystemSettingsDetailed = async (data: Record<string, any>): Promise<any> => {
+  const res = await apiClient.post('/settings/system', data);
+  return res.data;
+};
+
+export const getCompanyProfile = async (): Promise<CompanyInfo> => {
+  const res = await apiClient.get('/settings/company');
+  return res.data?.data;
+};
+
+export const updateCompanyProfile = async (data: Partial<CompanyInfo>): Promise<CompanyInfo> => {
+  const res = await apiClient.post('/settings/company', data);
+  return res.data?.data;
+};
+
+export const getBranchesList = async (): Promise<BranchItem[]> => {
+  const res = await apiClient.get('/settings/branches');
+  return res.data?.data || [];
+};
+
+export const getBranchDetails = async (id: number): Promise<BranchItem> => {
+  const res = await apiClient.get(`/settings/branches/${id}`);
+  return res.data?.data;
+};
+
+export const createBranch = async (data: Partial<BranchItem>): Promise<BranchItem> => {
+  const res = await apiClient.post('/settings/branches', data);
+  return res.data?.data;
+};
+
+export const updateBranch = async (id: number, data: Partial<BranchItem>): Promise<BranchItem> => {
+  const res = await apiClient.put(`/settings/branches/${id}`, data);
+  return res.data?.data;
+};
+
+export const deleteBranch = async (id: number): Promise<void> => {
+  await apiClient.delete(`/settings/branches/${id}`);
+};
+
+export const getBranchOverrides = async (branchId: number): Promise<Record<string, string>> => {
+  const res = await apiClient.get(`/settings/branches/${branchId}/overrides`);
+  return res.data?.data || {};
+};
+
+export const saveBranchOverrides = async (branchId: number, data: Record<string, any>): Promise<any> => {
+  const res = await apiClient.post(`/settings/branches/${branchId}/overrides`, data);
+  return res.data;
+};
+
+export const getBranchMergedSettings = async (branchId: number): Promise<Record<string, any>> => {
+  const res = await apiClient.get(`/settings/branches/${branchId}/merged`);
+  return res.data?.data || {};
+};
+
+export const getBranchTerminals = async (branchId: number): Promise<BranchPosTerminalItem[]> => {
+  const res = await apiClient.get(`/settings/branches/${branchId}/terminals`);
+  return res.data?.data || [];
+};
+
+export const saveBranchTerminal = async (data: Partial<BranchPosTerminalItem>): Promise<BranchPosTerminalItem> => {
+  const res = await apiClient.post('/settings/terminals', data);
+  return res.data?.data;
+};
+
+export const deleteBranchTerminal = async (id: number): Promise<void> => {
+  await apiClient.delete(`/settings/terminals/${id}`);
+};
+
+export const getBranchPrinters = async (branchId: number): Promise<BranchPrinterItem[]> => {
+  const res = await apiClient.get(`/settings/branches/${branchId}/printers`);
+  return res.data?.data || [];
+};
+
+export const saveBranchPrinter = async (data: Partial<BranchPrinterItem>): Promise<BranchPrinterItem> => {
+  const res = await apiClient.post('/settings/printers', data);
+  return res.data?.data;
+};
+
+export const deleteBranchPrinter = async (id: number): Promise<void> => {
+  await apiClient.delete(`/settings/printers/${id}`);
+};
+
+export const getBranchSequences = async (branchId: number): Promise<BranchNumberSequenceItem[]> => {
+  const res = await apiClient.get(`/settings/branches/${branchId}/sequences`);
+  return res.data?.data || [];
+};
+
+export const saveBranchSequence = async (data: Partial<BranchNumberSequenceItem>): Promise<BranchNumberSequenceItem> => {
+  const res = await apiClient.post('/settings/sequences', data);
+  return res.data?.data;
+};
+
+export const getBranchHours = async (branchId: number): Promise<BranchBusinessHourItem[]> => {
+  const res = await apiClient.get(`/settings/branches/${branchId}/hours`);
+  return res.data?.data || [];
+};
+
+export const saveBranchHours = async (branchId: number, hours: BranchBusinessHourItem[]): Promise<any> => {
+  const res = await apiClient.post(`/settings/branches/${branchId}/hours`, { hours });
+  return res.data;
+};
+
+export const getHolidays = async (branchId?: number): Promise<BranchHolidayItem[]> => {
+  const res = await apiClient.get('/settings/holidays', { params: branchId ? { branch_id: branchId } : {} });
+  return res.data?.data || [];
+};
+
+export const saveHoliday = async (data: Partial<BranchHolidayItem>): Promise<BranchHolidayItem> => {
+  const res = await apiClient.post('/settings/holidays', data);
+  return res.data?.data;
+};
+
+export const deleteHoliday = async (id: number): Promise<void> => {
+  await apiClient.delete(`/settings/holidays/${id}`);
+};
+
+export const getBranchStaffUsers = async (branchId: number): Promise<BranchUserItem[]> => {
+  const res = await apiClient.get(`/settings/branches/${branchId}/users`);
+  return res.data?.data || [];
+};
+
+export const assignBranchStaffUser = async (data: {
+  branch_id: number;
+  user_id: number;
+  assigned_role: string;
+  permissions?: string[];
+  is_active?: boolean;
+}): Promise<any> => {
+  const res = await apiClient.post('/settings/branch-users', data);
+  return res.data;
+};
+
+export const removeBranchStaffUser = async (id: number): Promise<void> => {
+  await apiClient.delete(`/settings/branch-users/${id}`);
+};
+
+export const getSettingsNotificationMatrix = async (branchId?: number): Promise<NotificationSettingRow[]> => {
+  const res = await apiClient.get('/settings/notifications', { params: branchId ? { branch_id: branchId } : {} });
+  return res.data?.data || [];
+};
+
+export const saveSettingsNotificationMatrix = async (matrix: NotificationSettingRow[], branchId?: number): Promise<any> => {
+  const res = await apiClient.post('/settings/notifications', { matrix, branch_id: branchId });
+  return res.data;
+};
+
+export const getSettingAuditLogs = async (limit = 100): Promise<SystemAuditLogItem[]> => {
+  const res = await apiClient.get('/settings/audits', { params: { limit } });
+  return res.data?.data || [];
+};
+
+

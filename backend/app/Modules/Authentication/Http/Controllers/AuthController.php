@@ -20,12 +20,27 @@ use App\Modules\Authentication\Application\Actions\LogoutAction;
 use App\Modules\Authentication\Application\Actions\SendOtpAction;
 use App\Modules\Authentication\Application\Actions\VerifyOtpAction;
 use App\Modules\Authentication\Application\DTOs\OtpDTO;
+use App\Modules\Audit\Application\Services\LoginAuditService;
 
 class AuthController extends Controller
 {
-    public function login(LoginRequest $request, LoginAction $action, AuthService $authService): JsonResponse
-    {
-        $result = $action->execute($request->toDTO());
+    public function login(
+        LoginRequest $request,
+        LoginAction $action,
+        AuthService $authService,
+        LoginAuditService $loginAuditService
+    ): JsonResponse {
+        try {
+            $result = $action->execute($request->toDTO());
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = $e->errors();
+            $reason = isset($errors['username'][0]) ? $errors['username'][0] : 'Invalid username or password';
+            $loginAuditService->recordLoginFailed($request->input('username', 'anonymous'), $request, $reason, 'PASSWORD');
+            throw $e;
+        } catch (\Throwable $e) {
+            $loginAuditService->recordLoginFailed($request->input('username', 'anonymous'), $request, $e->getMessage(), 'PASSWORD');
+            throw $e;
+        }
 
         $session = $authService->createSession($result['user'], [
             'device_type' => $request->header('X-Device-Type', 'WEB'),
@@ -36,6 +51,15 @@ class AuthController extends Controller
 
         $result['token'] = $session['token'];
         $result['session_id'] = $session['session']->id;
+
+        // Record successful login audit event
+        $loginAuditService->recordLoginSuccess(
+            $result['user'],
+            $request,
+            'PASSWORD',
+            (string) $session['session']->id,
+            (bool) $request->boolean('remember_me')
+        );
 
         // Establish Web guard session cookie for SPA
         \Illuminate\Support\Facades\Auth::guard('web')->login($result['user']);
@@ -684,8 +708,12 @@ class AuthController extends Controller
         ]);
     }
 
-    public function logout(Request $request, LogoutAction $action): JsonResponse
+    public function logout(Request $request, LogoutAction $action, LoginAuditService $loginAuditService): JsonResponse
     {
+        $user = $request->user();
+        $sessionId = $request->header('X-Session-ID');
+        $loginAuditService->recordLogout($user, $sessionId, 'MANUAL');
+
         if ($request->bearerToken()) {
             $action->execute($request->bearerToken());
         }

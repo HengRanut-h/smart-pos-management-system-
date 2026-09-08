@@ -26,6 +26,7 @@ import {
   FileBarChart,
   Bell,
   Shield,
+  KeyRound,
   Database,
   SlidersHorizontal,
   ChevronLeft,
@@ -57,6 +58,11 @@ import {
   Hash,
   ShieldCheck,
   Calculator,
+  Bot,
+  CreditCard,
+  Printer,
+  Server,
+  Send,
 } from 'lucide-react';
 
 interface NavItem {
@@ -104,6 +110,10 @@ export const SidebarNav: React.FC = () => {
     setDeliverySubTab,
     securitySubTab,
     setSecuritySubTab,
+    backupSubTab,
+    setBackupSubTab,
+    settingsSubTab,
+    setSettingsSubTab,
     cart,
     isShiftOpen,
     isSidebarCollapsed,
@@ -116,6 +126,13 @@ export const SidebarNav: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [openGroupId, setOpenGroupId] = useState<string | null>(null);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+
+  // Prevent browser password managers from injecting saved emails/usernames into the module search
+  useEffect(() => {
+    if (searchQuery.includes('@')) {
+      setSearchQuery('');
+    }
+  }, [searchQuery]);
 
   const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -502,6 +519,14 @@ export const SidebarNav: React.FC = () => {
             subTab: 'AUDIT_LOGS',
           },
           {
+            id: 'sec_login_audits',
+            name: 'User Login Audit',
+            nameKh: 'សវនកម្មការចូលប្រើប្រាស់',
+            icon: <KeyRound className="w-4 h-4" />,
+            tab: 'security',
+            subTab: 'LOGIN_AUDIT',
+          },
+          {
             id: 'sec_user_roles',
             name: 'User Roles & Access',
             nameKh: 'តួនាទីអ្នកប្រើ & សិទ្ធិ',
@@ -529,35 +554,226 @@ export const SidebarNav: React.FC = () => {
       },
       {
         id: 'backup',
-        title: 'Backup & Maintenance',
-        titleKh: 'ការបម្រុងទុកទិន្នន័យ',
+        title: 'Database Backup & System Data',
+        titleKh: 'ការបម្រុងទុកទិន្នន័យ & ប្រព័ន្ធ',
         icon: <Database className="w-4 h-4" />,
         items: [
           {
-            id: 'backup',
-            name: 'Database Snapshots',
-            nameKh: 'បម្រុងទុកមូលទិន្នន័យ',
+            id: 'bak_dashboard',
+            name: 'Dashboard & Snapshots',
+            nameKh: 'ផ្ទាំងគ្រប់គ្រង & ច្បាប់ចម្លង',
             icon: <Database className="w-4 h-4" />,
             tab: 'backup',
+            subTab: 'DASHBOARD',
             hotkey: 'F11',
-            description: 'Snapshots & JSON data exports',
+            description: '3-2-1 strategy, snapshot records & KPIs',
+          },
+          {
+            id: 'bak_schedule',
+            name: 'Schedule & Retention',
+            nameKh: 'កាលវិភាគ & គោលការណ៍រក្សាទុក',
+            icon: <Calendar className="w-4 h-4" />,
+            tab: 'backup',
+            subTab: 'SCHEDULE',
+            description: 'Automated daily/weekly backups & cloud sync',
+          },
+          {
+            id: 'bak_restore',
+            name: 'Restore & Recovery',
+            nameKh: 'ការស្ដារឡើងវិញ & ការពារទិន្នន័យ',
+            icon: <RotateCcw className="w-4 h-4" />,
+            tab: 'backup',
+            subTab: 'RESTORE',
+            description: 'Safe restore, rollback snapshots & recovery',
+          },
+          {
+            id: 'bak_maintenance',
+            name: 'System Data & Health',
+            nameKh: 'ទិន្នន័យប្រព័ន្ធ & សុខភាព DB',
+            icon: <Server className="w-4 h-4" />,
+            tab: 'backup',
+            subTab: 'MAINTENANCE',
+            description: 'VACUUM optimization, cache purge, table stats',
+          },
+          {
+            id: 'bak_import_export',
+            name: 'Import & Export Hub',
+            nameKh: 'ការនាំចូល & នាំចេញ',
+            icon: <FileSpreadsheet className="w-4 h-4" />,
+            tab: 'backup',
+            subTab: 'IMPORT_EXPORT',
+            description: 'Bulk JSON & CSV data exports',
+          },
+          {
+            id: 'bak_telegram',
+            name: 'Telegram Bot & Alerts',
+            nameKh: 'តេឡេក្រាម & ការជូនដំណឹង',
+            icon: <Send className="w-4 h-4" />,
+            tab: 'backup',
+            subTab: 'TELEGRAM',
+            description: 'Bot configuration, audit logs & remote alerts',
           },
         ],
       },
       {
         id: 'settings',
-        title: 'System Configuration',
-        titleKh: 'ការកំណត់ប្រព័ន្ធ',
+        title: 'System & Branch Settings',
+        titleKh: 'ការកំណត់ប្រព័ន្ធ និងសាខា',
         icon: <Settings className="w-4 h-4" />,
         items: [
           {
-            id: 'settings',
-            name: 'Store & Branch Setup',
-            nameKh: 'ព័ត៌មានហាង & អត្រាប្តូរប្រាក់',
-            icon: <Settings className="w-4 h-4" />,
+            id: 'set_system',
+            name: 'System Settings',
+            nameKh: 'ការកំណត់ប្រព័ន្ធទូទៅ',
+            icon: <SlidersHorizontal className="w-4 h-4" />,
             tab: 'settings',
+            subTab: 'SYSTEM',
             hotkey: 'F12',
-            description: 'VAT rates, Bakong & printer',
+            description: 'Global system name, code, defaults',
+          },
+          {
+            id: 'set_company',
+            name: 'Company Profile',
+            nameKh: 'ព័ត៌មានក្រុមហ៊ុន & អាសយដ្ឋាន',
+            icon: <Building2 className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'COMPANY',
+            description: 'Legal registration, TIN, contacts',
+          },
+          {
+            id: 'set_branches',
+            name: 'Branch Management',
+            nameKh: 'គ្រប់គ្រងសាខាហាង (Stores)',
+            icon: <MapPin className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'BRANCHES',
+            description: 'Head Office, Phnom Penh, Siem Reap, Battambang',
+          },
+          {
+            id: 'set_branch_settings',
+            name: 'Branch-Specific Overrides',
+            nameKh: 'ការកំណត់ដោយឡែកតាមសាខា',
+            icon: <SlidersHorizontal className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'BRANCH_SETTINGS',
+            description: 'Financial, inventory & receipt overrides',
+          },
+          {
+            id: 'set_branch_users',
+            name: 'Branch Staff & Permissions',
+            nameKh: 'បុគ្គលិកសាខា & សិទ្ធិ',
+            icon: <Users className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'BRANCH_USERS',
+            description: 'Assign users to stores & terminals',
+          },
+          {
+            id: 'set_business_hours',
+            name: 'Business Hours & Holidays',
+            nameKh: 'ម៉ោងបើកលក់ & ថ្ងៃឈប់សម្រាក',
+            icon: <Calendar className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'BUSINESS_HOURS',
+            description: 'Operating days, shifts & national holidays',
+          },
+          {
+            id: 'set_invoice_receipt',
+            name: 'Invoice & Receipt Settings',
+            nameKh: 'ទម្រង់វិក្កយបត្រ & ស្លាកស្នាម',
+            icon: <FileText className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'INVOICE_RECEIPT',
+            description: 'Prefixes INV-, POS-, numbering, QR code',
+          },
+          {
+            id: 'set_tax_currency',
+            name: 'Tax & Multi-Currency (Bakong)',
+            nameKh: 'ពន្ធ & រូបិយប័ណ្ណ (KHQR)',
+            icon: <Coins className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'TAX_CURRENCY',
+            description: 'USD/KHR rate, VAT %, Bakong merchant',
+          },
+          {
+            id: 'set_inventory',
+            name: 'Inventory Rules & Valuation',
+            nameKh: 'វិធានស្តុក & ថ្លៃដើម (FIFO)',
+            icon: <Boxes className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'INVENTORY',
+            description: 'Valuation method, low-stock threshold, negative stock',
+          },
+          {
+            id: 'set_payment',
+            name: 'Payment & Cash Drawer',
+            nameKh: 'វិធីទូទាត់ & ថតប្រាក់',
+            icon: <DollarSign className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'PAYMENT',
+            description: 'Cash drawer float, banks, split payment',
+          },
+          {
+            id: 'set_hardware',
+            name: 'POS Hardware & Printers',
+            nameKh: 'ឧបករណ៍ POS & ម៉ាស៊ីនបោះពុម្ព',
+            icon: <Printer className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'PRINTER_HARDWARE',
+            description: 'Terminals, 80mm/58mm printers, scanners, scales',
+          },
+          {
+            id: 'set_localization',
+            name: 'Localization (Khmer / English)',
+            nameKh: 'ភាសា (ខ្មែរ / អង់គ្លេស) & តំបន់',
+            icon: <Globe className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'LOCALIZATION',
+            description: 'Default language, timezone, date & number format',
+          },
+          {
+            id: 'set_notifications',
+            name: 'Notification Channels',
+            nameKh: 'ការជូនដំណឹង & កំណត់ហេតុ',
+            icon: <Bell className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'NOTIFICATIONS',
+            description: 'Email, Telegram, SMS, In-App alerts',
+          },
+          {
+            id: 'set_telegram',
+            name: 'Telegram Bot Integration',
+            nameKh: 'តេឡេក្រាមបូត & ការដាស់តឿន',
+            icon: <Bot className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'TELEGRAM',
+            description: 'Bot token, admin chat ID, remote alerts',
+          },
+          {
+            id: 'set_security',
+            name: 'Security & Session Policies',
+            nameKh: 'សន្តិសុខ & គោលការណ៍ចូលប្រើ',
+            icon: <Lock className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'SECURITY',
+            description: 'Session timeout, lockout, password expiry, 2FA',
+          },
+          {
+            id: 'set_backup',
+            name: 'Backup & Recovery Hub',
+            nameKh: 'បម្រុងទុកទិន្នន័យ (3-2-1 Strategy)',
+            icon: <Database className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'BACKUP',
+            description: 'Automated schedules, encryption, restore',
+          },
+          {
+            id: 'set_audit',
+            name: 'Configuration Audit Trail',
+            nameKh: 'សវនកម្មការកែប្រែប្រព័ន្ធ',
+            icon: <Terminal className="w-4 h-4" />,
+            tab: 'settings',
+            subTab: 'AUDIT',
+            description: 'Tracks old vs new setting changes with IP & device',
           },
         ],
       },
@@ -629,6 +845,13 @@ export const SidebarNav: React.FC = () => {
       setProductSubTab(subTab);
     } else if (tab === 'security' && subTab) {
       setSecuritySubTab(subTab);
+    } else if (tab === 'backup' && subTab) {
+      setBackupSubTab(subTab);
+    } else if (tab === 'settings' && subTab) {
+      setSettingsSubTab(subTab);
+    }
+    if (searchQuery) {
+      setSearchQuery('');
     }
     if (window.innerWidth < 1024) {
       setIsMobileDrawerOpen(false);
@@ -784,10 +1007,23 @@ export const SidebarNav: React.FC = () => {
             <div className="relative">
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
-                type="text"
+                type="search"
+                name="sidebar_module_search_query"
+                id="sidebar_module_search_query"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-form-type="other"
                 placeholder={lang === 'kh' ? 'ស្វែងរកម៉ឺនុយ...' : 'Search modules...'}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val.includes('@')) return;
+                  setSearchQuery(val);
+                }}
                 className="w-full pl-9 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-hidden focus:border-emerald-500 focus:bg-white transition"
               />
               {searchQuery && (
@@ -893,6 +1129,16 @@ export const SidebarNav: React.FC = () => {
                           return securitySubTab === subTab;
                         };
 
+                        const isBackupSubActive = (subTab?: string) => {
+                          if (!subTab) return true;
+                          return backupSubTab === subTab;
+                        };
+
+                        const isSettingsSubActive = (subTab?: string) => {
+                          if (!subTab) return true;
+                          return settingsSubTab === subTab;
+                        };
+
                         const isActive =
                           item.tab === 'delivery'
                             ? activeTab === 'delivery' && isDeliverySubActive(item.subTab)
@@ -900,6 +1146,10 @@ export const SidebarNav: React.FC = () => {
                             ? activeTab === 'products' && isProductSubActive(item.subTab)
                             : item.tab === 'security'
                             ? activeTab === 'security' && isSecuritySubActive(item.subTab)
+                            : item.tab === 'backup'
+                            ? activeTab === 'backup' && isBackupSubActive(item.subTab)
+                            : item.tab === 'settings'
+                            ? activeTab === 'settings' && isSettingsSubActive(item.subTab)
                             : activeTab === item.tab;
                         return (
                           <button

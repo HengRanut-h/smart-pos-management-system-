@@ -574,7 +574,7 @@ export const DeliveryManagementView: React.FC = () => {
           {/* Financial Metrics Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-5 rounded-3xl shadow-md">
-              <span className="text-xs uppercase tracking-wider font-semibold text-white/80 block">COD Collected (In Hand)</span>
+              <span className="text-xs uppercase tracking-wider font-semibold text-white/80 block">{lang === 'kh' ? 'ប្រាក់ COD ប្រមូលបាន (ក្នុងដៃ)' : 'COD Collected (In Hand)'}</span>
               <span className="text-3xl font-black mt-1 block">${(metrics?.cod_collected || 0).toFixed(2)}</span>
               <p className="text-xs text-white/70 mt-2 flex items-center justify-between">
                 <span>Pending Handover: ${(metrics?.cod_pending || 0).toFixed(2)}</span>
@@ -583,7 +583,7 @@ export const DeliveryManagementView: React.FC = () => {
             </div>
 
             <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-5 rounded-3xl shadow-md">
-              <span className="text-xs uppercase tracking-wider font-semibold text-white/80 block">Delivery Fees Revenue</span>
+              <span className="text-xs uppercase tracking-wider font-semibold text-white/80 block">{lang === 'kh' ? 'ចំណូលថ្លៃសេវាដឹកជញ្ជូន' : 'Delivery Fees Revenue'}</span>
               <span className="text-3xl font-black mt-1 block">${(metrics?.total_delivery_fees || 0).toFixed(2)}</span>
               <p className="text-xs text-white/70 mt-2 flex items-center justify-between">
                 <span>Avg Fee / Order: ${((metrics?.total_delivery_fees || 0) / Math.max(1, deliveries.length)).toFixed(2)}</span>
@@ -592,7 +592,7 @@ export const DeliveryManagementView: React.FC = () => {
             </div>
 
             <div className="bg-gradient-to-br from-purple-600 to-violet-700 text-white p-5 rounded-3xl shadow-md">
-              <span className="text-xs uppercase tracking-wider font-semibold text-white/80 block">Fulfillment Success Rate</span>
+              <span className="text-xs uppercase tracking-wider font-semibold text-white/80 block">{lang === 'kh' ? 'អត្រាជោគជ័យនៃការដឹកជញ្ជូន' : 'Fulfillment Success Rate'}</span>
               <span className="text-3xl font-black mt-1 block">{(metrics?.success_rate || 95)}%</span>
               <p className="text-xs text-white/70 mt-2 flex items-center justify-between">
                 <span>Avg Duration: ~28 Mins</span>
@@ -608,7 +608,7 @@ export const DeliveryManagementView: React.FC = () => {
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-gray-900 text-sm flex items-center space-x-2">
                   <UserCheck className="w-4 h-4 text-emerald-600" />
-                  <span>Active Riders & Fleet Status</span>
+                  <span>{lang === 'kh' ? 'អ្នកដឹកសកម្ម & ស្ថានភាពយានជំនិះ' : 'Active Riders & Fleet Status'}</span>
                 </h3>
                 <button onClick={() => setActiveTab('STAFF')} className="text-xs font-bold text-emerald-600 hover:underline cursor-pointer">View All</button>
               </div>
@@ -639,7 +639,7 @@ export const DeliveryManagementView: React.FC = () => {
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-gray-900 text-sm flex items-center space-x-2">
                   <Package className="w-4 h-4 text-emerald-600" />
-                  <span>Recent Delivery Pipeline</span>
+                  <span>{lang === 'kh' ? 'លំហូរដឹកជញ្ជូនថ្មីៗ' : 'Recent Delivery Pipeline'}</span>
                 </h3>
                 <button onClick={() => setActiveTab('ORDERS')} className="text-xs font-bold text-emerald-600 hover:underline cursor-pointer">View Pipeline &rarr;</button>
               </div>
@@ -779,11 +779,11 @@ export const DeliveryManagementView: React.FC = () => {
                         className="rounded-md text-emerald-600 focus:ring-emerald-500"
                       />
                     </th>
-                    <th className="p-3.5">Order / Tracking</th>
+                    <th className="p-3.5">{lang === 'kh' ? 'ការបញ្ជាទិញ / លេខតាមដាន' : 'Order / Tracking'}</th>
                     <th className="p-3.5">Recipient & Destination</th>
                     <th className="p-3.5">Zone / Slot</th>
-                    <th className="p-3.5">Assigned Rider</th>
-                    <th className="p-3.5">Payment & COD</th>
+                    <th className="p-3.5">{lang === 'kh' ? 'អ្នកដឹកជញ្ជូនដែលបានចាត់តាំង' : 'Assigned Rider'}</th>
+                    <th className="p-3.5">{lang === 'kh' ? 'ការទូទាត់ & COD' : 'Payment & COD'}</th>
                     <th className="p-3.5">Status</th>
                     <th className="p-3.5 pr-5 text-right">Actions</th>
                   </tr>
@@ -907,7 +907,7 @@ export const DeliveryManagementView: React.FC = () => {
             <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-gray-900 text-sm">Active Dispatch Board</h4>
+                  <h4 className="font-bold text-gray-900 text-sm">{lang === 'kh' ? 'ក្ដារគ្រប់គ្រងការបញ្ជូនសកម្ម' : 'Active Dispatch Board'}</h4>
                   <p className="text-xs text-gray-500">Assign unassigned pending orders to active drivers</p>
                 </div>
                 {selectedOrderIds.length > 0 && (
@@ -941,7 +941,7 @@ export const DeliveryManagementView: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="font-bold text-emerald-400 text-sm flex items-center space-x-2">
                   <Navigation className="w-4 h-4 animate-spin" />
-                  <span>Real-Time GPS Tracking & Milestone Pipeline</span>
+                  <span>{lang === 'kh' ? 'ការតាមដាន GPS ផ្ទាល់ & ដំណាក់កាលដឹក' : 'Real-Time GPS Tracking & Milestone Pipeline'}</span>
                 </span>
                 <span className="text-slate-400 font-mono">Simulated Coordinates Active</span>
               </div>
@@ -999,7 +999,7 @@ export const DeliveryManagementView: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between bg-white p-4 rounded-3xl border border-gray-100">
             <div>
-              <h3 className="font-bold text-gray-900 text-sm">Multi-Stop Delivery Routes & Optimization</h3>
+              <h3 className="font-bold text-gray-900 text-sm">{lang === 'kh' ? 'ផ្លូវដឹកជញ្ជូនច្រើនចំណត & ការបង្កើនប្រសិទ្ធភាព' : 'Multi-Stop Delivery Routes & Optimization'}</h3>
               <p className="text-xs text-gray-500">Group multiple deliveries into planned sequence loops</p>
             </div>
             <button
@@ -1031,7 +1031,7 @@ export const DeliveryManagementView: React.FC = () => {
                     className="text-xs font-bold text-teal-600 hover:underline cursor-pointer flex items-center space-x-1"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>Optimize Stops</span>
+                    <span>{lang === 'kh' ? 'បង្កើនប្រសិទ្ធភាពចំណត' : 'Optimize Stops'}</span>
                   </button>
                 </div>
 
@@ -1041,11 +1041,11 @@ export const DeliveryManagementView: React.FC = () => {
                     <span className="font-bold text-gray-800">{route.driver?.name || 'Unassigned'}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 text-[10px] block">Est Distance</span>
+                    <span className="text-gray-400 text-[10px] block">{lang === 'kh' ? 'ចម្ងាយប៉ាន់ស្មាន' : 'Est Distance'}</span>
                     <span className="font-bold text-gray-800">{route.total_distance_km} km</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 text-[10px] block">Est Time</span>
+                    <span className="text-gray-400 text-[10px] block">{lang === 'kh' ? 'ពេលប៉ាន់ស្មាន' : 'Est Time'}</span>
                     <span className="font-bold text-gray-800">{route.estimated_duration_minutes} mins</span>
                   </div>
                 </div>
@@ -1148,7 +1148,7 @@ export const DeliveryManagementView: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between bg-white p-4 rounded-3xl border border-gray-100">
             <div>
-              <h3 className="font-bold text-gray-900 text-sm">Fleet Vehicles & Maintenance</h3>
+              <h3 className="font-bold text-gray-900 text-sm">{lang === 'kh' ? 'យានជំនិះ & ការថែទាំ' : 'Fleet Vehicles & Maintenance'}</h3>
               <p className="text-xs text-gray-500">Motorcycles, cargo vans, service histories & oil changes</p>
             </div>
             <button
@@ -1180,11 +1180,11 @@ export const DeliveryManagementView: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50 p-2.5 rounded-2xl">
                   <div>
-                    <span className="text-gray-400 text-[10px] block">Assigned Rider</span>
+                    <span className="text-gray-400 text-[10px] block">{lang === 'kh' ? 'អ្នកដឹកជញ្ជូន' : 'Assigned Rider'}</span>
                     <span className="font-bold text-gray-800">{v.assigned_driver?.name || 'Pool Vehicle'}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 text-[10px] block">Mileage</span>
+                    <span className="text-gray-400 text-[10px] block">{lang === 'kh' ? 'គីឡូម៉ែត្រ' : 'Mileage'}</span>
                     <span className="font-bold text-gray-800">{v.mileage_km} KM</span>
                   </div>
                 </div>
@@ -1250,7 +1250,7 @@ export const DeliveryManagementView: React.FC = () => {
                   onClick={() => setIsZoneModalOpen(true)}
                   className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-500 cursor-pointer"
                 >
-                  + Add Delivery Zone
+                  {lang === 'kh' ? '+ បន្ថែមតំបន់ដឹកជញ្ជូន' : '+ Add Delivery Zone'}
                 </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1466,7 +1466,7 @@ export const DeliveryManagementView: React.FC = () => {
         <div className="space-y-4">
           <div className="bg-white p-4 rounded-3xl border border-gray-100 flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-gray-900 text-sm">Delivery Issues & Support Tickets</h3>
+              <h3 className="font-bold text-gray-900 text-sm">{lang === 'kh' ? 'បញ្ហាដឹកជញ្ជូន & សំបុត្រគាំទ្រ' : 'Delivery Issues & Support Tickets'}</h3>
               <p className="text-xs text-gray-500">Log customer complaints, late deliveries, spills and payment disputes</p>
             </div>
           </div>
@@ -1517,7 +1517,7 @@ export const DeliveryManagementView: React.FC = () => {
           {serviceInnerTab === 'ratings' && (
         <div className="space-y-4">
           <div className="bg-white p-4 rounded-3xl border border-gray-100">
-            <h3 className="font-bold text-gray-900 text-sm">Customer Delivery Ratings & Reviews</h3>
+            <h3 className="font-bold text-gray-900 text-sm">{lang === 'kh' ? 'ការវាយតម្លៃ & មតិកែលម្អការដឹកជញ្ជូន' : 'Customer Delivery Ratings & Reviews'}</h3>
             <p className="text-xs text-gray-500">Multi-metric feedback: Rider, Speed, Package Condition, Communication</p>
           </div>
 
@@ -1559,7 +1559,7 @@ export const DeliveryManagementView: React.FC = () => {
           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xs space-y-4">
             <h3 className="font-bold text-gray-900 text-sm flex items-center space-x-2">
               <Sparkles className="w-4 h-4 text-emerald-600" />
-              <span>End-to-End Delivery Funnel</span>
+              <span>{lang === 'kh' ? 'ចីវលោដំណើរការដឹកជញ្ជូនពេញលេញ' : 'End-to-End Delivery Funnel'}</span>
             </h3>
 
             <div className="grid grid-cols-5 gap-3 text-center text-xs">
@@ -1571,7 +1571,7 @@ export const DeliveryManagementView: React.FC = () => {
               <div className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100">
                 <span className="text-indigo-400 text-[10px] uppercase font-bold block">2. In Transit</span>
                 <span className="text-2xl font-black text-indigo-700 mt-1 block">{analytics.funnel.in_transit}</span>
-                <span className="text-[10px] text-indigo-500">Active On Road</span>
+                <span className="text-[10px] text-indigo-500">{lang === 'kh' ? 'កំពុងដឹកតាមផ្លូវ' : 'Active On Road'}</span>
               </div>
               <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
                 <span className="text-emerald-500 text-[10px] uppercase font-bold block">3. Successfully Delivered</span>
@@ -1769,7 +1769,7 @@ export const DeliveryManagementView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="font-bold text-base text-gray-900">Add Delivery Zone & Distance Tier</h3>
+              <h3 className="font-bold text-base text-gray-900">{lang === 'kh' ? 'បន្ថែមតំបន់ដឹកជញ្ជូន & កម្រិតចម្ងាយ' : 'Add Delivery Zone & Distance Tier'}</h3>
               <button onClick={() => setIsZoneModalOpen(false)} className="p-1 rounded-full hover:bg-gray-100 cursor-pointer">
                 <Plus className="w-5 h-5 rotate-45 text-gray-400" />
               </button>
@@ -1929,7 +1929,7 @@ export const DeliveryManagementView: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="font-semibold text-gray-700 block mb-1">Plate Number</label>
+                  <label className="font-semibold text-gray-700 block mb-1">{lang === 'kh' ? 'ស្លាកលេខសម្គាល់' : 'Plate Number'}</label>
                   <input
                     type="text"
                     placeholder="Phnom Penh 1AB-2345"

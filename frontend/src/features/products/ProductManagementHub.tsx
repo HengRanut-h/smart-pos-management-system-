@@ -424,7 +424,7 @@ export const ProductManagementHub: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
               <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs hover:shadow-md transition">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-500">Total Products</span>
+                  <span className="text-xs font-bold text-gray-500">{lang === 'kh' ? 'ទំនិញសរុប' : 'Total Products'}</span>
                   <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
                     <Package className="w-4 h-4" />
                   </div>
@@ -433,13 +433,13 @@ export const ProductManagementHub: React.FC = () => {
                   {dashboardData.overview.total_products}
                 </div>
                 <div className="text-[11px] text-green-600 font-bold mt-0.5">
-                  {dashboardData.overview.active_products} Active in POS
+                  {dashboardData.overview.active_products} {lang === 'kh' ? 'សកម្មក្នុង POS' : 'Active in POS'}
                 </div>
               </div>
 
               <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs hover:shadow-md transition">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-500">Out of Stock</span>
+                  <span className="text-xs font-bold text-gray-500">{lang === 'kh' ? 'អស់ពីស្តុក' : 'Out of Stock'}</span>
                   <div className="p-1.5 bg-red-50 text-red-600 rounded-lg">
                     <XCircle className="w-4 h-4" />
                   </div>
@@ -452,7 +452,7 @@ export const ProductManagementHub: React.FC = () => {
 
               <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs hover:shadow-md transition">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-500">Low Stock Alert</span>
+                  <span className="text-xs font-bold text-gray-500">{lang === 'kh' ? 'ការព្រមានជិតអស់ស្តុក' : 'Low Stock Alert'}</span>
                   <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg">
                     <AlertTriangle className="w-4 h-4" />
                   </div>
@@ -501,7 +501,7 @@ export const ProductManagementHub: React.FC = () => {
                 <div className="mt-2 text-2xl font-black text-emerald-600">
                   {dashboardData.overview.new_products}
                 </div>
-                <div className="text-[11px] text-emerald-700 font-semibold mt-0.5">Catalog Additions</div>
+                <div className="text-[11px] text-emerald-700 font-semibold mt-0.5">{lang === 'kh' ? 'ទំនិញថ្មីក្នុងកាតាឡុក' : 'Catalog Additions'}</div>
               </div>
             </div>
 
@@ -517,12 +517,12 @@ export const ProductManagementHub: React.FC = () => {
                     <span className="text-xs text-indigo-300">Live Valuation & Inventory ROI</span>
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-black mt-1.5 tracking-tight">
-                    Financial Valuation & Profit Analysis
+                    {lang === 'kh' ? 'ការវាយតម្លៃហិរញ្ញវត្ថុ & ការវិភាគប្រាក់ចំណេញ' : 'Financial Valuation & Profit Analysis'}
                   </h3>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="px-4 py-2 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10">
-                    <span className="text-xs text-gray-300 block">Average Profit Margin</span>
+                    <span className="text-xs text-gray-300 block">{lang === 'kh' ? 'ប្រាក់ចំណេញជាមធ្យម' : 'Average Profit Margin'}</span>
                     <span className="text-lg font-black text-emerald-400">
                       {dashboardData.financials.average_margin_percent}%
                     </span>
@@ -532,7 +532,7 @@ export const ProductManagementHub: React.FC = () => {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 relative z-10">
                 <div>
-                  <span className="text-xs text-gray-400 font-medium">Total Landed Inventory Cost</span>
+                  <span className="text-xs text-gray-400 font-medium">{lang === 'kh' ? 'ថ្លៃដើមស្តុកសរុប (Landed Cost)' : 'Total Landed Inventory Cost'}</span>
                   <div className="text-2xl sm:text-3xl font-black text-white mt-1">
                     ${dashboardData.financials.total_stock_value.toLocaleString()}
                   </div>
@@ -540,7 +540,7 @@ export const ProductManagementHub: React.FC = () => {
                 </div>
 
                 <div>
-                  <span className="text-xs text-gray-400 font-medium">Potential Retail Sales Value</span>
+                  <span className="text-xs text-gray-400 font-medium">{lang === 'kh' ? 'តម្លៃលក់រាយសរុបដែលអាចរកបាន' : 'Potential Retail Sales Value'}</span>
                   <div className="text-2xl sm:text-3xl font-black text-emerald-400 mt-1">
                     ${dashboardData.financials.potential_sales_value.toLocaleString()}
                   </div>
@@ -548,7 +548,7 @@ export const ProductManagementHub: React.FC = () => {
                 </div>
 
                 <div>
-                  <span className="text-xs text-gray-400 font-medium">Projected Gross Profit</span>
+                  <span className="text-xs text-gray-400 font-medium">{lang === 'kh' ? 'ប្រាក់ចំណេញដុលប៉ាន់ស្មាន' : 'Projected Gross Profit'}</span>
                   <div className="text-2xl sm:text-3xl font-black text-amber-400 mt-1">
                     ${dashboardData.financials.potential_profit.toLocaleString()}
                   </div>
@@ -556,7 +556,7 @@ export const ProductManagementHub: React.FC = () => {
                 </div>
 
                 <div>
-                  <span className="text-xs text-gray-400 font-medium">Inventory Velocity Rating</span>
+                  <span className="text-xs text-gray-400 font-medium">{lang === 'kh' ? 'អត្រារង្វិលជុំស្តុក' : 'Inventory Velocity Rating'}</span>
                   <div className="text-2xl sm:text-3xl font-black text-cyan-400 mt-1">
                     Optimal (3.8x)
                   </div>
@@ -573,7 +573,7 @@ export const ProductManagementHub: React.FC = () => {
                   <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
                     <Layers className="w-4 h-4" />
                   </div>
-                  <span>10 Product Types Distribution</span>
+                  <span>{lang === 'kh' ? 'ការបែងចែកប្រភេទផលិតផលទាំង ១០' : '10 Product Types Distribution'}</span>
                 </h4>
                 <div className="space-y-2">
                   {dashboardData.by_type.map(item => (
@@ -596,7 +596,7 @@ export const ProductManagementHub: React.FC = () => {
                   <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
                     <FolderTree className="w-4 h-4" />
                   </div>
-                  <span>Category Breakdown</span>
+                  <span>{lang === 'kh' ? 'ការបែងចែកតាមជំពូក' : 'Category Breakdown'}</span>
                 </h4>
                 <div className="space-y-2">
                   {dashboardData.by_category.map(item => (
@@ -619,7 +619,7 @@ export const ProductManagementHub: React.FC = () => {
                   <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
                     <Sparkles className="w-4 h-4" />
                   </div>
-                  <span>Quick Lifecycle Launchers</span>
+                  <span>{lang === 'kh' ? 'ផ្លូវកាត់រហ័ស' : 'Quick Lifecycle Launchers'}</span>
                 </h4>
                 <div className="grid grid-cols-2 gap-2.5 text-xs">
                   <button
@@ -713,7 +713,7 @@ export const ProductManagementHub: React.FC = () => {
                   <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search by Name, SKU, Barcode..."
+                    placeholder={lang === 'kh' ? 'ស្វែងរកតាមឈ្មោះ, SKU, បាកូដ...' : 'Search by Name, SKU, Barcode...'}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition"
@@ -733,7 +733,7 @@ export const ProductManagementHub: React.FC = () => {
                   onChange={e => setSelectedCategory(e.target.value)}
                   className="px-3 py-2 text-xs border border-gray-200 rounded-xl bg-gray-50 outline-none font-medium"
                 >
-                  <option value="ALL">All Categories</option>
+                  <option value="ALL">{lang === 'kh' ? 'គ្រប់ជំពូកទាំងអស់' : 'All Categories'}</option>
                   {categories.map(c => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -746,7 +746,7 @@ export const ProductManagementHub: React.FC = () => {
                   onChange={e => setSelectedType(e.target.value)}
                   className="px-3 py-2 text-xs border border-gray-200 rounded-xl bg-gray-50 outline-none font-medium"
                 >
-                  <option value="ALL">All Types (10)</option>
+                  <option value="ALL">{lang === 'kh' ? 'គ្រប់ប្រភេទទាំងអស់ (10)' : 'All Types (10)'}</option>
                   <option value="SIMPLE">SIMPLE</option>
                   <option value="VARIABLE">VARIABLE</option>
                   <option value="BUNDLE">BUNDLE</option>
@@ -762,10 +762,10 @@ export const ProductManagementHub: React.FC = () => {
                   onChange={e => setStockFilter(e.target.value)}
                   className="px-3 py-2 text-xs border border-gray-200 rounded-xl bg-gray-50 outline-none font-medium"
                 >
-                  <option value="ALL">All Stock Levels</option>
-                  <option value="IN_STOCK">In Stock</option>
-                  <option value="LOW_STOCK">Low Stock Alert</option>
-                  <option value="OUT_OF_STOCK">Out of Stock</option>
+                  <option value="ALL">{lang === 'kh' ? 'គ្រប់កម្រិតស្តុក' : 'All Stock Levels'}</option>
+                  <option value="IN_STOCK">{lang === 'kh' ? 'មានក្នុងស្តុក' : 'In Stock'}</option>
+                  <option value="LOW_STOCK">{lang === 'kh' ? 'ជិតអស់ពីស្តុក' : 'Low Stock Alert'}</option>
+                  <option value="OUT_OF_STOCK">{lang === 'kh' ? 'អស់ពីស្តុក' : 'Out of Stock'}</option>
                 </select>
 
                 <select
@@ -773,11 +773,11 @@ export const ProductManagementHub: React.FC = () => {
                   onChange={e => setSortBy(e.target.value as any)}
                   className="px-3 py-2 text-xs border border-gray-200 rounded-xl bg-gray-50 outline-none font-medium"
                 >
-                  <option value="name_asc">Sort: Name (A-Z)</option>
-                  <option value="price_asc">Sort: Price (Low → High)</option>
-                  <option value="price_desc">Sort: Price (High → Low)</option>
-                  <option value="stock_asc">Sort: Stock (Low → High)</option>
-                  <option value="stock_desc">Sort: Stock (High → Low)</option>
+                  <option value="name_asc">{lang === 'kh' ? 'តម្រៀប៖ ឈ្មោះ (A-Z)' : 'Sort: Name (A-Z)'}</option>
+                  <option value="price_asc">{lang === 'kh' ? 'តម្រៀប៖ តម្លៃ (ទាប → ខ្ពស់)' : 'Sort: Price (Low → High)'}</option>
+                  <option value="price_desc">{lang === 'kh' ? 'តម្រៀប៖ តម្លៃ (ខ្ពស់ → ទាប)' : 'Sort: Price (High → Low)'}</option>
+                  <option value="stock_asc">{lang === 'kh' ? 'តម្រៀប៖ ស្តុក (ទាប → ខ្ពស់)' : 'Sort: Stock (Low → High)'}</option>
+                  <option value="stock_desc">{lang === 'kh' ? 'តម្រៀប៖ ស្តុក (ខ្ពស់ → ទាប)' : 'Sort: Stock (High → Low)'}</option>
                 </select>
               </div>
 
@@ -966,15 +966,15 @@ export const ProductManagementHub: React.FC = () => {
                             className="rounded text-indigo-600"
                           />
                         </th>
-                        <th className="p-3.5">Product Title</th>
-                        <th className="p-3.5">SKU / Barcode</th>
-                        <th className="p-3.5">Type</th>
-                        <th className="p-3.5">Category</th>
-                        <th className="p-3.5 text-right">Cost Price</th>
-                        <th className="p-3.5 text-right">Selling Price</th>
-                        <th className="p-3.5 text-center">Stock Level</th>
-                        <th className="p-3.5 text-center">Lifecycle Operations</th>
-                        <th className="p-3.5 text-right">Actions</th>
+                        <th className="p-3.5">{lang === 'kh' ? 'ឈ្មោះទំនិញ' : 'Product Title'}</th>
+                        <th className="p-3.5">{lang === 'kh' ? 'លេខកូដ SKU / បាកូដ' : 'SKU / Barcode'}</th>
+                        <th className="p-3.5">{lang === 'kh' ? 'ប្រភេទ' : 'Type'}</th>
+                        <th className="p-3.5">{lang === 'kh' ? 'ជំពូក' : 'Category'}</th>
+                        <th className="p-3.5 text-right">{lang === 'kh' ? 'ថ្លៃដើម' : 'Cost Price'}</th>
+                        <th className="p-3.5 text-right">{lang === 'kh' ? 'តម្លៃលក់' : 'Selling Price'}</th>
+                        <th className="p-3.5 text-center">{lang === 'kh' ? 'កម្រិតស្តុក' : 'Stock Level'}</th>
+                        <th className="p-3.5 text-center">{lang === 'kh' ? 'ប្រតិបត្តិការ' : 'Lifecycle Operations'}</th>
+                        <th className="p-3.5 text-right">{lang === 'kh' ? 'សកម្មភាព' : 'Actions'}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -1229,7 +1229,7 @@ export const ProductManagementHub: React.FC = () => {
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs flex justify-between items-center">
               <div>
-                <h3 className="text-xl font-black text-gray-900">Variant Matrix Generator</h3>
+                <h3 className="text-xl font-black text-gray-900">{lang === 'kh' ? 'ម៉ាស៊ីនបង្កើតម៉ាទ្រីសវ៉ារ្យ៉ង់' : 'Variant Matrix Generator'}</h3>
                 <p className="text-xs text-gray-500 mt-0.5">
                   Generate cross-product attribute combinations (Size × Color × Material) with custom SKUs and prices.
                 </p>
@@ -1351,7 +1351,7 @@ export const ProductManagementHub: React.FC = () => {
             {catalogTab === 'barcodes' && (
               <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
-              <h3 className="text-xl font-black text-gray-900">Barcode Studio & Label Printing</h3>
+              <h3 className="text-xl font-black text-gray-900">{lang === 'kh' ? 'ស្ទូឌីយោបាកូដ & បោះពុម្ពស្លាក' : 'Barcode Studio & Label Printing'}</h3>
               <p className="text-xs text-gray-500 mt-0.5">EAN-13, Code-128, and QR label generation with thermal roll and sheet printer templates.</p>
             </div>
 
@@ -1459,7 +1459,7 @@ export const ProductManagementHub: React.FC = () => {
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs flex justify-between items-center">
               <div>
-                <h3 className="text-xl font-black text-gray-900">Brand Portfolio</h3>
+                <h3 className="text-xl font-black text-gray-900">{lang === 'kh' ? 'ផលប័ត្រម៉ាកយីហោ' : 'Brand Portfolio'}</h3>
                 <p className="text-xs text-gray-500 mt-0.5">Manage brands, manufacturers, and vendor labels.</p>
               </div>
             </div>
@@ -1494,7 +1494,7 @@ export const ProductManagementHub: React.FC = () => {
 
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
-              <h3 className="text-xl font-black text-gray-900">Units of Measure & Multi-Tier Conversions</h3>
+              <h3 className="text-xl font-black text-gray-900">{lang === 'kh' ? 'ខ្នាតរង្វាស់ & ការបំប្លែងពហុកម្រិត' : 'Units of Measure & Multi-Tier Conversions'}</h3>
               <p className="text-xs text-gray-500 mt-0.5">Define base units and conversion factors for purchasing and sales packaging.</p>
             </div>
 
@@ -1572,7 +1572,7 @@ export const ProductManagementHub: React.FC = () => {
                       <th className="p-3.5 text-right text-purple-600">VIP Tier</th>
                       <th className="p-3.5 text-right text-blue-600">Member</th>
                       <th className="p-3.5 text-right text-cyan-600">Online</th>
-                      <th className="p-3.5 text-right">Actions</th>
+                      <th className="p-3.5 text-right">{lang === 'kh' ? 'សកម្មភាព' : 'Actions'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -1975,7 +1975,7 @@ export const ProductManagementHub: React.FC = () => {
 
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
-              <h3 className="text-xl font-black text-gray-900">Bill of Materials (BOM) & Manufacturing Recipes</h3>
+              <h3 className="text-xl font-black text-gray-900">{lang === 'kh' ? 'រូបមន្តផលិតកម្ម & បញ្ជីធាតុផ្សំ (BOM)' : 'Bill of Materials (BOM) & Manufacturing Recipes'}</h3>
               <p className="text-xs text-gray-500 mt-0.5">Formulate product manufacturing recipes with ingredient quantities, scrap rates, and labor costs.</p>
             </div>
 
@@ -2008,7 +2008,7 @@ export const ProductManagementHub: React.FC = () => {
 
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
-              <h3 className="text-xl font-black text-gray-900">Combo Kits & Bundled Items</h3>
+              <h3 className="text-xl font-black text-gray-900">{lang === 'kh' ? 'កញ្ចប់ទំនិញរួម & ឈុតផ្សំ' : 'Combo Kits & Bundled Items'}</h3>
               <p className="text-xs text-gray-500 mt-0.5">Bundle multiple parent and child products into promotional sales packages.</p>
             </div>
 
@@ -2041,7 +2041,7 @@ export const ProductManagementHub: React.FC = () => {
 
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
-              <h3 className="text-xl font-black text-gray-900">Quality Control (QC) & Inspection Logs</h3>
+              <h3 className="text-xl font-black text-gray-900">{lang === 'kh' ? 'ការត្រួតពិនិត្យគុណភាព (QC) & កំណត់ហេតុអធិការកិច្ច' : 'Quality Control (QC) & Inspection Logs'}</h3>
               <p className="text-xs text-gray-500 mt-0.5">Track inspection sample sizes, defect counts, pass/fail ratios, and inspector credentials.</p>
             </div>
 
@@ -2091,7 +2091,7 @@ export const ProductManagementHub: React.FC = () => {
 
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
-              <h3 className="text-xl font-black text-gray-900">Bulk Product Import & Export Studio</h3>
+              <h3 className="text-xl font-black text-gray-900">{lang === 'kh' ? 'ស្ទូឌីយោនាំចូល & នាំចេញកាតាឡុកជាដុំ' : 'Bulk Product Import & Export Studio'}</h3>
               <p className="text-xs text-gray-500 mt-0.5">High-speed catalog batch operations via CSV or Excel templates.</p>
             </div>
 
@@ -2139,7 +2139,7 @@ export const ProductManagementHub: React.FC = () => {
 
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
-              <h3 className="text-xl font-black text-gray-900">Product Lifecycle Audit Logs & Price History</h3>
+              <h3 className="text-xl font-black text-gray-900">{lang === 'kh' ? 'កំណត់ហេតុសវនកម្ម & ប្រវត្តិតម្លៃទំនិញ' : 'Product Lifecycle Audit Logs & Price History'}</h3>
               <p className="text-xs text-gray-500 mt-0.5">Immutable audit trail of product price changes, inventory reorders, and metadata adjustments.</p>
             </div>
 
@@ -2181,7 +2181,7 @@ export const ProductManagementHub: React.FC = () => {
 
           <div className="space-y-4">
             <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-xs">
-              <h3 className="text-xl font-black text-gray-900">Customer Reviews & Rating Moderation</h3>
+              <h3 className="text-xl font-black text-gray-900">{lang === 'kh' ? 'ការវាយតម្លៃរបស់អតិថិជន & មតិកែលម្អ' : 'Customer Reviews & Rating Moderation'}</h3>
               <p className="text-xs text-gray-500 mt-0.5">Moderate customer star ratings and feedback for store products.</p>
             </div>
 

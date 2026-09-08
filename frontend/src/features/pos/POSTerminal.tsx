@@ -1037,7 +1037,7 @@ export const POSTerminal: React.FC = () => {
             ) : filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-400 space-y-2">
                 <Search className="w-8 h-8 text-gray-300" />
-                <span className="text-xs">No matching products found</span>
+                <span className="text-xs">{lang === 'kh' ? 'រកមិនឃើញទំនិញដែលត្រូវគ្នាទេ' : 'No matching products found'}</span>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -1469,7 +1469,7 @@ export const POSTerminal: React.FC = () => {
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h3 className="font-bold text-gray-900 text-base flex items-center space-x-2">
                 <Users className="w-5 h-5 text-purple-600" />
-                <span>Select Member Customer</span>
+                <span>{lang === 'kh' ? 'ជ្រើសរើសអតិថិជនសមាជិក' : 'Select Member Customer'}</span>
               </h3>
               <button
                 onClick={() => {
@@ -1546,9 +1546,9 @@ export const POSTerminal: React.FC = () => {
 
                 <div className="max-h-64 overflow-y-auto divide-y divide-gray-100">
                   {isLoadingCustomers ? (
-                    <div className="py-8 text-center text-xs text-gray-400">Loading customers...</div>
+                    <div className="py-8 text-center text-xs text-gray-400">{lang === 'kh' ? 'កំពុងផ្ទុកទិន្នន័យអតិថិជន...' : 'Loading customers...'}</div>
                   ) : customerList.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-gray-400">No customers found.</div>
+                    <div className="py-8 text-center text-xs text-gray-400">{lang === 'kh' ? 'រកមិនឃើញអតិថិជនទេ។' : 'No customers found.'}</div>
                   ) : (
                     customerList.map((c) => {
                       const tier = getTier(c.loyalty_points);
@@ -1596,7 +1596,7 @@ export const POSTerminal: React.FC = () => {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-6 shadow-2xl border border-gray-100 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900 text-base">Complete Payment</h3>
+              <h3 className="font-bold text-gray-900 text-base">{lang === 'kh' ? 'បញ្ចប់ការទូទាត់ប្រាក់' : 'Complete Payment'}</h3>
               <button
                 onClick={() => setIsCheckoutOpen(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -1629,7 +1629,7 @@ export const POSTerminal: React.FC = () => {
                       onChange={(e) => handleToggleRedeem(e.target.checked)}
                       className="rounded text-purple-600 focus:ring-purple-500 w-3.5 h-3.5"
                     />
-                    <span>Redeem Loyalty Points</span>
+                    <span>{lang === 'kh' ? 'ប្រើប្រាស់ពិន្ទុសន្សំ' : 'Redeem Loyalty Points'}</span>
                   </label>
                   <span className="text-[11px] text-purple-700 font-mono">
                     Avail: {selectedCustomer.loyalty_points} pts
@@ -1668,7 +1668,7 @@ export const POSTerminal: React.FC = () => {
                   />
                   <div className="flex items-center space-x-1.5">
                     <Truck className={`w-3.5 h-3.5 ${isDeliveryRequested ? 'text-amber-600' : 'text-gray-400'}`} />
-                    <span>Ship via Delivery Dispatch</span>
+                    <span>{lang === 'kh' ? 'ផ្ញើតាមរយៈសេវាដឹកជញ្ជូន' : 'Ship via Delivery Dispatch'}</span>
                   </div>
                 </label>
                 {isDeliveryRequested && (
@@ -1682,7 +1682,7 @@ export const POSTerminal: React.FC = () => {
                 <div className="space-y-2 pt-1 border-t border-slate-200/80">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Recipient Name</label>
+                      <label className="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">{lang === 'kh' ? 'ឈ្មោះអ្នកទទួល' : 'Recipient Name'}</label>
                       <input
                         type="text"
                         value={deliveryRecipientName}
@@ -1692,7 +1692,7 @@ export const POSTerminal: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Recipient Phone</label>
+                      <label className="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">{lang === 'kh' ? 'លេខទូរស័ព្ទអ្នកទទួល' : 'Recipient Phone'}</label>
                       <input
                         type="text"
                         value={deliveryRecipientPhone}
@@ -1704,7 +1704,7 @@ export const POSTerminal: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">Delivery Address</label>
+                    <label className="block text-[10px] font-bold text-gray-600 uppercase mb-0.5">{lang === 'kh' ? 'អាសយដ្ឋានដឹកជញ្ជូន' : 'Delivery Address'}</label>
                     <input
                       type="text"
                       value={deliveryAddress}
@@ -1800,7 +1800,7 @@ export const POSTerminal: React.FC = () => {
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
-                <span>Split Tender</span>
+                <span>{lang === 'kh' ? 'បង់ប្រាក់ចម្រុះ (Split)' : 'Split Tender'}</span>
               </button>
             </div>
 
@@ -1808,7 +1808,7 @@ export const POSTerminal: React.FC = () => {
               /* SPLIT TENDER CONTROLS */
               <div className="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-slate-600 uppercase">Allocated Breakdown</span>
+                  <span className="font-bold text-slate-600 uppercase">{lang === 'kh' ? 'ការបែងចែកចំនួនទឹកប្រាក់' : 'Allocated Breakdown'}</span>
                   {(() => {
                     const allocated = splitCashUsd + (splitCashKhr / exchangeRate) + splitKhqr + splitCard;
                     const remaining = Math.max(0, finalPayableTotal - allocated);
@@ -1964,7 +1964,7 @@ export const POSTerminal: React.FC = () => {
                 }`}
               >
                 <DollarSign className="w-4 h-4" />
-                <span>Cash Payment</span>
+                <span>{lang === 'kh' ? 'ទូទាត់ជាសាច់ប្រាក់' : 'Cash Payment'}</span>
               </button>
               <button
                 type="button"
@@ -1981,7 +1981,7 @@ export const POSTerminal: React.FC = () => {
                 }`}
               >
                 <QrCode className="w-4 h-4" />
-                <span>Bakong KHQR</span>
+                <span>{lang === 'kh' ? 'បាគង KHQR' : 'Bakong KHQR'}</span>
               </button>
             </div>
 
@@ -2073,13 +2073,13 @@ export const POSTerminal: React.FC = () => {
                 {/* Change Calculation (Dual Currency) */}
                 <div className="p-3 bg-gray-50 rounded-xl space-y-1">
                   <div className="flex justify-between items-center text-xs text-gray-500 font-semibold">
-                    <span>Change Due (USD):</span>
+                    <span>{lang === 'kh' ? 'ប្រាក់អាប់ជាដុល្លារ ($):' : 'Change Due (USD):'}</span>
                     <span className="font-mono font-bold text-gray-900">
                       ${Math.max(0, effectiveCashReceivedUsd - finalPayableTotal).toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs text-gray-500 font-semibold">
-                    <span>Change Due (KHR):</span>
+                    <span>{lang === 'kh' ? 'ប្រាក់អាប់ជារៀល (៛):' : 'Change Due (KHR):'}</span>
                     <span className="font-mono font-bold text-emerald-700">
                       ៛{Math.round(Math.max(0, effectiveCashReceivedUsd - finalPayableTotal) * exchangeRate).toLocaleString()}
                     </span>
@@ -2101,7 +2101,7 @@ export const POSTerminal: React.FC = () => {
                     </span>
                   </div>
                 ) : (
-                  <div className="py-6 text-xs text-gray-400">Generating Bakong KHQR...</div>
+                  <div className="py-6 text-xs text-gray-400">{lang === 'kh' ? 'កំពុងបង្កើតកូដបាគង KHQR...' : 'Generating Bakong KHQR...'}</div>
                 )}
               </div>
             )}
@@ -2144,7 +2144,7 @@ export const POSTerminal: React.FC = () => {
 
             <div className="flex flex-col items-center space-y-1.5">
               <SmartPosLogo variant="full" size="sm" showSubtitle={false} />
-              <h3 className="text-base font-bold text-gray-900">Sale Receipt Finalized</h3>
+              <h3 className="text-base font-bold text-gray-900">{lang === 'kh' ? 'ការលក់ត្រូវបានបញ្ចប់ដោយជោគជ័យ' : 'Sale Receipt Finalized'}</h3>
               <p className="text-xs text-gray-500 font-mono mt-0.5">
                 {completedSuccess.sale_number}
               </p>
@@ -2152,7 +2152,7 @@ export const POSTerminal: React.FC = () => {
 
             <div className="bg-gray-50 p-4 rounded-xl space-y-2 text-xs text-left font-mono">
               <div className="flex justify-between text-gray-600">
-                <span>Total Due:</span>
+                <span>{lang === 'kh' ? 'ទឹកប្រាក់ត្រូវបង់៖' : 'Total Due:'}</span>
                 <span className="font-bold text-gray-900">
                   ${Number(completedSuccess.total_amount).toFixed(2)} (៛{(Math.round(Number(completedSuccess.total_amount) * exchangeRate)).toLocaleString()})
                 </span>
@@ -2162,7 +2162,7 @@ export const POSTerminal: React.FC = () => {
                 <span>${Number(completedSuccess.paid_amount).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
-                <span>Change:</span>
+                <span>{lang === 'kh' ? 'ប្រាក់អាប់៖' : 'Change:'}</span>
                 <span>
                   ${Number(completedSuccess.change_amount || 0).toFixed(2)} (៛{(Math.round(Number(completedSuccess.change_amount || 0) * exchangeRate)).toLocaleString()})
                 </span>
@@ -2234,7 +2234,7 @@ export const POSTerminal: React.FC = () => {
                 className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-xs transition"
               >
                 <Printer className="w-4 h-4" />
-                <span>Print Thermal Receipt (80mm)</span>
+                <span>{lang === 'kh' ? 'បោះពុម្ពវិក្កយបត្រកម្តៅ (80mm)' : 'Print Thermal Receipt (80mm)'}</span>
               </button>
               <button
                 onClick={() => {
@@ -2283,7 +2283,7 @@ export const POSTerminal: React.FC = () => {
               <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-[11px] flex items-center justify-center">
                 {cart.reduce((s, it) => s + it.quantity, 0)}
               </span>
-              <span>Items in Cart</span>
+              <span>{lang === 'kh' ? 'ទំនិញក្នុងកន្រ្តក' : 'Items in Cart'}</span>
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-emerald-400 font-mono text-sm">${finalPayableTotal.toFixed(2)}</span>

@@ -145,8 +145,8 @@ export const Navbar: React.FC = () => {
                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-emerald-200'
                 : 'bg-gray-50/80 text-gray-700 border-gray-200 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700'
             }`}
-            title="POS Cart & Checkout"
-            aria-label="POS Cart"
+            title={lang === 'kh' ? 'កន្រ្តកទំនិញ POS & គិតប្រាក់' : 'POS Cart & Checkout'}
+            aria-label={lang === 'kh' ? 'កន្រ្តកទំនិញ POS' : 'POS Cart'}
           >
             <ShoppingCart className="w-5 h-5" strokeWidth={2.2} />
             {totalCartCount > 0 && (
@@ -170,8 +170,12 @@ export const Navbar: React.FC = () => {
                 ? 'bg-emerald-50/80 text-emerald-700 border-emerald-300 hover:bg-emerald-100/70 hover:border-emerald-400'
                 : 'bg-gray-50/80 text-gray-400 border-gray-200 hover:bg-gray-100 hover:text-gray-600'
             }`}
-            title={isScanBeepEnabled ? 'Beep Sound Scan: ON (Click to Mute / Test)' : 'Beep Sound Scan: MUTED (Click to Enable)'}
-            aria-label="Toggle Barcode Scan Beep Sound"
+            title={
+              isScanBeepEnabled
+                ? (lang === 'kh' ? 'សំឡេងស្កេនបាកូដ៖ បើក (ចុចដើម្បីបិទ)' : 'Beep Sound Scan: ON (Click to Mute / Test)')
+                : (lang === 'kh' ? 'សំឡេងស្កេនបាកូដ៖ បិទ (ចុចដើម្បីបើក)' : 'Beep Sound Scan: MUTED (Click to Enable)')
+            }
+            aria-label={lang === 'kh' ? 'បិទ/បើកសំឡេងស្កេនបាកូដ' : 'Toggle Barcode Scan Beep Sound'}
           >
             {isScanBeepEnabled ? (
               <Volume2 className="w-5 h-5 text-emerald-600" strokeWidth={2.2} />
@@ -186,8 +190,8 @@ export const Navbar: React.FC = () => {
               window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
             }}
             className="w-10 h-10 rounded-xl text-gray-700 bg-gray-50/80 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-all flex items-center justify-center border border-gray-200 shadow-xs shrink-0 cursor-pointer"
-            title="Keyboard Shortcuts (Press ?)"
-            aria-label="Keyboard Shortcuts"
+            title={lang === 'kh' ? 'ផ្លូវកាត់ក្ដារចុច (ចុច ?)' : 'Keyboard Shortcuts (Press ?)'}
+            aria-label={lang === 'kh' ? 'ផ្លូវកាត់ក្ដារចុច' : 'Keyboard Shortcuts'}
           >
             <Keyboard className="w-5 h-5 text-emerald-600" strokeWidth={2.2} />
           </button>
@@ -196,7 +200,8 @@ export const Navbar: React.FC = () => {
           <button
             onClick={logoutUser}
             className="w-10 h-10 rounded-xl text-gray-600 bg-gray-50/80 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition-all flex items-center justify-center border border-gray-200 shadow-xs shrink-0 cursor-pointer"
-            title="Log Out of System"
+            title={lang === 'kh' ? 'ចាកចេញពីប្រព័ន្ធ' : 'Log Out of System'}
+            aria-label={lang === 'kh' ? 'ចាកចេញ' : 'Log Out'}
           >
             <LogOut className="w-5 h-5" strokeWidth={2.2} />
           </button>

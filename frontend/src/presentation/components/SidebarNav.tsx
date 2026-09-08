@@ -673,7 +673,7 @@ export const SidebarNav: React.FC = () => {
                       ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200'
                       : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                   }`}
-                  title={item.hotkey ? `${item.label} (${item.hotkey})` : item.label}
+                  title={item.hotkey ? `${lang === 'kh' && item.labelKh ? item.labelKh : item.label} (${item.hotkey})` : (lang === 'kh' && item.labelKh ? item.labelKh : item.label)}
                 >
                   {item.icon}
 
@@ -711,7 +711,7 @@ export const SidebarNav: React.FC = () => {
           <button
             onClick={() => handleSelectTab('profile')}
             className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs shadow-xs transition transform hover:scale-105"
-            title={`${currentUser?.first_name || 'Lead'} ${currentUser?.last_name || 'Admin'} (${currentUser?.primary_role || 'SuperAdministrator'})`}
+            title={`${currentUser?.first_name || (lang === 'kh' ? 'ប្រធាន' : 'Lead')} ${currentUser?.last_name || (lang === 'kh' ? 'គ្រប់គ្រង' : 'Admin')} (${currentUser?.primary_role || (lang === 'kh' ? 'អភិបាលជាន់ខ្ពស់' : 'SuperAdministrator')})`}
           >
             {currentUser?.first_name?.charAt(0) || 'L'}{currentUser?.last_name?.charAt(0) || 'A'}
           </button>
@@ -926,7 +926,7 @@ export const SidebarNav: React.FC = () => {
                 ? 'bg-emerald-50 border-emerald-300 text-emerald-900 shadow-xs'
                 : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 shadow-xs'
             }`}
-            title="View User Profile & Account"
+            title={lang === 'kh' ? 'មើលព័ត៌មានគណនី និងប្រវត្តិរូប' : 'View User Profile & Account'}
           >
             <div className="flex items-center space-x-2.5 min-w-0">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
@@ -934,10 +934,10 @@ export const SidebarNav: React.FC = () => {
               </div>
               <div className="leading-tight min-w-0">
                 <span className="block text-xs font-bold text-gray-900 truncate">
-                  {currentUser?.first_name || 'Lead'} {currentUser?.last_name || 'Admin'}
+                  {currentUser?.first_name || (lang === 'kh' ? 'ប្រធាន' : 'Lead')} {currentUser?.last_name || (lang === 'kh' ? 'គ្រប់គ្រង' : 'Admin')}
                 </span>
                 <span className="block text-[10px] text-emerald-600 font-semibold truncate">
-                  {currentUser?.primary_role || 'SuperAdministrator'}
+                  {currentUser?.primary_role || (lang === 'kh' ? 'អភិបាលជាន់ខ្ពស់' : 'SuperAdministrator')}
                 </span>
               </div>
             </div>

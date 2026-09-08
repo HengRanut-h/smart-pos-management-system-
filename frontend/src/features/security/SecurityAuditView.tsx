@@ -19,11 +19,15 @@ import {
 } from 'lucide-react';
 
 export const SecurityAuditView: React.FC = () => {
-  const { lang } = useApp();
+  const { lang, securitySubTab, setSecuritySubTab } = useApp();
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [actionFilter, setActionFilter] = useState('');
-  const [activeTab, setActiveTab] = useState<'AUDIT_LOGS' | 'USER_ROLES' | 'ROLES' | 'POLICIES'>('AUDIT_LOGS');
+  
+  const activeTab = (securitySubTab as 'AUDIT_LOGS' | 'USER_ROLES' | 'ROLES' | 'POLICIES') || 'AUDIT_LOGS';
+  const setActiveTab = (tab: 'AUDIT_LOGS' | 'USER_ROLES' | 'ROLES' | 'POLICIES') => {
+    setSecuritySubTab(tab);
+  };
 
   const fetchLogs = async () => {
     setIsLoading(true);
@@ -105,7 +109,7 @@ export const SecurityAuditView: React.FC = () => {
             onClick={fetchLogs}
             disabled={isLoading}
             className="p-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
-            title="Refresh"
+            title={lang === 'kh' ? 'ផ្ទុកទិន្នន័យឡើងវិញ' : 'Refresh'}
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
@@ -115,22 +119,22 @@ export const SecurityAuditView: React.FC = () => {
       {/* Tab Navigation */}
       <div className="bg-white border-b border-gray-200 px-6 py-2.5 flex items-center space-x-4">
         {[
-          { id: 'AUDIT_LOGS', label: 'Audit Trail Logs', icon: <Terminal className="w-4 h-4" /> },
-          { id: 'USER_ROLES', label: 'User Roles & Customer Assignment', icon: <Users className="w-4 h-4" /> },
-          { id: 'ROLES', label: 'Roles & Permission Matrix', icon: <UserCheck className="w-4 h-4" /> },
-          { id: 'POLICIES', label: 'Security Status & Policy', icon: <Lock className="w-4 h-4" /> },
+          { id: 'AUDIT_LOGS', label: 'Audit Trail Logs', labelKh: 'កំណត់ត្រាអធិការកិច្ច', icon: <Terminal className="w-4 h-4" /> },
+          { id: 'USER_ROLES', label: 'User Roles & Access', labelKh: 'តួនាទីអ្នកប្រើ & សិទ្ធិ', icon: <Users className="w-4 h-4" /> },
+          { id: 'ROLES', label: 'Roles & Permission Matrix', labelKh: 'ម៉ាទ្រីសសិទ្ធិអនុញ្ញាត', icon: <UserCheck className="w-4 h-4" /> },
+          { id: 'POLICIES', label: 'Security Status & Policy', labelKh: 'គោលការណ៍សន្តិសុខ & ស្ថានភាព', icon: <Lock className="w-4 h-4" /> },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center space-x-2 py-2 px-3 rounded-xl text-xs font-bold transition ${
+            className={`flex items-center space-x-2 py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               activeTab === tab.id
                 ? 'bg-indigo-50 text-indigo-700'
                 : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
             }`}
           >
             {tab.icon}
-            <span>{tab.label}</span>
+            <span>{lang === 'kh' ? tab.labelKh : tab.label}</span>
           </button>
         ))}
       </div>

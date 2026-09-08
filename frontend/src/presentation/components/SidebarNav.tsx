@@ -22,6 +22,7 @@ import {
   Home,
   Users,
   UserCheck,
+  Terminal,
   FileBarChart,
   Bell,
   Shield,
@@ -101,6 +102,8 @@ export const SidebarNav: React.FC = () => {
     setProductSubTab,
     deliverySubTab,
     setDeliverySubTab,
+    securitySubTab,
+    setSecuritySubTab,
     cart,
     isShiftOpen,
     isSidebarCollapsed,
@@ -485,19 +488,42 @@ export const SidebarNav: React.FC = () => {
         ],
       },
       {
-        id: 'security',
+        id: 'security_group',
         title: 'Security & Audit',
         titleKh: 'សន្តិសុខ & អធិការកិច្ច',
         icon: <Shield className="w-4 h-4" />,
         items: [
           {
-            id: 'security',
-            name: 'Audit Trail & Roles',
-            nameKh: 'កំណត់ត្រាអធិការកិច្ច & សិទ្ធិ',
-            icon: <Shield className="w-4 h-4" />,
+            id: 'sec_audit_logs',
+            name: 'Audit Trail Logs',
+            nameKh: 'កំណត់ត្រាអធិការកិច្ច',
+            icon: <Terminal className="w-4 h-4" />,
             tab: 'security',
-            hotkey: 'F10',
-            description: 'Immutable logs & permissions',
+            subTab: 'AUDIT_LOGS',
+          },
+          {
+            id: 'sec_user_roles',
+            name: 'User Roles & Access',
+            nameKh: 'តួនាទីអ្នកប្រើ & សិទ្ធិ',
+            icon: <Users className="w-4 h-4" />,
+            tab: 'security',
+            subTab: 'USER_ROLES',
+          },
+          {
+            id: 'sec_roles_matrix',
+            name: 'Roles & Permission Matrix',
+            nameKh: 'ម៉ាទ្រីសសិទ្ធិអនុញ្ញាត',
+            icon: <UserCheck className="w-4 h-4" />,
+            tab: 'security',
+            subTab: 'ROLES',
+          },
+          {
+            id: 'sec_policies',
+            name: 'Security Status & Policy',
+            nameKh: 'គោលការណ៍សន្តិសុខ & ស្ថានភាព',
+            icon: <Lock className="w-4 h-4" />,
+            tab: 'security',
+            subTab: 'POLICIES',
           },
         ],
       },
@@ -601,6 +627,8 @@ export const SidebarNav: React.FC = () => {
       setDeliverySubTab(subTab);
     } else if (tab === 'products' && subTab) {
       setProductSubTab(subTab);
+    } else if (tab === 'security' && subTab) {
+      setSecuritySubTab(subTab);
     }
     if (window.innerWidth < 1024) {
       setIsMobileDrawerOpen(false);
@@ -860,11 +888,18 @@ export const SidebarNav: React.FC = () => {
                           return false;
                         };
 
+                        const isSecuritySubActive = (subTab?: string) => {
+                          if (!subTab) return true;
+                          return securitySubTab === subTab;
+                        };
+
                         const isActive =
                           item.tab === 'delivery'
                             ? activeTab === 'delivery' && isDeliverySubActive(item.subTab)
                             : item.tab === 'products'
                             ? activeTab === 'products' && isProductSubActive(item.subTab)
+                            : item.tab === 'security'
+                            ? activeTab === 'security' && isSecuritySubActive(item.subTab)
                             : activeTab === item.tab;
                         return (
                           <button

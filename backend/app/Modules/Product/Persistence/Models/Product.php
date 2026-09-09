@@ -192,4 +192,9 @@ class Product extends Model
     {
         return $this->hasMany(ProductPriceHistory::class, 'product_id');
     }
+
+    public function barcodes(): HasMany
+    {
+        return $this->hasMany(ProductBarcode::class, 'product_id');
+    }
 }

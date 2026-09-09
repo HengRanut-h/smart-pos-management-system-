@@ -54,6 +54,8 @@ import {
 } from '../../data-access/deliveryApi';
 import { ThermalReceiptModal } from '../../presentation/components/ThermalReceiptModal';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
+import { barcodeScannerService } from '../../services/barcode';
+import { ScannerStatus } from '../../presentation/components/barcode/ScannerStatus';
 
 export const POSTerminal: React.FC = () => {
   const {
@@ -213,6 +215,71 @@ export const POSTerminal: React.FC = () => {
       if (selectedCustomer.address) setDeliveryAddress(selectedCustomer.address);
     }
   }, [selectedCustomer]);
+
+  // Universal Barcode Scanner Handler (supporting local cache, backend lookup, and packaging multipliers)
+  const handleUniversalScan = async (code: string, multiplier: number = 1) => {
+    const trimmed = code.trim();
+    if (!trimmed) return;
+
+    // 1. Check local loaded products first
+    const localMatch = products.find(
+      (p) => (p.barcode && p.barcode.toLowerCase() === trimmed.toLowerCase()) ||
+             (p.sku && p.sku.toLowerCase() === trimmed.toLowerCase())
+    );
+
+    if (localMatch) {
+      addToCart(localMatch, multiplier);
+      playScanBeep();
+      setScannedNotification(`Added: +${multiplier} ${localMatch.name} (${trimmed})`);
+      setTimeout(() => setScannedNotification(null), 2500);
+      return;
+    }
+
+    // 2. Query backend API for multi-package barcodes & server-side lookup
+    try {
+      const lookup = await barcodeScannerService.lookupBarcode(trimmed);
+      if (lookup.success && lookup.data) {
+        const mult = (lookup.multiplier || 1) * multiplier;
+        const unitPrice = lookup.custom_price != null
+          ? Number(lookup.custom_price) / (lookup.multiplier || 1)
+          : Number(lookup.data.selling_price);
+
+        const productToAdd = {
+          ...lookup.data,
+          selling_price: unitPrice,
+        };
+
+        addToCart(productToAdd, mult);
+        playScanBeep();
+        const pkgLabel = lookup.package_type && lookup.package_type !== 'PIECE' ? ` [${lookup.package_type}]` : '';
+        setScannedNotification(`Auto-Added: +${mult} ${lookup.data.name}${pkgLabel} ($${(unitPrice * mult).toFixed(2)})`);
+        setTimeout(() => setScannedNotification(null), 3000);
+      } else {
+        notify.warning(
+          lang === 'kh' ? `រកមិនឃើញទំនិញសម្រាប់បាកូដ '${trimmed}' ទេ` : `No product found matching barcode '${trimmed}'`,
+          lang === 'kh' ? 'ស្កេនបាកូដ' : 'Barcode Scan'
+        );
+      }
+    } catch (err) {
+      console.error('Barcode scan error:', err);
+    }
+  };
+
+  // Hardware Scanner & Universal Barcode Subscription
+  useEffect(() => {
+    barcodeScannerService.init();
+
+    const unsub = barcodeScannerService.onScan((scanResult) => {
+      // Ignore background hardware scans if a text modal is currently open
+      if (isCustomerModalOpen || isQuickAddOpen || isHeldOrdersModalOpen) return;
+      handleUniversalScan(scanResult.value, scanResult.multiplier || 1);
+    });
+
+    return () => {
+      unsub();
+      barcodeScannerService.destroy();
+    };
+  }, [products, isCustomerModalOpen, isQuickAddOpen, isHeldOrdersModalOpen]);
 
   const [selectedPosCategory, setSelectedPosCategory] = useState<string>('ALL');
 
@@ -1017,18 +1084,26 @@ export const POSTerminal: React.FC = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && filteredProducts.length === 1) {
-                    addToCart(filteredProducts[0]);
-                    playScanBeep();
-                    setScannedNotification(`Added: ${filteredProducts[0].name}`);
-                    setTimeout(() => setScannedNotification(null), 2000);
-                    setSearch('');
+                  if (e.key === 'Enter') {
+                    if (filteredProducts.length === 1) {
+                      addToCart(filteredProducts[0]);
+                      playScanBeep();
+                      setScannedNotification(`Added: ${filteredProducts[0].name}`);
+                      setTimeout(() => setScannedNotification(null), 2000);
+                      setSearch('');
+                    } else if (search.trim()) {
+                      handleUniversalScan(search.trim());
+                      setSearch('');
+                    }
                   }
                 }}
                 className="w-full pl-10 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-xs focus:outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-xs transition"
               />
               <Barcode className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
             </div>
+
+            <ScannerStatus onOpenCameraModal={() => setIsBarcodeScannerModalOpen(true)} compact={true} />
+
             <button
               type="button"
               onClick={() => setIsBarcodeScannerModalOpen(true)}
@@ -2376,6 +2451,7 @@ export const POSTerminal: React.FC = () => {
           setScannedNotification(`Auto-Added: +${quantity} ${product.name} (${product.barcode || product.sku})`);
           setTimeout(() => setScannedNotification(null), 2500);
         }}
+        onDetectedBarcode={(code) => handleUniversalScan(code)}
         playScanBeep={playScanBeep}
       />
 

@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use App\Modules\Product\Persistence\Models\Product;
 use App\Modules\Product\Persistence\Models\ProductAuditLog;
 use App\Modules\Product\Persistence\Models\ProductPriceHistory;
+use App\Modules\Product\Persistence\Models\ProductBarcode;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -308,6 +309,93 @@ class ProductCatalogController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Product archived/deleted successfully',
+        ]);
+    }
+
+    /**
+     * Look up product by barcode (supporting primary barcode, SKU, and packaging barcodes).
+     */
+    public function getByBarcode(string $barcode): JsonResponse
+    {
+        $barcode = trim($barcode);
+
+        // 1. Check packaging barcodes first
+        $packageBarcode = ProductBarcode::with(['product' => function ($q) {
+            $q->with(['category', 'brand', 'unit', 'status', 'barcodes']);
+        }])->where('barcode', $barcode)->first();
+
+        if ($packageBarcode && $packageBarcode->product) {
+            $product = $packageBarcode->product;
+            $multiplier = (int) ($packageBarcode->multiplier ?: 1);
+            $effectivePrice = $packageBarcode->custom_price !== null 
+                ? (float) $packageBarcode->custom_price 
+                : round((float) $product->selling_price * $multiplier, 2);
+
+            return response()->json([
+                'success' => true,
+                'match_type' => 'package_barcode',
+                'barcode' => $barcode,
+                'package_type' => $packageBarcode->package_type,
+                'multiplier' => $multiplier,
+                'custom_price' => $packageBarcode->custom_price,
+                'effective_price' => $effectivePrice,
+                'notes' => $packageBarcode->notes,
+                'data' => $product,
+            ]);
+        }
+
+        // 2. Check product primary barcode or SKU
+        $product = Product::with(['category', 'brand', 'unit', 'status', 'barcodes'])
+            ->where('barcode', $barcode)
+            ->orWhere('sku', $barcode)
+            ->first();
+
+        if ($product) {
+            return response()->json([
+                'success' => true,
+                'match_type' => ($product->barcode === $barcode) ? 'primary_barcode' : 'sku',
+                'barcode' => $barcode,
+                'package_type' => 'PIECE',
+                'multiplier' => 1,
+                'custom_price' => null,
+                'effective_price' => (float) $product->selling_price,
+                'notes' => null,
+                'data' => $product,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => "No product found matching barcode '{$barcode}'",
+        ], 404);
+    }
+
+    /**
+     * Look up product by SKU.
+     */
+    public function getBySku(string $sku): JsonResponse
+    {
+        $sku = trim($sku);
+
+        $product = Product::with(['category', 'brand', 'unit', 'status', 'barcodes'])
+            ->where('sku', $sku)
+            ->first();
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => "No product found with SKU '{$sku}'",
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'match_type' => 'sku',
+            'sku' => $sku,
+            'package_type' => 'PIECE',
+            'multiplier' => 1,
+            'effective_price' => (float) $product->selling_price,
+            'data' => $product,
         ]);
     }
 }

@@ -21,6 +21,8 @@ Route::prefix('products')->group(function () {
     Route::put('/{id}', [ProductCatalogController::class, 'update'])->where('id', '[0-9]+');
     Route::delete('/{id}', [ProductCatalogController::class, 'destroy'])->where('id', '[0-9]+');
     Route::post('/{id}/duplicate', [ProductCatalogController::class, 'duplicate'])->where('id', '[0-9]+');
+    Route::get('/barcode/{barcode}', [ProductCatalogController::class, 'getByBarcode']);
+    Route::get('/sku/{sku}', [ProductCatalogController::class, 'getBySku']);
 
     // 04. Variants
     Route::get('/variants', [ProductVariantController::class, 'index']);

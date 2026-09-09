@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { verifyStaffBadgeScan } from '../../data-access/posApi';
+import { BarcodeScannerModal } from '../pos/BarcodeScannerModal';
 import { useApp } from '../../application/context/AppContext';
 import {
   QrCode,
@@ -15,6 +16,7 @@ import {
   Wifi,
   Sparkles,
   Lock,
+  Camera,
 } from 'lucide-react';
 
 interface StaffBadgeScannerModalProps {
@@ -36,6 +38,7 @@ export const StaffBadgeScannerModal: React.FC<StaffBadgeScannerModalProps> = ({
   const [tokenInput, setTokenInput] = useState('');
   const [scanType, setScanType] = useState<string>(defaultScanType);
   const [loading, setLoading] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [result, setResult] = useState<any>(null);
 
   if (!isOpen) return null;
@@ -153,9 +156,19 @@ export const StaffBadgeScannerModal: React.FC<StaffBadgeScannerModalProps> = ({
 
           {/* Scanner Simulation Input */}
           <div className="space-y-2">
-            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
-              {lang === 'kh' ? 'ស្កេន ឬបញ្ចូលថូខឹនប័ណ្ណ (Scanner Stream)' : 'Scan Stream / Manual Token Input'}
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                {lang === 'kh' ? 'ស្កេន ឬបញ្ចូលថូខឹនប័ណ្ណ (Scanner Stream)' : 'Scan Stream / Manual Token Input'}
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsCameraOpen(true)}
+                className="flex items-center space-x-1.5 px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold transition border border-emerald-200 shadow-xs cursor-pointer"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>{lang === 'kh' ? 'ស្កេនដោយកាមេរ៉ា' : 'Scan with Camera'}</span>
+              </button>
+            </div>
             <div className="relative">
               <input
                 type="text"
@@ -260,6 +273,19 @@ export const StaffBadgeScannerModal: React.FC<StaffBadgeScannerModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Live Camera Scanner Modal with Camera Device Selector */}
+      {isCameraOpen && (
+        <BarcodeScannerModal
+          isOpen={isCameraOpen}
+          onClose={() => setIsCameraOpen(false)}
+          onDetectedBarcode={(code) => {
+            setTokenInput(code);
+            handleScanSubmit(code);
+            setIsCameraOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };

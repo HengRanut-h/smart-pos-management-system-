@@ -59,25 +59,31 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const scanMultiplierRef = useRef<number>(1);
   scanMultiplierRef.current = scanMultiplier;
 
-  // List available camera devices & select rear camera if available
-  useEffect(() => {
-    if (!isOpen) return;
+  // Refresh and list available camera devices
+  const refreshDevices = async () => {
     if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
       return;
     }
-    BrowserCodeReader.listVideoInputDevices()
-      .then((devices) => {
-        setAvailableDevices(devices);
-        if (devices.length > 0 && !selectedDeviceId) {
-          const backCam = devices.find((d) =>
-            d.label.toLowerCase().includes('back') ||
-            d.label.toLowerCase().includes('rear') ||
-            d.label.toLowerCase().includes('environment')
-          );
-          setSelectedDeviceId(backCam ? backCam.deviceId : devices[0].deviceId);
-        }
-      })
-      .catch(() => {});
+    try {
+      const devices = await BrowserCodeReader.listVideoInputDevices();
+      setAvailableDevices(devices);
+      if (devices.length > 0 && !selectedDeviceId) {
+        const backCam = devices.find((d) =>
+          d.label.toLowerCase().includes('back') ||
+          d.label.toLowerCase().includes('rear') ||
+          d.label.toLowerCase().includes('environment')
+        );
+        setSelectedDeviceId(backCam ? backCam.deviceId : devices[0].deviceId);
+      }
+    } catch (err) {
+      console.warn('Failed to enumerate video devices', err);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      refreshDevices();
+    }
   }, [isOpen]);
 
   // Haptic feedback (vibration on mobile)
@@ -90,7 +96,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   };
 
   // Ultra-Fast High-Quality Scanner Engine (Hardware-Accelerated GPU BarcodeDetector + Continuous Autofocus)
-  const startScanner = async () => {
+  const startScanner = async (overrideDeviceId?: string) => {
     setCameraError(null);
     if (!videoRef.current) return;
 
@@ -100,24 +106,45 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
       return;
     }
 
+    const deviceToUse = overrideDeviceId !== undefined ? overrideDeviceId : selectedDeviceId;
+
     try {
       stopScanner();
 
-      // High definition video constraints with 60fps preference and continuous autofocus
+      // High definition video constraints with fallback
       const videoConstraints: MediaTrackConstraints = {
-        facingMode: selectedDeviceId ? undefined : { ideal: cameraFacing },
-        deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+        deviceId: deviceToUse ? { exact: deviceToUse } : undefined,
+        facingMode: !deviceToUse ? { ideal: cameraFacing } : undefined,
         width: { ideal: 1920, min: 1280 },
         height: { ideal: 1080, min: 720 },
         frameRate: { ideal: 60, min: 30 },
       };
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: videoConstraints,
-        audio: false,
-      });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: videoConstraints,
+          audio: false,
+        });
+      } catch (err) {
+        // Fallback to basic constraint if 1080p or exact constraint fails
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: deviceToUse ? { deviceId: { ideal: deviceToUse } } : true,
+          audio: false,
+        });
+      }
 
       mediaStreamRef.current = stream;
+
+      // Re-enumerate devices so friendly labels (e.g. "Logitech Webcam") populate after permission is granted
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices?.enumerateDevices) {
+        navigator.mediaDevices.enumerateDevices().then((devs) => {
+          const videoDevs = devs.filter((d) => d.kind === 'videoinput');
+          if (videoDevs.length > 0) {
+            setAvailableDevices(videoDevs);
+          }
+        }).catch(() => {});
+      }
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -296,15 +323,25 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     onClose();
   };
 
-  // Flip front/back camera
-  const handleFlipCamera = () => {
+  // Explicit device selection from dropdown
+  const handleSelectDevice = async (deviceId: string) => {
+    setSelectedDeviceId(deviceId);
+    await startScanner(deviceId);
+  };
+
+  // Flip front/back camera or cycle through connected devices
+  const handleFlipCamera = async () => {
     if (availableDevices.length > 1) {
       const currentIdx = availableDevices.findIndex((d) => d.deviceId === selectedDeviceId);
       const nextIdx = (currentIdx + 1) % availableDevices.length;
-      setSelectedDeviceId(availableDevices[nextIdx].deviceId);
+      const nextDevId = availableDevices[nextIdx].deviceId;
+      setSelectedDeviceId(nextDevId);
+      await startScanner(nextDevId);
     } else {
-      setCameraFacing((prev) => (prev === 'environment' ? 'user' : 'environment'));
+      const nextFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+      setCameraFacing(nextFacing);
       setSelectedDeviceId('');
+      await startScanner('');
     }
   };
 
@@ -563,6 +600,53 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               title="Close Scanner"
             >
               <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Active Camera Device Selector Bar */}
+        <div className="px-4 py-2.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center space-x-2 flex-1 min-w-0">
+            <Camera className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 hidden sm:inline">
+              Camera:
+            </span>
+            <div className="relative flex-1 min-w-0">
+              <select
+                value={selectedDeviceId}
+                onChange={(e) => handleSelectDevice(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 hover:border-emerald-500 rounded-xl px-2.5 py-1.5 text-xs text-white font-medium focus:outline-hidden focus:border-emerald-500 transition truncate cursor-pointer shadow-inner"
+              >
+                {availableDevices.length === 0 ? (
+                  <option value="">Default System Camera</option>
+                ) : (
+                  availableDevices.map((dev, idx) => {
+                    let label = dev.label;
+                    if (!label) {
+                      label = `Camera #${idx + 1} (${dev.deviceId.slice(0, 8)}...)`;
+                    }
+                    return (
+                      <option key={dev.deviceId || idx} value={dev.deviceId}>
+                        {label}
+                      </option>
+                    );
+                  })
+                )}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-1.5 shrink-0">
+            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg hidden xs:inline-block">
+              {availableDevices.length} {availableDevices.length === 1 ? 'camera' : 'cameras'}
+            </span>
+            <button
+              type="button"
+              onClick={refreshDevices}
+              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition border border-slate-700 shadow-xs cursor-pointer"
+              title="Refresh / Detect Connected Cameras"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

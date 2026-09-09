@@ -21,6 +21,7 @@ export type NavTab =
   | 'products'
   | 'sales'
   | 'invoices'
+  | 'invoice-designer'
   | 'inventory'
   | 'purchases'
   | 'shifts'

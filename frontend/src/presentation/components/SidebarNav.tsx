@@ -484,6 +484,14 @@ export const SidebarNav: React.FC = () => {
             hotkey: 'F4',
             description: 'Official tax invoice records',
           },
+          {
+            id: 'invoice-designer',
+            name: 'Document & Invoice Designer',
+            nameKh: 'រចនាវិក្កយបត្រ និងឯកសារ',
+            icon: <SlidersHorizontal className="w-4 h-4" />,
+            tab: 'invoice-designer',
+            description: 'Templates, layouts, numbering & assignments',
+          },
         ],
       },
       {

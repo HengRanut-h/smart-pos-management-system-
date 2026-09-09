@@ -10,6 +10,7 @@ import { DashboardView } from './features/dashboard/DashboardView';
 import { ReportsView } from './features/reports/ReportsView';
 import { SalesHistoryView } from './features/sales/SalesHistoryView';
 import { InvoiceListView } from './features/invoices/InvoiceListView';
+import { InvoiceDesignerHub } from './features/invoices/designer/InvoiceDesignerHub';
 import { InventoryPortalView } from './features/inventory/InventoryPortalView';
 import { PurchasingPortalView } from './features/purchasing/PurchasingPortalView';
 import { ShiftManagementView } from './features/shifts/ShiftManagementView';
@@ -43,6 +44,7 @@ const MainContent: React.FC = () => {
       {activeTab === 'reports' && <ReportsView />}
       {activeTab === 'sales' && <SalesHistoryView />}
       {activeTab === 'invoices' && <InvoiceListView />}
+      {activeTab === 'invoice-designer' && <InvoiceDesignerHub />}
       {activeTab === 'inventory' && <InventoryPortalView />}
       {activeTab === 'purchases' && <PurchasingPortalView />}
       {activeTab === 'shifts' && <ShiftManagementView />}

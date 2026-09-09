@@ -883,6 +883,8 @@ export const getBranchesList = async (): Promise<BranchItem[]> => {
   return res.data?.data || [];
 };
 
+export const getBranches = getBranchesList;
+
 export const getBranchDetails = async (id: number): Promise<BranchItem> => {
   const res = await apiClient.get(`/settings/branches/${id}`);
   return res.data?.data;
@@ -1013,5 +1015,91 @@ export const getSettingAuditLogs = async (limit = 100): Promise<SystemAuditLogIt
   const res = await apiClient.get('/settings/audits', { params: { limit } });
   return res.data?.data || [];
 };
+
+// ==========================================
+// INVOICE & DOCUMENT DESIGNER API
+// ==========================================
+
+export const getInvoiceTemplates = async (documentType?: string): Promise<any[]> => {
+  const res = await apiClient.get('/invoice-templates', {
+    params: documentType ? { document_type: documentType } : {},
+  });
+  return res.data?.data || [];
+};
+
+export const getInvoiceTemplateById = async (id: number): Promise<any> => {
+  const res = await apiClient.get(`/invoice-templates/${id}`);
+  return res.data?.data;
+};
+
+export const createInvoiceTemplate = async (payload: any): Promise<any> => {
+  const res = await apiClient.post('/invoice-templates', payload);
+  return res.data;
+};
+
+export const updateInvoiceTemplate = async (id: number, payload: any): Promise<any> => {
+  const res = await apiClient.put(`/invoice-templates/${id}`, payload);
+  return res.data;
+};
+
+export const duplicateInvoiceTemplate = async (id: number): Promise<any> => {
+  const res = await apiClient.post(`/invoice-templates/${id}/duplicate`);
+  return res.data;
+};
+
+export const setDefaultInvoiceTemplate = async (id: number): Promise<any> => {
+  const res = await apiClient.post(`/invoice-templates/${id}/set-default`);
+  return res.data;
+};
+
+export const deleteInvoiceTemplate = async (id: number): Promise<any> => {
+  const res = await apiClient.delete(`/invoice-templates/${id}`);
+  return res.data;
+};
+
+export const restoreInvoiceTemplateVersion = async (id: number, versionId: number): Promise<any> => {
+  const res = await apiClient.post(`/invoice-templates/${id}/restore-version/${versionId}`);
+  return res.data;
+};
+
+export const getInvoiceAssignments = async (): Promise<any[]> => {
+  const res = await apiClient.get('/invoice-templates/assignments');
+  return res.data?.data || [];
+};
+
+export const saveInvoiceAssignments = async (assignments: any[]): Promise<any> => {
+  const res = await apiClient.post('/invoice-templates/assignments', { assignments });
+  return res.data;
+};
+
+export const getInvoiceSequences = async (): Promise<any[]> => {
+  const res = await apiClient.get('/invoice-sequences');
+  return res.data?.data || [];
+};
+
+export const saveInvoiceSequence = async (payload: any, id?: number): Promise<any> => {
+  if (id) {
+    const res = await apiClient.put(`/invoice-sequences/${id}`, payload);
+    return res.data;
+  }
+  const res = await apiClient.post('/invoice-sequences', payload);
+  return res.data;
+};
+
+export const previewSequencePattern = async (
+  pattern: string,
+  padding = 4,
+  currentNumber = 1,
+  branchCode = 'HQ'
+): Promise<{ pattern: string; sample_output: string }> => {
+  const res = await apiClient.post('/invoice-sequences/preview', {
+    pattern,
+    padding,
+    current_number: currentNumber,
+    branch_code: branchCode,
+  });
+  return res.data;
+};
+
 
 

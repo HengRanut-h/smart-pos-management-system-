@@ -16,10 +16,11 @@ import {
   RefreshCw,
   X,
   Calendar,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 export const InvoiceListView: React.FC = () => {
-  const { t, lang, notify } = useApp();
+  const { t, lang, notify, setActiveTab } = useApp();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,6 +122,14 @@ export const InvoiceListView: React.FC = () => {
             title="Refresh Invoices"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={() => setActiveTab('invoice-designer')}
+            className="px-3.5 py-2.5 bg-white border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition shadow-2xs"
+            title="Design and customize invoice and receipt templates"
+          >
+            <SlidersHorizontal className="w-4 h-4 text-emerald-600" />
+            <span>Customize Templates</span>
           </button>
           <button
             onClick={() => setIsGenerateModalOpen(true)}

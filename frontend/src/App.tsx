@@ -7,6 +7,8 @@ import { SidebarNav } from './presentation/components/SidebarNav';
 import { POSTerminal } from './features/pos/POSTerminal';
 import { ProductManagementHub } from './features/products/ProductManagementHub';
 import { DashboardView } from './features/dashboard/DashboardView';
+import { ExecutiveDrilldownView } from './features/dashboard/ExecutiveDrilldownView';
+import { ApprovalManagementHub } from './features/approvals/ApprovalManagementHub';
 import { ReportsView } from './features/reports/ReportsView';
 import { SalesHistoryView } from './features/sales/SalesHistoryView';
 import { InvoiceListView } from './features/invoices/InvoiceListView';
@@ -41,6 +43,8 @@ const MainContent: React.FC = () => {
       {activeTab === 'pos' && <POSTerminal />}
       {activeTab === 'products' && <ProductManagementHub />}
       {activeTab === 'dashboard' && <DashboardView />}
+      {activeTab === 'executive' && <ExecutiveDrilldownView />}
+      {activeTab === 'approvals' && <ApprovalManagementHub />}
       {activeTab === 'reports' && <ReportsView />}
       {activeTab === 'sales' && <SalesHistoryView />}
       {activeTab === 'invoices' && <InvoiceListView />}

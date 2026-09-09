@@ -17,6 +17,8 @@ export interface ConfirmOptions {
 export type NavTab =
   | 'pos'
   | 'dashboard'
+  | 'executive'
+  | 'approvals'
   | 'reports'
   | 'products'
   | 'sales'

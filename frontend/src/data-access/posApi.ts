@@ -1101,5 +1101,69 @@ export const previewSequencePattern = async (
   return res.data;
 };
 
+// ==========================================
+// APPROVAL & WORKFLOW ENGINE API
+// ==========================================
+
+export const getApprovalRequests = async (params?: any): Promise<any> => {
+  const res = await apiClient.get('/approvals', { params });
+  return res.data?.data;
+};
+
+export const getApprovalRequestById = async (id: number): Promise<any> => {
+  const res = await apiClient.get(`/approvals/${id}`);
+  return res.data?.data;
+};
+
+export const approveApprovalRequest = async (id: number, notes?: string): Promise<any> => {
+  const res = await apiClient.post(`/approvals/${id}/approve`, { notes });
+  return res.data;
+};
+
+export const rejectApprovalRequest = async (id: number, reason: string): Promise<any> => {
+  const res = await apiClient.post(`/approvals/${id}/reject`, { reason });
+  return res.data;
+};
+
+export const escalateApprovalRequest = async (id: number, notes?: string): Promise<any> => {
+  const res = await apiClient.post(`/approvals/${id}/escalate`, { notes });
+  return res.data;
+};
+
+export const getApprovalMetrics = async (): Promise<any> => {
+  const res = await apiClient.get('/approvals/summary-metrics');
+  return res.data?.data;
+};
+
+export const getApprovalWorkflows = async (): Promise<any[]> => {
+  const res = await apiClient.get('/approvals/workflows');
+  return res.data?.data || [];
+};
+
+export const updateApprovalWorkflow = async (id: number, payload: any): Promise<any> => {
+  const res = await apiClient.put(`/approvals/workflows/${id}`, payload);
+  return res.data;
+};
+
+export const getBusinessRules = async (): Promise<any[]> => {
+  const res = await apiClient.get('/approvals/business-rules');
+  return res.data?.data || [];
+};
+
+export const saveBusinessRule = async (payload: any, id?: number): Promise<any> => {
+  if (id) {
+    const res = await apiClient.put(`/approvals/business-rules/${id}`, payload);
+    return res.data;
+  }
+  const res = await apiClient.post('/approvals/business-rules', payload);
+  return res.data;
+};
+
+export const toggleBusinessRule = async (id: number): Promise<any> => {
+  const res = await apiClient.post(`/approvals/business-rules/${id}/toggle`);
+  return res.data;
+};
+
+
 
 

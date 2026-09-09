@@ -58,6 +58,7 @@ import {
   Hash,
   ShieldCheck,
   Calculator,
+  TrendingUp,
   Bot,
   CreditCard,
   Printer,
@@ -222,6 +223,38 @@ export const SidebarNav: React.FC = () => {
     }
 
     return [
+      {
+        id: 'executive_cockpit',
+        title: 'Executive 360 Cockpit',
+        titleKh: 'ផ្ទាំងបញ្ជាប្រតិបត្តិការ 360°',
+        icon: <TrendingUp className="w-4 h-4" />,
+        items: [
+          {
+            id: 'executive',
+            name: 'Executive 360 Cockpit',
+            nameKh: 'ផ្ទាំងបញ្ជាប្រតិបត្តិការ 360°',
+            icon: <TrendingUp className="w-4 h-4" />,
+            tab: 'executive',
+            description: 'Multi-store, channel & cashier drilldowns',
+          },
+        ],
+      },
+      {
+        id: 'governance_group',
+        title: 'Approval Governance',
+        titleKh: 'មជ្ឈមណ្ឌលអនុម័ត',
+        icon: <ShieldCheck className="w-4 h-4" />,
+        items: [
+          {
+            id: 'approvals',
+            name: 'Approval Governance & Rules',
+            nameKh: 'មជ្ឈមណ្ឌលអនុម័ត និងវិធានអាជីវកម្ម',
+            icon: <ShieldCheck className="w-4 h-4" />,
+            tab: 'approvals',
+            description: 'Pending queue, rule policies & multi-tier signoffs',
+          },
+        ],
+      },
       {
         id: 'reports_group',
         title: 'General Reports',
@@ -811,6 +844,8 @@ export const SidebarNav: React.FC = () => {
     }
     return [
       { id: 'dashboard' as NavTab, label: 'Dashboard', labelKh: 'ផ្ទាំងគ្រប់គ្រង', icon: <Home className="w-5 h-5" />, hotkey: 'F7', sub: 'Executive KPI', subKh: 'ទិន្នន័យប្រតិបត្តិការ' },
+      { id: 'executive' as NavTab, label: 'Executive 360', labelKh: 'ផ្ទាំងប្រតិបត្តិ', icon: <TrendingUp className="w-5 h-5" />, sub: 'Store Drilldown', subKh: 'ទិដ្ឋភាពសាខា' },
+      { id: 'approvals' as NavTab, label: 'Approvals', labelKh: 'ការអនុម័ត', icon: <ShieldCheck className="w-5 h-5" />, sub: 'Workflow Engine', subKh: 'អភិបាលកិច្ច' },
       { id: 'pos' as NavTab, label: 'POS & Sales', labelKh: 'កន្លែងលក់ POS', icon: <ShoppingCart className="w-5 h-5" />, badge: totalCartCount, hotkey: 'F1', sub: 'Cashier Checkout', subKh: 'គិតប្រាក់' },
       { id: 'products' as NavTab, label: 'Products', labelKh: 'គ្រប់គ្រងទំនិញ', icon: <Package className="w-5 h-5" />, sub: 'Product Hub', subKh: 'មជ្ឈមណ្ឌលទំនិញ' },
       { id: 'delivery' as NavTab, label: 'Delivery', labelKh: 'ដឹកជញ្ជូន', icon: <Truck className="w-5 h-5" />, hotkey: 'F7', sub: 'Fleet & Logistics', subKh: 'ភស្តុភារ & អ្នកដឹក' },

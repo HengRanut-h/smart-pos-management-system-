@@ -35,7 +35,7 @@ interface StoreQrManagementViewProps {
 }
 
 export const StoreQrManagementView: React.FC<StoreQrManagementViewProps> = ({ onBack }) => {
-  const { lang } = useApp();
+  const { lang, notify } = useApp();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [qrCodes, setQrCodes] = useState<AttendanceQrCode[]>([]);
@@ -94,13 +94,20 @@ export const StoreQrManagementView: React.FC<StoreQrManagementViewProps> = ({ on
       });
 
       if (res.success) {
+        notify.success(
+          lang === 'kh' ? 'កូដ QR ហាងត្រូវបានបង្កើតដោយជោគជ័យ!' : 'Store attendance QR code created successfully!',
+          lang === 'kh' ? 'វត្តមាន QR' : 'Store QR'
+        );
         setIsCreateModalOpen(false);
         setNewName('');
         setNewExpiresAt('');
         fetchData();
+      } else {
+        notify.error(res.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបង្កើតកូដ QR' : 'Failed to create QR code'), lang === 'kh' ? 'កំហុស' : 'QR Error');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to create store QR code', err);
+      notify.error(err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបង្កើតកូដ QR' : 'Failed to create QR code'), lang === 'kh' ? 'កំហុស' : 'QR Error');
     } finally {
       setIsSubmitting(false);
     }
@@ -114,13 +121,20 @@ export const StoreQrManagementView: React.FC<StoreQrManagementViewProps> = ({ on
     try {
       const res = await regenerateAttendanceQrCode(id);
       if (res.success) {
+        notify.success(
+          lang === 'kh' ? 'កូដសម្ងាត់ QR ត្រូវបានផ្លាស់ប្តូរថ្មីដោយជោគជ័យ!' : 'QR token regenerated successfully!',
+          lang === 'kh' ? 'វត្តមាន QR' : 'QR Regenerated'
+        );
         fetchData();
         if (previewQrCode && previewQrCode.id === id) {
           setPreviewQrCode(res.data);
         }
+      } else {
+        notify.error(res.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបង្កើតកូដ QR ថ្មី' : 'Failed to regenerate QR token'), lang === 'kh' ? 'កំហុស' : 'QR Error');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to regenerate QR token', err);
+      notify.error(err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបង្កើតកូដ QR ថ្មី' : 'Failed to regenerate QR token'), lang === 'kh' ? 'កំហុស' : 'QR Error');
     }
   };
 
@@ -129,10 +143,17 @@ export const StoreQrManagementView: React.FC<StoreQrManagementViewProps> = ({ on
     try {
       const res = await updateAttendanceQrCodeStatus(qr.id, nextStatus);
       if (res.success) {
+        notify.success(
+          lang === 'kh' ? `ស្ថានភាពកូដ QR ត្រូវបានផ្លាស់ប្តូរទៅជា ${nextStatus}` : `QR code status updated to ${nextStatus}`,
+          lang === 'kh' ? 'វត្តមាន QR' : 'QR Status'
+        );
         fetchData();
+      } else {
+        notify.error(res.message || (lang === 'kh' ? 'បរាជ័យក្នុងការផ្លាស់ប្តូរស្ថានភាព' : 'Failed to update status'), lang === 'kh' ? 'កំហុស' : 'QR Error');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to update QR status', err);
+      notify.error(err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការផ្លាស់ប្តូរស្ថានភាព' : 'Failed to update status'), lang === 'kh' ? 'កំហុស' : 'QR Error');
     }
   };
 
@@ -144,19 +165,30 @@ export const StoreQrManagementView: React.FC<StoreQrManagementViewProps> = ({ on
     try {
       const res = await deleteAttendanceQrCode(id);
       if (res.success) {
+        notify.success(
+          lang === 'kh' ? 'កូដ QR ហាងត្រូវបានលុបដោយជោគជ័យ!' : 'Store QR code deleted successfully!',
+          lang === 'kh' ? 'លុបកូដ QR' : 'QR Deleted'
+        );
         if (previewQrCode && previewQrCode.id === id) {
           setPreviewQrCode(null);
         }
         fetchData();
+      } else {
+        notify.error(res.message || (lang === 'kh' ? 'បរាជ័យក្នុងការលុបកូដ QR' : 'Failed to delete QR code'), lang === 'kh' ? 'កំហុស' : 'QR Error');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to delete QR code', err);
+      notify.error(err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការលុបកូដ QR' : 'Failed to delete QR code'), lang === 'kh' ? 'កំហុស' : 'QR Error');
     }
   };
 
   const handleCopyToken = (token: string) => {
     navigator.clipboard.writeText(token);
     setCopiedToken(token);
+    notify.info(
+      lang === 'kh' ? 'បានចម្លងកូដសម្ងាត់ Token រួចរាល់!' : 'QR security token copied to clipboard!',
+      lang === 'kh' ? 'ចម្លង' : 'Copied'
+    );
     setTimeout(() => setCopiedToken(null), 2000);
   };
 

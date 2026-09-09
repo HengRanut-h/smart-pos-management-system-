@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { X, CheckCircle, PenTool, Camera, KeyRound, AlertCircle } from 'lucide-react';
 import { Delivery } from '../../foundation/types/delivery';
 import { submitProofOfDelivery } from '../../data-access/deliveryApi';
+import { useApp } from '../../application/context/AppContext';
 
 interface ProofOfDeliveryModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export const ProofOfDeliveryModal: React.FC<ProofOfDeliveryModalProps> = ({
   onSuccess,
   delivery,
 }) => {
+  const { lang, notify } = useApp();
   const [receiverName, setReceiverName] = useState(delivery?.recipient_name || '');
   const [relationship, setRelationship] = useState('SELF');
   const [otpCode, setOtpCode] = useState('');
@@ -101,10 +103,16 @@ export const ProofOfDeliveryModal: React.FC<ProofOfDeliveryModalProps> = ({
         cod_collected: delivery.payment_type === 'COD' ? codCollected : 0,
       });
 
+      notify.success(
+        lang === 'kh' ? 'ភស្តុតាងនៃការប្រគល់ត្រូវបានបញ្ជូនដោយជោគជ័យ!' : 'Proof of delivery submitted successfully!',
+        lang === 'kh' ? 'ដឹកជញ្ជូនរួចរាល់' : 'Delivery Complete'
+      );
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to submit proof of delivery.');
+      const errMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបញ្ជូនភស្តុតាងប្រគល់ទំនិញ' : 'Failed to submit proof of delivery.');
+      setError(errMsg);
+      notify.error(errMsg, lang === 'kh' ? 'កំហុស' : 'Delivery Error');
     } finally {
       setIsSubmitting(false);
     }

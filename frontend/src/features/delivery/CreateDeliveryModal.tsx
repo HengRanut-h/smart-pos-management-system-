@@ -3,6 +3,7 @@ import { X, Truck, DollarSign, MapPin, Phone, User, AlertCircle, ShoppingBag, Pl
 import { DeliveryZone, DeliveryDriver } from '../../foundation/types/delivery';
 import { createDeliveryOrder } from '../../data-access/deliveryApi';
 import { Product } from '../../foundation/types';
+import { useApp } from '../../application/context/AppContext';
 
 interface CreateDeliveryModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const CreateDeliveryModal: React.FC<CreateDeliveryModalProps> = ({
   drivers,
   products,
 }) => {
+  const { lang, notify } = useApp();
   const [recipientName, setRecipientName] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
   const [recipientSecondaryPhone, setRecipientSecondaryPhone] = useState('');
@@ -114,10 +116,16 @@ export const CreateDeliveryModal: React.FC<CreateDeliveryModalProps> = ({
         })),
       });
 
+      notify.success(
+        lang === 'kh' ? 'ការបញ្ជាទិញដឹកជញ្ជូនត្រូវបានបង្កើតដោយជោគជ័យ!' : 'Delivery order created successfully!',
+        lang === 'kh' ? 'ដឹកជញ្ជូន' : 'Delivery Created'
+      );
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create delivery order.');
+      const errMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការបង្កើតការបញ្ជាទិញដឹកជញ្ជូន' : 'Failed to create delivery order.');
+      setError(errMsg);
+      notify.error(errMsg, lang === 'kh' ? 'កំហុស' : 'Delivery Error');
     } finally {
       setIsSubmitting(false);
     }

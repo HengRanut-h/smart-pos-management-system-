@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, UserCheck, Bike, AlertCircle } from 'lucide-react';
 import { Delivery, DeliveryDriver } from '../../foundation/types/delivery';
 import { assignDriverToDelivery } from '../../data-access/deliveryApi';
+import { useApp } from '../../application/context/AppContext';
 
 interface AssignDriverModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const AssignDriverModal: React.FC<AssignDriverModalProps> = ({
   delivery,
   drivers,
 }) => {
+  const { lang, notify } = useApp();
   const [selectedDriverId, setSelectedDriverId] = useState<number | ''>('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,10 +38,16 @@ export const AssignDriverModal: React.FC<AssignDriverModalProps> = ({
     setError(null);
     try {
       await assignDriverToDelivery(delivery.id, Number(selectedDriverId), notes);
+      notify.success(
+        lang === 'kh' ? 'អ្នកដឹកជញ្ជូនត្រូវបានចាត់តាំងដោយជោគជ័យ!' : 'Driver assigned successfully!',
+        lang === 'kh' ? 'ចាត់តាំងអ្នកដឹក' : 'Driver Assigned'
+      );
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to assign driver.');
+      const errMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការចាត់តាំងអ្នកដឹក' : 'Failed to assign driver.');
+      setError(errMsg);
+      notify.error(errMsg, lang === 'kh' ? 'កំហុស' : 'Driver Error');
     } finally {
       setIsSubmitting(false);
     }

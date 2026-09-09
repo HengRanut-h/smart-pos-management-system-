@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, DollarSign, CheckCircle2, AlertCircle } from 'lucide-react';
 import { settleDriverCod } from '../../data-access/deliveryApi';
+import { useApp } from '../../application/context/AppContext';
 
 interface SettleCodModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const SettleCodModal: React.FC<SettleCodModalProps> = ({
   onSuccess,
   driver,
 }) => {
+  const { lang, notify } = useApp();
   const [amount, setAmount] = useState<number>(driver?.active_cash_in_hand || 0);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,10 +45,18 @@ export const SettleCodModal: React.FC<SettleCodModalProps> = ({
         amount_to_settle: amount,
         notes: notes || undefined,
       });
+      notify.success(
+        lang === 'kh'
+          ? `បានទូទាត់ប្រាក់ COD $${amount.toFixed(2)} សម្រាប់អ្នកដឹក ${driver.name}!`
+          : `Settled $${amount.toFixed(2)} COD cash for driver ${driver.name}!`,
+        lang === 'kh' ? 'ទូទាត់ប្រាក់' : 'COD Settlement'
+      );
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to settle COD cash.');
+      const errMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការទូទាត់ប្រាក់ COD' : 'Failed to settle COD cash.');
+      setError(errMsg);
+      notify.error(errMsg, lang === 'kh' ? 'កំហុស' : 'Settlement Error');
     } finally {
       setIsSubmitting(false);
     }

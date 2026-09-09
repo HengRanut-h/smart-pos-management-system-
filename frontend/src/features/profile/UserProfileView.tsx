@@ -31,6 +31,7 @@ export const UserProfileView: React.FC = () => {
     lang,
     setLang,
     setActiveTab,
+    notify,
   } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'security' | 'preferences'>('profile');
@@ -76,11 +77,15 @@ export const UserProfileView: React.FC = () => {
         phone: formData.phone,
       });
       refreshUserProfile();
-      setSuccessMessage('Profile details updated successfully!');
+      const msg = lang === 'kh' ? 'ព័ត៌មានគណនីត្រូវបានធ្វើបច្ចុប្បន្នភាពដោយជោគជ័យ!' : 'Profile details updated successfully!';
+      setSuccessMessage(msg);
+      notify.success(msg, lang === 'kh' ? 'គណនី' : 'Profile Updated');
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: any) {
       console.error('Failed to update profile', err);
-      setErrorMessage(err.response?.data?.message || 'Failed to update profile.');
+      const errMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការកែប្រែព័ត៌មានគណនី' : 'Failed to update profile.');
+      setErrorMessage(errMsg);
+      notify.error(errMsg, lang === 'kh' ? 'កំហុស' : 'Profile Error');
     } finally {
       setIsSaving(false);
     }
@@ -89,11 +94,15 @@ export const UserProfileView: React.FC = () => {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.new_password !== passwordData.confirm_password) {
-      setErrorMessage('New password and confirmation do not match.');
+      const errMsg = lang === 'kh' ? 'ពាក្យសម្ងាត់ថ្មី និងការបញ្ជាក់មិនត្រូវគ្នាទេ' : 'New password and confirmation do not match.';
+      setErrorMessage(errMsg);
+      notify.warning(errMsg, lang === 'kh' ? 'ការព្រមាន' : 'Password Error');
       return;
     }
     if (passwordData.new_password.length < 6) {
-      setErrorMessage('New password must be at least 6 characters long.');
+      const errMsg = lang === 'kh' ? 'ពាក្យសម្ងាត់ថ្មីត្រូវតែមានយ៉ាងតិច 6 តួអក្សរ' : 'New password must be at least 6 characters long.';
+      setErrorMessage(errMsg);
+      notify.warning(errMsg, lang === 'kh' ? 'ការព្រមាន' : 'Password Error');
       return;
     }
 
@@ -107,11 +116,15 @@ export const UserProfileView: React.FC = () => {
         new_password: passwordData.new_password,
       });
       setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
-      setSuccessMessage('Password changed successfully!');
+      const msg = lang === 'kh' ? 'ពាក្យសម្ងាត់ត្រូវបានផ្លាស់ប្តូរដោយជោគជ័យ!' : 'Password changed successfully!';
+      setSuccessMessage(msg);
+      notify.success(msg, lang === 'kh' ? 'ពាក្យសម្ងាត់' : 'Password Changed');
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: any) {
       console.error('Failed to change password', err);
-      setErrorMessage(err.response?.data?.message || 'Failed to change password.');
+      const errMsg = err.response?.data?.message || (lang === 'kh' ? 'បរាជ័យក្នុងការផ្លាស់ប្តូរពាក្យសម្ងាត់' : 'Failed to change password.');
+      setErrorMessage(errMsg);
+      notify.error(errMsg, lang === 'kh' ? 'កំហុស' : 'Password Error');
     } finally {
       setIsSaving(false);
     }
@@ -610,7 +623,9 @@ export const UserProfileView: React.FC = () => {
 
             <button
               onClick={() => {
-                setSuccessMessage('Station preferences saved to local terminal cache!');
+                const msg = lang === 'kh' ? 'ចំណូលចិត្តម៉ាស៊ីនត្រូវបានរក្សាទុកក្នុងឃ្លាំងសម្ងាត់!' : 'Station preferences saved to local terminal cache!';
+                setSuccessMessage(msg);
+                notify.success(msg, lang === 'kh' ? 'ចំណូលចិត្ត' : 'Station Preferences');
                 setTimeout(() => setSuccessMessage(null), 3000);
               }}
               className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center space-x-2"

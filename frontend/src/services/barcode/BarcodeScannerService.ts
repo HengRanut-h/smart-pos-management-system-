@@ -1,4 +1,5 @@
-import { hardwareScanner, HardwareScanner } from './HardwareScanner';
+import { apiClient } from '../../data-access/apiClient';
+import { hardwareScanner, HardwareScanner, ScannerDebugInfo } from './HardwareScanner';
 import { cameraScanner, CameraScanner } from './CameraScanner';
 import {
   BarcodeLookupResult,
@@ -13,11 +14,9 @@ class BarcodeScannerService {
   private audioCtx: AudioContext | null = null;
   private soundEnabled: boolean = true;
   private lastScan: ScanResult | null = null;
+  private lastHandledCode: string = '';
+  private lastHandledTime: number = 0;
   private initialized: boolean = false;
-
-  constructor() {
-    // Lazy-bind listeners
-  }
 
   public init(): void {
     if (this.initialized) return;
@@ -43,6 +42,14 @@ class BarcodeScannerService {
   }
 
   private handleScanEvent = (result: ScanResult) => {
+    const now = Date.now();
+    // Debounce duplicate events fired across listeners within 400ms
+    if (result.value === this.lastHandledCode && now - this.lastHandledTime < 400) {
+      return;
+    }
+    this.lastHandledCode = result.value;
+    this.lastHandledTime = now;
+
     this.lastScan = result;
     this.playBeep();
     this.triggerHaptic();
@@ -146,22 +153,8 @@ class BarcodeScannerService {
     }
 
     try {
-      const res = await fetch(`/api/v1/products/barcode/${encodeURIComponent(trimmed)}`, {
-        headers: {
-          Accept: 'application/json',
-        },
-      });
-
-      if (!res.ok) {
-        return {
-          success: false,
-          multiplier: 1,
-          effective_price: 0,
-          message: `Product not found for barcode: ${trimmed}`,
-        };
-      }
-
-      const data = await res.json();
+      const res = await apiClient.get(`/products/barcode/${encodeURIComponent(trimmed)}`);
+      const data = res.data;
       return {
         success: true,
         match_type: data.match_type,
@@ -174,12 +167,11 @@ class BarcodeScannerService {
         data: data.data,
       };
     } catch (err: any) {
-      console.error('[BarcodeScannerService] API error:', err);
       return {
         success: false,
         multiplier: 1,
         effective_price: 0,
-        message: err.message || 'Network error looking up barcode',
+        message: err.response?.data?.message || err.message || `Product not found for barcode: ${trimmed}`,
       };
     }
   }
@@ -194,22 +186,8 @@ class BarcodeScannerService {
     }
 
     try {
-      const res = await fetch(`/api/v1/products/sku/${encodeURIComponent(trimmed)}`, {
-        headers: {
-          Accept: 'application/json',
-        },
-      });
-
-      if (!res.ok) {
-        return {
-          success: false,
-          multiplier: 1,
-          effective_price: 0,
-          message: `Product not found for SKU: ${trimmed}`,
-        };
-      }
-
-      const data = await res.json();
+      const res = await apiClient.get(`/products/sku/${encodeURIComponent(trimmed)}`);
+      const data = res.data;
       return {
         success: true,
         match_type: 'sku',
@@ -223,7 +201,7 @@ class BarcodeScannerService {
         success: false,
         multiplier: 1,
         effective_price: 0,
-        message: err.message || 'Network error looking up SKU',
+        message: err.response?.data?.message || err.message || `Product not found for SKU: ${trimmed}`,
       };
     }
   }
@@ -252,6 +230,10 @@ class BarcodeScannerService {
       soundEnabled: this.soundEnabled,
       lastScan: this.lastScan,
     };
+  }
+
+  public getHardwareDebugInfo(): ScannerDebugInfo | null {
+    return hardwareScanner.getDebugInfo();
   }
 
   private notifyStatusChange(): void {

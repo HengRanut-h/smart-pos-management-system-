@@ -137,10 +137,10 @@ export const Navbar: React.FC = () => {
             </button>
           </div>
 
-          {/* Quick POS Cart Access Button */}
+          {/* Quick POS Cart Access Button (shown on desktop, mobile has bottom bar) */}
           <button
             onClick={() => setActiveTab('pos')}
-            className={`relative w-10 h-10 rounded-xl transition-all flex items-center justify-center border shadow-xs shrink-0 cursor-pointer ${
+            className={`hidden lg:flex relative w-10 h-10 rounded-xl transition-all items-center justify-center border shadow-xs shrink-0 cursor-pointer ${
               activeTab === 'pos'
                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-emerald-200'
                 : 'bg-gray-50/80 text-gray-700 border-gray-200 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700'
@@ -165,7 +165,7 @@ export const Navbar: React.FC = () => {
           {/* Beep Sound Scan Toggle Button */}
           <button
             onClick={toggleScanBeep}
-            className={`w-10 h-10 rounded-xl transition-all flex items-center justify-center border shadow-xs shrink-0 cursor-pointer ${
+            className={`hidden sm:flex w-10 h-10 rounded-xl transition-all items-center justify-center border shadow-xs shrink-0 cursor-pointer ${
               isScanBeepEnabled
                 ? 'bg-emerald-50/80 text-emerald-700 border-emerald-300 hover:bg-emerald-100/70 hover:border-emerald-400'
                 : 'bg-gray-50/80 text-gray-400 border-gray-200 hover:bg-gray-100 hover:text-gray-600'
@@ -189,7 +189,7 @@ export const Navbar: React.FC = () => {
             onClick={() => {
               window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }));
             }}
-            className="w-10 h-10 rounded-xl text-gray-700 bg-gray-50/80 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-all flex items-center justify-center border border-gray-200 shadow-xs shrink-0 cursor-pointer"
+            className="hidden md:flex w-10 h-10 rounded-xl text-gray-700 bg-gray-50/80 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-all items-center justify-center border border-gray-200 shadow-xs shrink-0 cursor-pointer"
             title={lang === 'kh' ? 'ផ្លូវកាត់ក្ដារចុច (ចុច ?)' : 'Keyboard Shortcuts (Press ?)'}
             aria-label={lang === 'kh' ? 'ផ្លូវកាត់ក្ដារចុច' : 'Keyboard Shortcuts'}
           >

@@ -69,22 +69,22 @@ export const DashboardView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-[1920px] 3xl:max-w-[2400px] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6">
       {/* Top Header & Live Station Identity */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2.5">
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
               {t.dashboard || 'Executive Command Center & Business Analytics'}
             </h1>
-            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-full border border-emerald-200">
+            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] sm:text-[11px] font-bold rounded-full border border-emerald-200 shrink-0">
               Live Station HQ-01
             </span>
           </div>
-          <p className="text-xs text-gray-500 mt-1 flex items-center space-x-2">
+          <p className="text-xs text-gray-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
             <span>Store: Phnom Penh Headquarters</span>
-            <span>•</span>
-            <span>Active Station: {currentUser?.full_name || 'Lead Admin'}</span>
+            <span className="hidden sm:inline">•</span>
+            <span className="hidden sm:inline">Active Station: {currentUser?.full_name || 'Lead Admin'}</span>
             <span>•</span>
             <span className="font-mono text-emerald-700 font-bold">1 USD = {exchangeRate.toLocaleString()} KHR</span>
           </p>
@@ -110,7 +110,7 @@ export const DashboardView: React.FC = () => {
       </div>
 
       {/* Top 4 KPI Executive Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 3xl:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Today Revenue */}
         <div className="bg-white p-5 rounded-3xl border border-gray-200/80 shadow-xs space-y-2 relative overflow-hidden">
           <div className="flex items-center justify-between">

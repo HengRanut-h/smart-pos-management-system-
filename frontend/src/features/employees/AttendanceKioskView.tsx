@@ -747,8 +747,9 @@ export const AttendanceKioskView: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
               <thead className="bg-gray-50/80 text-gray-500 font-bold border-b border-gray-200">
                 <tr>
                   <th className="py-3.5 px-4">Staff Member</th>
@@ -857,7 +858,84 @@ export const AttendanceKioskView: React.FC = () => {
               </tbody>
             </table>
           </div>
-        )}
+
+          {/* Responsive Mobile Cards for Small Screens (< 768px) */}
+          <div className="md:hidden divide-y divide-gray-100 bg-white">
+            {filteredRecords.map((rec) => {
+              const emp = rec.employee;
+              const roleName = emp?.user?.roles?.[0]?.name || 'POS Cashier';
+              const initials = `${emp?.first_name?.charAt(0) || ''}${emp?.last_name?.charAt(0) || ''}`.toUpperCase();
+              const isOnDuty = !rec.clock_out;
+
+              return (
+                <div key={rec.id} className="p-4 space-y-3 hover:bg-gray-50/60 transition">
+                  {/* Employee & Status */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                        {initials}
+                      </div>
+                      <div className="min-w-0">
+                        <span className="font-bold text-sm text-gray-900 block truncate">
+                          {emp?.first_name} {emp?.last_name}
+                        </span>
+                        <div className="flex items-center space-x-1.5 text-[11px] text-gray-500 font-mono">
+                          <span>{emp?.employee_code}</span>
+                          <span>•</span>
+                          <span className="px-1.5 py-0.2 bg-gray-100 rounded text-[10px] font-semibold text-gray-700 font-sans">
+                            {roleName}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      {isOnDuty ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          ON DUTY
+                        </span>
+                      ) : rec.status === 'LATE' ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">
+                          LATE
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">
+                          COMPLETED
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Punch Timeline Details */}
+                  <div className="grid grid-cols-3 gap-2 bg-gray-50 p-2.5 rounded-xl text-center text-xs">
+                    <div>
+                      <span className="text-gray-400 block text-[9px] uppercase font-bold">Clock In</span>
+                      <span className="font-mono font-bold text-gray-800">{formatTimeStr(rec.clock_in)}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block text-[9px] uppercase font-bold">Clock Out</span>
+                      <span className="font-mono font-bold text-gray-800">
+                        {rec.clock_out ? (
+                          formatTimeStr(rec.clock_out)
+                        ) : (
+                          <span className="text-emerald-600 font-bold flex items-center justify-center space-x-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Active</span>
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 block text-[9px] uppercase font-bold">Duration</span>
+                      <span className="font-mono font-bold text-emerald-700">{rec.formatted_duration || `${rec.total_minutes}m`}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
       </div>
 
       {/* 5. Camera Scanner Modal */}

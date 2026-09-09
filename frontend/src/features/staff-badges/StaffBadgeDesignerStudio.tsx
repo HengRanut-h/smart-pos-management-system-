@@ -44,6 +44,13 @@ export const StaffBadgeDesignerStudio: React.FC<StaffBadgeDesignerStudioProps> =
   const [zoom, setZoom] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
   const [changeSummary, setChangeSummary] = useState('');
+  const [isMobileInspectorOpen, setIsMobileInspectorOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      setZoom(0.75);
+    }
+  }, []);
 
   // Local Template Editing State
   const [name, setName] = useState(template.name);
@@ -270,10 +277,49 @@ export const StaffBadgeDesignerStudio: React.FC<StaffBadgeDesignerStudioProps> =
           <div className="text-center text-[11px] text-gray-400">
             Standard CR80 PVC (85.60 × 53.98 mm) • Dynamic employee variables automatically populate when printed
           </div>
+
+          {/* Mobile Bottom Sheet Trigger Button */}
+          <div className="lg:hidden w-full max-w-sm mt-3 px-2 z-20">
+            <button
+              type="button"
+              onClick={() => setIsMobileInspectorOpen(true)}
+              className="w-full py-3 bg-slate-900 hover:bg-black text-white font-bold rounded-2xl shadow-xl flex items-center justify-center space-x-2 active:scale-98 transition cursor-pointer"
+            >
+              <Palette className="w-4 h-4 text-emerald-400" />
+              <span>{lang === 'kh' ? 'កែប្រែទម្រង់ & ការរចនា' : 'Customize Design & Elements'}</span>
+            </button>
+          </div>
         </div>
 
-        {/* Right Side: Configuration Inspector Tabs */}
-        <aside className="w-96 bg-white border-l border-gray-200 flex flex-col shrink-0 shadow-lg z-20">
+        {/* Mobile Backdrop */}
+        {isMobileInspectorOpen && (
+          <div
+            onClick={() => setIsMobileInspectorOpen(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 lg:hidden transition-opacity"
+          />
+        )}
+
+        {/* Right Side / Mobile Bottom Drawer: Configuration Inspector Tabs */}
+        <aside
+          className={`bg-white border-l border-gray-200 flex flex-col shrink-0 shadow-2xl lg:shadow-lg transition-transform duration-300 z-50 lg:z-20 ${
+            isMobileInspectorOpen
+              ? 'fixed inset-x-0 bottom-0 top-16 rounded-t-3xl border-t lg:static lg:top-0 lg:rounded-none lg:border-t-0 w-full lg:w-96'
+              : 'hidden lg:flex lg:w-96'
+          }`}
+        >
+          {/* Mobile Drawer Header with Close Button */}
+          <div className="lg:hidden p-3 border-b border-gray-100 flex items-center justify-between bg-gray-50 rounded-t-3xl">
+            <span className="font-bold text-xs text-gray-800 flex items-center space-x-2">
+              <Palette className="w-4 h-4 text-emerald-600" />
+              <span>{lang === 'kh' ? 'កែប្រែទម្រង់ប័ណ្ណ' : 'Badge Customizer'}</span>
+            </span>
+            <button
+              onClick={() => setIsMobileInspectorOpen(false)}
+              className="p-1.5 rounded-xl hover:bg-gray-200 text-gray-500 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
           {/* Tab Navigation */}
           <div className="flex border-b border-gray-100 bg-gray-50/70 p-1.5 gap-1 shrink-0">
             {[

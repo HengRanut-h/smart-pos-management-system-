@@ -51,6 +51,7 @@ export const InvoiceDesignerStudio: React.FC<InvoiceDesignerStudioProps> = ({
   const [previewLang, setPreviewLang] = useState<'kh' | 'en'>('kh');
   const [isSaving, setIsSaving] = useState(false);
   const [showVariableHelper, setShowVariableHelper] = useState(false);
+  const [mobileStudioView, setMobileStudioView] = useState<'preview' | 'controls'>('preview');
   const [changeSummary, setChangeSummary] = useState('');
 
   // Handle Save
@@ -202,10 +203,40 @@ export const InvoiceDesignerStudio: React.FC<InvoiceDesignerStudioProps> = ({
         </div>
       </div>
 
+      {/* Mobile Screen Tab Switcher */}
+      <div className="flex lg:hidden bg-white border-b border-gray-200 p-2 gap-2 shrink-0">
+        <button
+          type="button"
+          onClick={() => setMobileStudioView('preview')}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+            mobileStudioView === 'preview'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span>Paper Preview</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileStudioView('controls')}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+            mobileStudioView === 'controls'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          <Sliders className="w-4 h-4" />
+          <span>Design Controls</span>
+        </button>
+      </div>
+
       {/* 2. SPLIT WORKSPACE: LEFT CONTROLS, RIGHT LIVE PREVIEW */}
       <div className="flex-1 flex overflow-hidden">
         {/* LEFT COLUMN: CUSTOMIZATION PANELS */}
-        <div className="w-full md:w-[440px] bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden print:hidden">
+        <div className={`w-full lg:w-[440px] bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden print:hidden ${
+          mobileStudioView === 'preview' ? 'hidden lg:flex' : 'flex'
+        }`}>
           {/* Sub Navigation Tabs */}
           <div className="flex border-b border-gray-100 bg-gray-50/70 p-1.5 gap-1 text-xs font-bold">
             <button
@@ -760,7 +791,22 @@ export const InvoiceDesignerStudio: React.FC<InvoiceDesignerStudioProps> = ({
         </div>
 
         {/* RIGHT COLUMN: INTERACTIVE DOCUMENT CANVAS */}
-        <div className="flex-1 bg-gray-200/80 overflow-auto flex flex-col items-center justify-start p-6 relative">
+        <div className={`flex-1 bg-gray-200/80 overflow-auto flex flex-col items-center justify-start p-3 sm:p-6 relative ${
+          mobileStudioView === 'controls' ? 'hidden lg:flex' : 'flex'
+        }`}>
+          {/* Mobile floating button to open controls */}
+          {mobileStudioView === 'preview' && (
+            <div className="lg:hidden fixed bottom-16 left-4 right-4 z-30">
+              <button
+                type="button"
+                onClick={() => setMobileStudioView('controls')}
+                className="w-full py-3 bg-slate-900/95 hover:bg-black text-white font-bold rounded-2xl shadow-xl flex items-center justify-center space-x-2 active:scale-98 transition cursor-pointer"
+              >
+                <Sliders className="w-4 h-4 text-emerald-400" />
+                <span>Customize Layout, Fonts & Policies</span>
+              </button>
+            </div>
+          )}
           <DocumentPaperPreview
             layout={layout}
             styles={styles}

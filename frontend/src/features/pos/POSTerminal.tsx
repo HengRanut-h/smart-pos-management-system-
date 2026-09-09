@@ -1106,7 +1106,7 @@ export const POSTerminal: React.FC = () => {
                 <span className="text-xs">{lang === 'kh' ? 'រកមិនឃើញទំនិញដែលត្រូវគ្នាទេ' : 'No matching products found'}</span>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4k:grid-cols-8 gap-2.5 sm:gap-3">
                 {filteredProducts.map((p) => {
                   const hasImage = Boolean(p.image_url);
                   return (
@@ -1176,12 +1176,55 @@ export const POSTerminal: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Mobile Sticky Floating Cart Bar */}
+          {cart.length > 0 && mobileTab === 'catalog' && (
+            <div className="lg:hidden fixed bottom-16 left-3 right-3 z-30 animate-in slide-in-from-bottom-3 duration-200">
+              <button
+                type="button"
+                onClick={() => setMobileTab('cart')}
+                className="w-full bg-slate-900/95 hover:bg-slate-900 backdrop-blur-md text-white p-3 rounded-2xl shadow-xl flex items-center justify-between border border-slate-700/80 transition active:scale-98 cursor-pointer"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    {cart.reduce((s, i) => s + i.quantity, 0)}
+                  </div>
+                  <div className="text-left">
+                    <div className="text-[10px] uppercase font-bold text-slate-400">
+                      {lang === 'kh' ? 'កន្ត្រកទំនិញ' : 'Current Cart'}
+                    </div>
+                    <div className="text-sm font-black text-white">
+                      ${finalPayableTotal.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-xs">
+                  <span>{lang === 'kh' ? 'មើលកន្ត្រក & គិតលុយ' : 'View Cart & Pay'}</span>
+                  <span>→</span>
+                </div>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right: Cart & Checkout Panel */}
         <div className={`w-full lg:w-96 flex flex-col bg-white border-l border-gray-200 ${
           mobileTab === 'catalog' ? 'hidden lg:flex' : 'flex'
         }`}>
+          {/* Mobile Back-to-Catalog Header */}
+          <div className="lg:hidden p-2.5 bg-gray-100 border-b border-gray-200 flex items-center justify-between shrink-0">
+            <button
+              type="button"
+              onClick={() => setMobileTab('catalog')}
+              className="flex items-center space-x-1.5 text-xs font-bold text-gray-700 hover:text-gray-900 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-xs cursor-pointer"
+            >
+              <span>←</span>
+              <span>{lang === 'kh' ? 'ត្រឡប់ទៅកាតាឡុកវិញ' : 'Back to Products'}</span>
+            </button>
+            <span className="text-xs font-bold text-emerald-700 font-mono">
+              {cart.reduce((s, i) => s + i.quantity, 0)} items • ${finalPayableTotal.toFixed(2)}
+            </span>
+          </div>
           {/* Customer Loyalty Banner */}
           <div className="p-3 border-b border-gray-100 bg-purple-50/40">
             {selectedCustomer ? (

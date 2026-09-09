@@ -4,6 +4,7 @@ import { AppProvider, useApp } from './application/context/AppContext';
 import { GlobalToastContainer } from './presentation/components/GlobalToastContainer';
 import { Navbar } from './presentation/components/Navbar';
 import { SidebarNav } from './presentation/components/SidebarNav';
+import { MobileBottomNav } from './presentation/components/MobileBottomNav';
 import { POSTerminal } from './features/pos/POSTerminal';
 import { ProductManagementHub } from './features/products/ProductManagementHub';
 import { DashboardView } from './features/dashboard/DashboardView';
@@ -37,7 +38,7 @@ const MainContent: React.FC = () => {
 
   return (
     <main
-      className={`min-h-[calc(100vh-64px)] pb-12 transition-all duration-300 ${
+      className={`min-h-[calc(100vh-64px)] pb-20 lg:pb-12 transition-all duration-300 ${
         isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'
       }`}
     >
@@ -77,10 +78,11 @@ const AppShellContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col relative">
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col relative overflow-x-clip">
       <SidebarNav />
       <Navbar />
       <MainContent />
+      <MobileBottomNav />
     </div>
   );
 };

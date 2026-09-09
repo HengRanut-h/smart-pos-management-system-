@@ -21,8 +21,10 @@ import {
   X,
   RotateCcw,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
+  Stamp,
 } from 'lucide-react';
+import { BACKGROUND_TONE_PRESETS, WATERMARK_PRESETS } from '../invoiceCustomization';
 
 interface InvoiceDesignerStudioProps {
   template: InvoiceTemplate;
@@ -509,6 +511,130 @@ export const InvoiceDesignerStudio: React.FC<InvoiceDesignerStudioProps> = ({
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Paper Background Tone */}
+                <div className="space-y-2 p-4 bg-gray-50 rounded-2xl border border-gray-200/70">
+                  <span className="font-bold text-gray-900 block text-xs uppercase tracking-wider">
+                    Paper Background Tone
+                  </span>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    {BACKGROUND_TONE_PRESETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => setStyles(s => ({ ...s, background_color: preset.bg, background_tone: preset.id }))}
+                        className={`p-2 rounded-xl border flex items-center space-x-2 text-left transition ${
+                          styles.background_color === preset.bg
+                            ? 'border-emerald-500 bg-white ring-1 ring-emerald-500 shadow-2xs'
+                            : 'border-gray-200 bg-white hover:bg-gray-50'
+                        }`}
+                      >
+                        <span
+                          className="w-4 h-4 rounded-full border border-gray-300 shrink-0"
+                          style={{ backgroundColor: preset.bg }}
+                        />
+                        <span className="font-bold text-xs truncate">{preset.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2 pt-1">
+                    <label className="text-[11px] font-semibold text-gray-500">Custom Color:</label>
+                    <input
+                      type="color"
+                      value={styles.background_color || '#ffffff'}
+                      onChange={(e) => setStyles(s => ({ ...s, background_color: e.target.value, background_tone: 'custom' }))}
+                      className="w-6 h-6 rounded-md border border-gray-300 cursor-pointer p-0.5"
+                    />
+                    <input
+                      type="text"
+                      value={styles.background_color || '#ffffff'}
+                      onChange={(e) => setStyles(s => ({ ...s, background_color: e.target.value, background_tone: 'custom' }))}
+                      className="w-20 px-2 py-0.5 bg-white border border-gray-200 rounded-md font-mono text-[11px]"
+                    />
+                  </div>
+                </div>
+
+                {/* Watermark Overlay */}
+                <div className="space-y-3 p-4 bg-gray-50 rounded-2xl border border-gray-200/70">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-gray-900 block text-xs uppercase tracking-wider">
+                      Document Watermark
+                    </span>
+                    <label className="text-[11px] font-semibold flex items-center space-x-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(styles.watermark_text)}
+                        onChange={(e) =>
+                          setStyles(s => ({
+                            ...s,
+                            watermark_text: e.target.checked ? 'ច្បាប់ដើម • ORIGINAL' : '',
+                          }))
+                        }
+                        className="w-4 h-4 text-emerald-600 rounded"
+                      />
+                      <span>Enable</span>
+                    </label>
+                  </div>
+
+                  {Boolean(styles.watermark_text) && (
+                    <div className="space-y-2 pt-1">
+                      <div>
+                        <label className="text-[11px] font-semibold text-gray-500 block mb-1">Watermark Text</label>
+                        <input
+                          type="text"
+                          value={styles.watermark_text || ''}
+                          onChange={(e) => setStyles(s => ({ ...s, watermark_text: e.target.value }))}
+                          placeholder="e.g. ច្បាប់ដើម • ORIGINAL"
+                          className="w-full p-2 bg-white border border-gray-200 rounded-xl font-bold text-xs"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <label className="text-[11px] font-semibold text-gray-500">Watermark Color:</label>
+                        <input
+                          type="color"
+                          value={styles.watermark_color || '#64748b'}
+                          onChange={(e) => setStyles(s => ({ ...s, watermark_color: e.target.value }))}
+                          className="w-6 h-6 rounded-md border border-gray-300 cursor-pointer p-0.5"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Official Stamp Toggle */}
+                <div className="space-y-2 p-4 bg-gray-50 rounded-2xl border border-gray-200/70">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Stamp className="w-4 h-4 text-rose-600" />
+                      <span className="font-bold text-gray-900 text-xs uppercase tracking-wider">
+                        Official Cambodia GDT Seal
+                      </span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(styles.show_official_stamp)}
+                      onChange={(e) => setStyles(s => ({ ...s, show_official_stamp: e.target.checked }))}
+                      className="w-4 h-4 text-emerald-600 rounded"
+                    />
+                  </div>
+
+                  {Boolean(styles.show_official_stamp) && (
+                    <div className="pt-2">
+                      <label className="text-[11px] font-semibold text-gray-500 block mb-1">Stamp Type</label>
+                      <select
+                        value={styles.stamp_type || 'PAID'}
+                        onChange={(e) => setStyles(s => ({ ...s, stamp_type: e.target.value }))}
+                        className="w-full p-2 bg-white border border-gray-200 rounded-xl font-semibold text-xs"
+                      >
+                        <option value="PAID">PAID (បានទូទាត់រួច)</option>
+                        <option value="VERIFIED">VERIFIED (បានផ្ទៀងផ្ទាត់)</option>
+                        <option value="APPROVED">APPROVED (បានអនុម័ត)</option>
+                        <option value="OFFICIAL">OFFICIAL (ផ្លូវការ)</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-3 p-4 bg-gray-50 rounded-2xl border border-gray-200/70">

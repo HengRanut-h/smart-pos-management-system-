@@ -17,7 +17,15 @@ import {
   X,
   Calendar,
   SlidersHorizontal,
+  Palette,
+  ChevronRight,
 } from 'lucide-react';
+import {
+  InvoiceCustomizationState,
+  loadInvoiceCustomization,
+  saveInvoiceCustomization,
+} from './invoiceCustomization';
+import { InvoiceBackgroundCustomizerModal } from './InvoiceBackgroundCustomizerModal';
 
 export const InvoiceListView: React.FC = () => {
   const { t, lang, notify, setActiveTab } = useApp();
@@ -33,6 +41,12 @@ export const InvoiceListView: React.FC = () => {
   // Generate From Sale Modal
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Background & Visual Customizer State
+  const [customizationSettings, setCustomizationSettings] = useState<InvoiceCustomizationState>(() =>
+    loadInvoiceCustomization()
+  );
+  const [isBackgroundCustomizerOpen, setIsBackgroundCustomizerOpen] = useState(false);
 
   const exchangeRate = 4100;
 
@@ -124,6 +138,14 @@ export const InvoiceListView: React.FC = () => {
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
+            onClick={() => setIsBackgroundCustomizerOpen(true)}
+            className="px-3.5 py-2.5 bg-white border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition shadow-2xs"
+            title="Customize paper background, watermark, seal and colors for all invoices"
+          >
+            <Palette className="w-4 h-4 text-emerald-600" />
+            <span>Background & Styling</span>
+          </button>
+          <button
             onClick={() => setActiveTab('invoice-designer')}
             className="px-3.5 py-2.5 bg-white border border-gray-200 hover:border-emerald-400 hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition shadow-2xs"
             title="Design and customize invoice and receipt templates"
@@ -139,6 +161,54 @@ export const InvoiceListView: React.FC = () => {
             <span>Generate Invoice from Sale</span>
           </button>
         </div>
+      </div>
+
+      {/* Active Background & Visual Styling Info Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-white border border-gray-200 rounded-2xl text-xs text-gray-600 shadow-2xs">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="flex items-center space-x-1.5">
+            <span
+              className="w-3.5 h-3.5 rounded-full border border-gray-300 shadow-2xs shrink-0"
+              style={{ backgroundColor: customizationSettings.backgroundColor }}
+            />
+            <span className="font-semibold text-gray-800">
+              {lang === 'kh' ? 'ផ្ទៃក្រដាស:' : 'Background:'}
+            </span>
+            <span className="capitalize text-gray-700 font-medium">
+              {customizationSettings.backgroundTone || 'Custom'} ({customizationSettings.backgroundColor})
+            </span>
+          </div>
+
+          <span className="text-gray-300 hidden sm:inline">•</span>
+
+          <div className="flex items-center space-x-1">
+            <span className="font-semibold text-gray-800">
+              {lang === 'kh' ? 'ឡូហ្គោទឹក:' : 'Watermark:'}
+            </span>
+            <span className={customizationSettings.showWatermark ? 'text-emerald-700 font-bold' : 'text-gray-400'}>
+              {customizationSettings.showWatermark ? customizationSettings.watermarkText : (lang === 'kh' ? 'គ្មាន' : 'Disabled')}
+            </span>
+          </div>
+
+          <span className="text-gray-300 hidden sm:inline">•</span>
+
+          <div className="flex items-center space-x-1">
+            <span className="font-semibold text-gray-800">
+              {lang === 'kh' ? 'ត្រាក្រហម GDT:' : 'Official Seal:'}
+            </span>
+            <span className={customizationSettings.showOfficialStamp ? 'text-rose-600 font-bold' : 'text-gray-400'}>
+              {customizationSettings.showOfficialStamp ? `Active (${customizationSettings.stampType})` : (lang === 'kh' ? 'បិទ' : 'Disabled')}
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setIsBackgroundCustomizerOpen(true)}
+          className="text-emerald-600 hover:text-emerald-700 font-bold text-xs flex items-center space-x-1 hover:underline ml-auto"
+        >
+          <span>{lang === 'kh' ? 'ផ្លាស់ប្តូរផ្ទៃខាងក្រោយ' : 'Customize Background & Seal'}</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {/* KPI Cards */}
@@ -406,9 +476,24 @@ export const InvoiceListView: React.FC = () => {
         <TaxInvoiceModal
           invoice={selectedInvoice}
           exchangeRate={exchangeRate}
-          onClose={() => setSelectedInvoice(null)}
+          onClose={() => {
+            setSelectedInvoice(null);
+            // Refresh customization settings in case user changed them in modal
+            setCustomizationSettings(loadInvoiceCustomization());
+          }}
         />
       )}
+
+      {/* Invoice Background & Visual Customizer Modal */}
+      <InvoiceBackgroundCustomizerModal
+        isOpen={isBackgroundCustomizerOpen}
+        onClose={() => setIsBackgroundCustomizerOpen(false)}
+        settings={customizationSettings}
+        onChange={(updated) => {
+          setCustomizationSettings(updated);
+          saveInvoiceCustomization(updated);
+        }}
+      />
     </div>
   );
 };

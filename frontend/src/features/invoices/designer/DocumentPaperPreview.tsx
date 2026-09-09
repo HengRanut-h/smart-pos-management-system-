@@ -3,6 +3,7 @@ import { InvoiceLayoutConfig, InvoiceStylesConfig, PaperSize } from './types';
 import { SAMPLE_INVOICE_DATA } from './sampleInvoiceData';
 import QRCode from 'qrcode';
 import { SmartPosLogo } from '../../../presentation/components/SmartPosLogo';
+import { OfficialTaxStamp } from '../../../presentation/components/OfficialTaxStamp';
 
 interface DocumentPaperPreviewProps {
   layout: InvoiceLayoutConfig;
@@ -278,15 +279,32 @@ export const DocumentPaperPreview: React.FC<DocumentPaperPreviewProps> = ({
     >
       <div
         id="printable-invoice-paper"
-        className="bg-white text-gray-900 border border-gray-300 shadow-2xl relative select-text flex flex-col justify-between"
+        className="text-gray-900 border border-gray-300 shadow-2xl relative select-text flex flex-col justify-between transition-colors"
         style={{
           width: dims.width,
           minHeight: dims.minHeight,
           fontFamily: styles.font_family || 'Battambang, sans-serif',
+          backgroundColor: styles.background_color || '#ffffff',
           padding: `${styles.margin_mm * 2.8}px`,
         }}
       >
-        <div className="space-y-6">
+        {/* Dynamic Watermark Overlay */}
+        {styles.watermark_text && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-10 overflow-hidden">
+            <div
+              className="font-black text-6xl md:text-8xl tracking-widest text-center whitespace-nowrap"
+              style={{
+                transform: 'rotate(-30deg)',
+                color: styles.watermark_color || '#64748b',
+                opacity: styles.watermark_opacity || 0.08,
+              }}
+            >
+              {styles.watermark_text}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-6 relative z-20">
           {/* National Kingdom Header (GDT Cambodia Requirement) */}
           {layout.show_national_header && (
             <div className="text-center space-y-1 pb-3 border-b border-gray-200">
@@ -513,7 +531,7 @@ export const DocumentPaperPreview: React.FC<DocumentPaperPreviewProps> = ({
 
           {/* Signatures Block */}
           {layout.show_signatures && layout.signatures && (
-            <div className="grid grid-cols-2 gap-8 pt-8 pb-4 text-center text-xs">
+            <div className="grid grid-cols-2 gap-8 pt-8 pb-4 text-center text-xs relative">
               {layout.signatures.map((sig, idx) => (
                 <div key={idx} className="space-y-12">
                   <div>
@@ -525,6 +543,15 @@ export const DocumentPaperPreview: React.FC<DocumentPaperPreviewProps> = ({
                   </div>
                 </div>
               ))}
+
+              {styles.show_official_stamp && (
+                <div className="absolute right-0 bottom-0 pointer-events-none">
+                  <OfficialTaxStamp
+                    type={styles.stamp_type || 'PAID'}
+                    size="md"
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>

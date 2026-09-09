@@ -92,6 +92,13 @@ export interface InvoiceStylesConfig {
   header_bg: string;
   margin_mm: number;
   paper_shadow?: boolean;
+  background_color?: string;
+  background_tone?: string;
+  watermark_text?: string;
+  watermark_opacity?: number;
+  watermark_color?: string;
+  show_official_stamp?: boolean;
+  stamp_type?: 'PAID' | 'VERIFIED' | 'APPROVED' | 'OFFICIAL' | string;
 }
 
 export interface InvoiceTemplate {

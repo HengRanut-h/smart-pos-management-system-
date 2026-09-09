@@ -20,6 +20,7 @@ import { CustomerManagementView } from './features/customers/CustomerManagementV
 import { EmployeeManagementView } from './features/employees/EmployeeManagementView';
 import { AttendanceKioskView } from './features/employees/AttendanceKioskView';
 import { StoreQrManagementView } from './features/employees/StoreQrManagementView';
+import { StaffBadgeManagementHub } from './features/staff-badges/StaffBadgeManagementHub';
 import { StaffPayrollView } from './features/employees/StaffPayrollView';
 import { NotificationsView } from './features/notifications/NotificationsView';
 import { SecurityAuditView } from './features/security/SecurityAuditView';
@@ -57,6 +58,7 @@ const MainContent: React.FC = () => {
       {activeTab === 'employees' && <EmployeeManagementView />}
       {activeTab === 'attendances' && <AttendanceKioskView />}
       {activeTab === 'store-qr-codes' && <StoreQrManagementView />}
+      {activeTab === 'staff-badges' && <StaffBadgeManagementHub />}
       {activeTab === 'payroll' && <StaffPayrollView />}
       {activeTab === 'notifications' && <NotificationsView />}
       {activeTab === 'security' && <SecurityAuditView />}

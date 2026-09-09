@@ -493,6 +493,14 @@ export const SidebarNav: React.FC = () => {
             description: 'Generate secure store QR tokens',
           },
           {
+            id: 'staff-badges',
+            name: 'Staff ID Badges & Cards',
+            nameKh: 'ប័ណ្ណសម្គាល់ខ្លួន & កាតស្កេន',
+            icon: <CreditCard className="w-4 h-4" />,
+            tab: 'staff-badges',
+            description: 'CR80 PVC badges, designer, QR tokens & NFC',
+          },
+          {
             id: 'payroll',
             name: 'Payroll & Salary Calculator',
             nameKh: 'គណនាប្រាក់បៀវត្សរ៍',

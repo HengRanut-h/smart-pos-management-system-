@@ -1164,6 +1164,80 @@ export const toggleBusinessRule = async (id: number): Promise<any> => {
   return res.data;
 };
 
+// ==========================================
+// STAFF ID BADGES & SCANNABLE CARDS API
+// ==========================================
+
+export const getStaffBadgeTemplates = async (): Promise<any[]> => {
+  const res = await apiClient.get('/badges/templates');
+  return res.data?.data || [];
+};
+
+export const saveStaffBadgeTemplate = async (payload: any, id?: number): Promise<any> => {
+  if (id) {
+    const res = await apiClient.put(`/badges/templates/${id}`, payload);
+    return res.data;
+  }
+  const res = await apiClient.post('/badges/templates', payload);
+  return res.data;
+};
+
+export const deleteStaffBadgeTemplate = async (id: number): Promise<any> => {
+  const res = await apiClient.delete(`/badges/templates/${id}`);
+  return res.data;
+};
+
+export const getStaffBadgeTemplateVersions = async (id: number): Promise<any[]> => {
+  const res = await apiClient.get(`/badges/templates/${id}/versions`);
+  return res.data?.data || [];
+};
+
+export const restoreStaffBadgeTemplateVersion = async (templateId: number, versionId: number): Promise<any> => {
+  const res = await apiClient.post(`/badges/templates/${templateId}/restore/${versionId}`);
+  return res.data;
+};
+
+export const getStaffBadgeCards = async (params?: any): Promise<any[]> => {
+  const res = await apiClient.get('/badges/cards', { params });
+  return res.data?.data || [];
+};
+
+export const issueStaffBadge = async (payload: any): Promise<any> => {
+  const res = await apiClient.post('/badges/cards/generate', payload);
+  return res.data;
+};
+
+export const updateStaffBadgeStatus = async (id: number, status: string, reason?: string): Promise<any> => {
+  const res = await apiClient.post(`/badges/cards/${id}/status`, { status, reason });
+  return res.data;
+};
+
+export const replaceStaffBadge = async (id: number, reason: string, nfcUid?: string): Promise<any> => {
+  const res = await apiClient.post(`/badges/cards/${id}/replace`, { reason, nfc_uid: nfcUid });
+  return res.data;
+};
+
+export const bindStaffBadgeNfc = async (id: number, nfcUid: string): Promise<any> => {
+  const res = await apiClient.post(`/badges/cards/${id}/nfc`, { nfc_uid: nfcUid });
+  return res.data;
+};
+
+export const verifyStaffBadgeScan = async (payload: {
+  token: string;
+  scan_type?: string;
+  required_role?: string;
+  device_name?: string;
+}): Promise<any> => {
+  const res = await apiClient.post('/badges/verify-scan', payload);
+  return res.data;
+};
+
+export const getStaffBadgeMetrics = async (): Promise<any> => {
+  const res = await apiClient.get('/badges/metrics');
+  return res.data;
+};
+
+
 
 
 

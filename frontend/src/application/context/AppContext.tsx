@@ -32,6 +32,7 @@ export type NavTab =
   | 'employees'
   | 'attendances'
   | 'store-qr-codes'
+  | 'staff-badges'
   | 'payroll'
   | 'notifications'
   | 'security'

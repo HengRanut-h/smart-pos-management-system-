@@ -42,7 +42,7 @@ import {
 } from 'lucide-react';
 
 export const UserLoginAuditView: React.FC = () => {
-  const { lang, currentUser, notify } = useApp();
+  const { lang, currentUser, notify, confirmAction } = useApp();
 
   // Data states
   const [audits, setAudits] = useState<UserLoginAuditItem[]>([]);
@@ -136,13 +136,15 @@ export const UserLoginAuditView: React.FC = () => {
   };
 
   const handleForceLogout = async (audit: UserLoginAuditItem) => {
-    if (!window.confirm(
-      lang === 'kh'
+    const ok = await confirmAction({
+      title: lang === 'kh' ? 'បញ្ចប់វគ្គការងារ?' : 'Terminate Active Session?',
+      message: lang === 'kh'
         ? `តើអ្នកពិតជាចង់បញ្ចប់វគ្គការងាររបស់អ្នកប្រើប្រាស់ "${audit.username}" មែនទេ?`
-        : `Are you sure you want to forcefully terminate the active session for user "${audit.username}"?`
-    )) {
-      return;
-    }
+        : `Are you sure you want to forcefully terminate the active session for user "${audit.username}"?`,
+      variant: 'danger',
+      confirmText: lang === 'kh' ? 'បញ្ចប់វគ្គ' : 'Terminate Session',
+    });
+    if (!ok) return;
 
     setTerminatingId(audit.id);
     try {

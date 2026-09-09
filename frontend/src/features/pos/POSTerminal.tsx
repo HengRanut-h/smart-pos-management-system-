@@ -73,6 +73,8 @@ export const POSTerminal: React.FC = () => {
     setLastCompletedSale,
     isScanBeepEnabled,
     notify,
+    confirmDelete,
+    confirmAction,
   } = useApp();
 
   const exchangeRate = 4100; // 1 USD = 4,100 KHR standard retail rate
@@ -410,11 +412,18 @@ export const POSTerminal: React.FC = () => {
     setTimeout(() => setScannedNotification(null), 2500);
   };
 
-  const handleResumeHeldOrder = (held: typeof heldOrders[0]) => {
+  const handleResumeHeldOrder = async (held: typeof heldOrders[0]) => {
     if (cart.length > 0) {
-      if (!confirm('Current active cart has items. Replace with this held order?')) {
-        return;
-      }
+      const confirmed = await confirmAction({
+        title: lang === 'kh' ? 'ជំនួសកន្ត្រកបច្ចុប្បន្ន?' : 'Replace Active Cart?',
+        message: lang === 'kh'
+          ? 'កន្ត្រកបច្ចុប្បន្នមានទំនិញរួចហើយ។ តើអ្នកចង់ជំនួសដោយការបញ្ជាទិញដែលបានផ្អាកនេះទេ?'
+          : 'Current active cart has items. Replace active cart with this held order?',
+        confirmText: lang === 'kh' ? 'ជំនួសកន្ត្រក' : 'Replace Cart',
+        cancelText: lang === 'kh' ? 'បោះបង់' : 'Cancel',
+        variant: 'warning',
+      });
+      if (!confirmed) return;
     }
     setCartItems(held.items);
     setSelectedCustomer(held.customer);
@@ -426,10 +435,41 @@ export const POSTerminal: React.FC = () => {
     setTimeout(() => setScannedNotification(null), 2500);
   };
 
-  const handleDiscardHeldOrder = (heldId: string) => {
-    if (confirm('Are you sure you want to discard this parked order?')) {
+  const handleDiscardHeldOrder = async (heldId: string) => {
+    const confirmed = await confirmDelete({
+      title: lang === 'kh' ? 'លុបការបញ្ជាទិញដែលបានផ្អាក?' : 'Discard Parked Order?',
+      message: lang === 'kh'
+        ? 'តើអ្នកប្រាកដថាចង់បោះបង់ ឬលុបការបញ្ជាទិញដែលបានផ្អាកនេះចោលទេ?'
+        : 'Are you sure you want to discard this parked order? This action cannot be undone.',
+      confirmText: lang === 'kh' ? 'លុបចោល' : 'Discard Order',
+      cancelText: lang === 'kh' ? 'រក្សាទុក' : 'Keep Order',
+    });
+    if (confirmed) {
       const remaining = heldOrders.filter((h) => h.id !== heldId);
       saveHeldOrders(remaining);
+      notify.info(
+        lang === 'kh' ? 'បានលុបការបញ្ជាទិញផ្អាក' : 'Parked order discarded',
+        lang === 'kh' ? `ការបញ្ជាទិញ #${heldId} ត្រូវបានលុបចោល` : `Held order #${heldId} was removed.`
+      );
+    }
+  };
+
+  const handleClearCart = async () => {
+    if (cart.length === 0) return;
+    const confirmed = await confirmDelete({
+      title: lang === 'kh' ? 'សម្អាតទំនិញទាំងអស់ក្នុងកន្ត្រក?' : 'Clear Entire Cart?',
+      message: lang === 'kh'
+        ? `តើអ្នកប្រាកដថាចង់សម្អាតទំនិញទាំង ${cart.length} មុខចេញពីកន្ត្រកទេ?`
+        : `Are you sure you want to remove all ${cart.length} item(s) from the cart?`,
+      confirmText: lang === 'kh' ? 'សម្អាតទាំងអស់' : 'Clear All',
+      cancelText: lang === 'kh' ? 'រក្សាទុក' : 'Keep Items',
+    });
+    if (confirmed) {
+      clearCart();
+      notify.info(
+        lang === 'kh' ? 'បានសម្អាតកន្ត្រក' : 'Cart Cleared',
+        lang === 'kh' ? 'ទំនិញទាំងអស់ត្រូវបានដកចេញពីកន្ត្រក' : 'All items have been removed from the cart.'
+      );
     }
   };
 
@@ -1230,10 +1270,10 @@ export const POSTerminal: React.FC = () => {
                     <span>{lang === 'kh' ? 'ផ្អាក' : 'Hold'}</span>
                   </button>
                   <button
-                    onClick={clearCart}
+                    onClick={handleClearCart}
                     className="text-xs font-semibold text-rose-500 hover:text-rose-600 transition px-1 py-0.5"
                   >
-                    Clear All
+                    {lang === 'kh' ? 'សម្អាតទាំងអស់' : 'Clear All'}
                   </button>
                 </>
               )}

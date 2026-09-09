@@ -97,7 +97,7 @@ import { useNotification } from '../../application/context/NotificationContext';
 import { DEFAULT_NOTIFICATION_POLICY, NotificationPolicyConfig } from '../../foundation/types/notification';
 
 export const SettingsView: React.FC = () => {
-  const { lang, setLang, settingsSubTab, setSettingsSubTab, updateStoreSettingsState, setActiveTab } = useApp();
+  const { lang, setLang, settingsSubTab, setSettingsSubTab, updateStoreSettingsState, setActiveTab, confirmDelete, confirmAction } = useApp();
 
   // Selected branch: null = Global System Defaults, number = specific branch ID
   const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
@@ -365,7 +365,12 @@ export const SettingsView: React.FC = () => {
   };
 
   const handleDeleteBranch = async (id: number) => {
-    if (!window.confirm('Are you sure you want to deactivate this branch?')) return;
+    const ok = await confirmDelete({
+      title: lang === 'kh' ? 'ផ្អាកដំណើរការសាខា?' : 'Deactivate Branch?',
+      message: lang === 'kh' ? 'តើអ្នកពិតជាចង់ផ្អាកដំណើរការសាខានេះមែនទេ?' : 'Are you sure you want to deactivate this branch?',
+      confirmText: lang === 'kh' ? 'ផ្អាកដំណើរការ' : 'Deactivate',
+    });
+    if (!ok) return;
     try {
       await deleteBranch(id);
       setBranches((prev) => prev.filter((b) => b.id !== id));
@@ -405,7 +410,11 @@ export const SettingsView: React.FC = () => {
   };
 
   const handleDeleteTerminal = async (id: number) => {
-    if (!window.confirm('Delete this POS terminal?')) return;
+    const ok = await confirmDelete({
+      title: lang === 'kh' ? 'លុបស្ថានីយ POS?' : 'Delete POS Terminal?',
+      message: lang === 'kh' ? 'តើអ្នកពិតជាចង់លុបស្ថានីយ POS នេះមែនទេ?' : 'Are you sure you want to delete this POS terminal?',
+    });
+    if (!ok) return;
     try {
       await deleteBranchTerminal(id);
       setTerminals((prev) => prev.filter((t) => t.id !== id));
@@ -444,7 +453,11 @@ export const SettingsView: React.FC = () => {
   };
 
   const handleDeletePrinter = async (id: number) => {
-    if (!window.confirm('Delete this printer?')) return;
+    const ok = await confirmDelete({
+      title: lang === 'kh' ? 'លុបម៉ាស៊ីនបោះពុម្ព?' : 'Delete Printer?',
+      message: lang === 'kh' ? 'តើអ្នកពិតជាចង់លុបម៉ាស៊ីនបោះពុម្ពនេះមែនទេ?' : 'Are you sure you want to delete this printer?',
+    });
+    if (!ok) return;
     try {
       await deleteBranchPrinter(id);
       setPrinters((prev) => prev.filter((p) => p.id !== id));
@@ -485,7 +498,11 @@ export const SettingsView: React.FC = () => {
   };
 
   const handleRemoveBranchUser = async (id: number) => {
-    if (!window.confirm('Remove staff access from this branch?')) return;
+    const ok = await confirmDelete({
+      title: lang === 'kh' ? 'ដកសិទ្ធិបុគ្គលិក?' : 'Remove Staff Access?',
+      message: lang === 'kh' ? 'តើអ្នកពិតជាចង់ដកសិទ្ធិបុគ្គលិកនេះពីសាខាមែនទេ?' : 'Are you sure you want to remove staff access from this branch?',
+    });
+    if (!ok) return;
     try {
       await removeBranchStaffUser(id);
       setBranchUsers((prev) => prev.filter((u) => u.id !== id));
@@ -515,7 +532,11 @@ export const SettingsView: React.FC = () => {
   };
 
   const handleDeleteHoliday = async (id: number) => {
-    if (!window.confirm('Delete this holiday record?')) return;
+    const ok = await confirmDelete({
+      title: lang === 'kh' ? 'លុបថ្ងៃឈប់សម្រាក?' : 'Delete Holiday?',
+      message: lang === 'kh' ? 'តើអ្នកពិតជាចង់លុបកំណត់ត្រាថ្ងៃឈប់សម្រាកនេះមែនទេ?' : 'Are you sure you want to delete this holiday record?',
+    });
+    if (!ok) return;
     try {
       await deleteHoliday(id);
       setHolidays((prev) => prev.filter((h) => h.id !== id));
@@ -1940,7 +1961,13 @@ export const SettingsView: React.FC = () => {
                         <button
                           type="button"
                           onClick={async () => {
-                            if (window.confirm(lang === 'kh' ? 'តើអ្នកចង់កំណត់គោលការណ៍ជូនដំណឹងទៅជាទម្រង់លំនាំដើមវិញ?' : 'Reset notification policy to enterprise defaults?')) {
+                            const ok = await confirmAction({
+                              title: lang === 'kh' ? 'កំណត់គោលការណ៍ជូនដំណឹងឡើងវិញ?' : 'Reset Notification Policy?',
+                              message: lang === 'kh' ? 'តើអ្នកចង់កំណត់គោលការណ៍ជូនដំណឹងទៅជាទម្រង់លំនាំដើមវិញ?' : 'Reset notification policy to enterprise defaults?',
+                              variant: 'warning',
+                              confirmText: lang === 'kh' ? 'កំណត់ឡើងវិញ' : 'Reset Defaults',
+                            });
+                            if (ok) {
                               await resetPolicyConfig();
                               setTempPolicyConfig(DEFAULT_NOTIFICATION_POLICY);
                               notify.info(lang === 'kh' ? 'គោលការណ៍ជូនដំណឹងត្រូវបានកំណត់ឡើងវិញ' : 'Notification policy reset to enterprise defaults.', 'Reset Complete');

@@ -4,6 +4,15 @@ import { getProducts, getCurrentShift, getUserProfile, getSystemSettings, logout
 import { Product, CartItem, Sale, Shift, UserProfile, SystemSettings } from '../../foundation/types';
 
 import { useNotification, NotificationMethods } from './NotificationContext';
+import { ConfirmationModal } from '../../presentation/components/ConfirmationModal';
+
+export interface ConfirmOptions {
+  title?: string;
+  message: React.ReactNode;
+  confirmText?: string;
+  cancelText?: string;
+  variant?: 'danger' | 'warning' | 'info';
+}
 
 export type NavTab =
   | 'pos'
@@ -80,6 +89,8 @@ interface AppContextType {
   isScanBeepEnabled: boolean;
   toggleScanBeep: () => void;
   notify: NotificationMethods;
+  confirmAction: (options: ConfirmOptions) => Promise<boolean>;
+  confirmDelete: (options?: Partial<ConfirmOptions> | string) => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -146,6 +157,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return next;
     });
+  };
+
+  // Confirmation Dialog State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    options: ConfirmOptions;
+    resolve?: (value: boolean) => void;
+  }>({
+    isOpen: false,
+    options: { message: '' },
+  });
+
+  const confirmAction = (options: ConfirmOptions): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setConfirmDialog({
+        isOpen: true,
+        options,
+        resolve,
+      });
+    });
+  };
+
+  const confirmDelete = (opts?: Partial<ConfirmOptions> | string): Promise<boolean> => {
+    const isString = typeof opts === 'string';
+    const message = isString
+      ? opts
+      : opts?.message || (lang === 'kh' ? 'តើអ្នកពិតជាចង់លុបទិន្នន័យនេះមែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។' : 'Are you sure you want to delete this item? This action cannot be undone.');
+    const title = !isString && opts?.title ? opts.title : (lang === 'kh' ? 'បញ្ជាក់ការលុប' : 'Confirm Delete');
+    const confirmText = !isString && opts?.confirmText ? opts.confirmText : (lang === 'kh' ? 'យល់ព្រមលុប' : 'Yes, Delete');
+    const cancelText = !isString && opts?.cancelText ? opts.cancelText : (lang === 'kh' ? 'បោះបង់' : 'Cancel');
+
+    return confirmAction({
+      title,
+      message,
+      confirmText,
+      cancelText,
+      variant: (!isString && opts?.variant) || 'danger',
+    });
+  };
+
+  const handleConfirmAccept = () => {
+    confirmDialog.resolve?.(true);
+    setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  const handleConfirmClose = () => {
+    confirmDialog.resolve?.(false);
+    setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
   };
 
   // Current User Profile State & Auth Session (Managed via HttpOnly Session Cookie)
@@ -387,9 +446,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isScanBeepEnabled,
         toggleScanBeep,
         notify,
+        confirmAction,
+        confirmDelete,
       }}
     >
       {children}
+      <ConfirmationModal
+        isOpen={confirmDialog.isOpen}
+        onClose={handleConfirmClose}
+        onConfirm={handleConfirmAccept}
+        title={confirmDialog.options.title}
+        message={confirmDialog.options.message}
+        confirmText={confirmDialog.options.confirmText}
+        cancelText={confirmDialog.options.cancelText}
+        variant={confirmDialog.options.variant}
+      />
     </AppContext.Provider>
   );
 };

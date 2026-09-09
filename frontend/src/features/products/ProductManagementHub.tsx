@@ -105,7 +105,7 @@ export type SubView =
   | 'audit_logs';
 
 export const ProductManagementHub: React.FC = () => {
-  const { lang, t, productSubTab, setProductSubTab, notify } = useApp();
+  const { lang, t, productSubTab, setProductSubTab, notify, confirmDelete } = useApp();
 
   // Navigation State
   const [activeSubView, setActiveSubView] = useState<SubView>(
@@ -303,7 +303,12 @@ export const ProductManagementHub: React.FC = () => {
   }, [products, searchQuery, selectedCategory, selectedType, stockFilter, sortBy]);
 
   const handleDeleteProduct = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    const ok = await confirmDelete({
+      title: lang === 'kh' ? 'លុបផលិតផល?' : 'Delete Product?',
+      message: lang === 'kh' ? 'តើអ្នកពិតជាចង់លុបផលិតផលនេះមែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។' : 'Are you sure you want to delete this product? This action cannot be undone.',
+      confirmText: lang === 'kh' ? 'យល់ព្រមលុប' : 'Delete Product',
+    });
+    if (!ok) return;
     try {
       await productEnterpriseApi.deleteProduct(id);
       notify.success(
@@ -318,7 +323,12 @@ export const ProductManagementHub: React.FC = () => {
 
   const handleBulkDelete = async () => {
     if (!selectedProductIds.length) return;
-    if (!confirm(`Delete ${selectedProductIds.length} selected products?`)) return;
+    const ok = await confirmDelete({
+      title: lang === 'kh' ? 'លុបផលិតផលច្រើន?' : 'Delete Multiple Products?',
+      message: lang === 'kh' ? `តើអ្នកពិតជាចង់លុប ${selectedProductIds.length} ផលិតផលដែលបានជ្រើសរើសមែនទេ?` : `Are you sure you want to delete ${selectedProductIds.length} selected products?`,
+      confirmText: lang === 'kh' ? 'យល់ព្រមលុបទាំងអស់' : 'Delete All Selected',
+    });
+    if (!ok) return;
     try {
       for (const id of selectedProductIds) {
         await productEnterpriseApi.deleteProduct(id).catch(console.error);

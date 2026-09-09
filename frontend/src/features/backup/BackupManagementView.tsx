@@ -69,7 +69,7 @@ import {
 type BackupTab = 'DASHBOARD' | 'SCHEDULE' | 'RESTORE' | 'MAINTENANCE' | 'IMPORT_EXPORT' | 'TELEGRAM';
 
 export const BackupManagementView: React.FC = () => {
-  const { lang, backupSubTab, setBackupSubTab, notify } = useApp();
+  const { lang, backupSubTab, setBackupSubTab, notify, confirmDelete, confirmAction } = useApp();
 
   // Active sub-tab linked to sidebar navigation
   const activeTab = (backupSubTab || 'DASHBOARD') as BackupTab;
@@ -208,11 +208,14 @@ export const BackupManagementView: React.FC = () => {
   };
 
   const handleDeleteSnapshot = async (record: BackupRecordItem) => {
-    if (!window.confirm(
-      lang === 'kh'
-        ? `តើអ្នកពិតជាចង់លុបច្បាប់ចម្លង ${record.backup_code} មែនទេ?`
-        : `Are you sure you want to permanently delete snapshot ${record.backup_code}?`
-    )) return;
+    const ok = await confirmDelete({
+      title: lang === 'kh' ? 'លុបច្បាប់ចម្លងបម្រុង?' : 'Delete Backup Snapshot?',
+      message: lang === 'kh'
+        ? `តើអ្នកពិតជាចង់លុបច្បាប់ចម្លង ${record.backup_code} (${record.file_name}) មែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។`
+        : `Are you sure you want to permanently delete snapshot ${record.backup_code} (${record.file_name})? This action cannot be undone.`,
+      confirmText: lang === 'kh' ? 'យល់ព្រមលុប' : 'Delete Snapshot',
+    });
+    if (!ok) return;
 
     try {
       await deleteBackupSnapshot(record.id);
@@ -297,9 +300,12 @@ export const BackupManagementView: React.FC = () => {
   };
 
   const handleDeleteSchedule = async (id: number, name: string) => {
-    if (!window.confirm(lang === 'kh' ? `តើអ្នកប្រាកដថាចង់លុបកាលវិភាគ "${name}" មែនទេ?` : `Are you sure you want to delete backup schedule "${name}"?`)) {
-      return;
-    }
+    const ok = await confirmDelete({
+      title: lang === 'kh' ? 'លុបកាលវិភាគបម្រុងទុក?' : 'Delete Backup Schedule?',
+      message: lang === 'kh' ? `តើអ្នកប្រាកដថាចង់លុបកាលវិភាគ "${name}" មែនទេ?` : `Are you sure you want to delete backup schedule "${name}"?`,
+      confirmText: lang === 'kh' ? 'យល់ព្រមលុប' : 'Delete Schedule',
+    });
+    if (!ok) return;
     setDeletingScheduleId(id);
     try {
       const res = await deleteBackupSchedule(id);
@@ -313,9 +319,13 @@ export const BackupManagementView: React.FC = () => {
   };
 
   const handlePruneExpired = async () => {
-    if (!window.confirm(lang === 'kh' ? 'តើអ្នកចង់សម្អាត និងលុបចោល backup ទាំងអស់ដែលហួសកាលកំណត់ retention មែនទេ?' : 'Do you want to prune and purge all backups that have surpassed their retention policy period?')) {
-      return;
-    }
+    const ok = await confirmAction({
+      title: lang === 'kh' ? 'សម្អាត និងលុបចោល Backup?' : 'Prune Expired Backups?',
+      message: lang === 'kh' ? 'តើអ្នកចង់សម្អាត និងលុបចោល backup ទាំងអស់ដែលហួសកាលកំណត់ retention មែនទេ?' : 'Do you want to prune and purge all backups that have surpassed their retention policy period?',
+      variant: 'warning',
+      confirmText: lang === 'kh' ? 'សម្អាតចោល' : 'Prune Now',
+    });
+    if (!ok) return;
     setIsPruning(true);
     try {
       const res = await pruneExpiredBackups();

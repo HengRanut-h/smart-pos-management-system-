@@ -33,7 +33,7 @@ interface RolePermissionManagementViewProps {
 }
 
 export const RolePermissionManagementView: React.FC<RolePermissionManagementViewProps> = ({ onBack }) => {
-  const { lang, notify } = useApp();
+  const { lang, notify, confirmDelete } = useApp();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [roles, setRoles] = useState<RoleItem[]>([]);
@@ -202,7 +202,12 @@ export const RolePermissionManagementView: React.FC<RolePermissionManagementView
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to delete role "${role.name}"?`)) return;
+    const ok = await confirmDelete({
+      title: lang === 'kh' ? 'លុបតួនាទី?' : 'Delete Role?',
+      message: lang === 'kh' ? `តើអ្នកពិតជាចង់លុបតួនាទី "${role.name}" មែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។` : `Are you sure you want to delete role "${role.name}"? This action cannot be undone.`,
+      confirmText: lang === 'kh' ? 'យល់ព្រមលុប' : 'Delete Role',
+    });
+    if (!ok) return;
 
     try {
       await deleteRole(role.id);

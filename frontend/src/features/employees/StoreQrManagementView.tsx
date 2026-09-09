@@ -35,7 +35,7 @@ interface StoreQrManagementViewProps {
 }
 
 export const StoreQrManagementView: React.FC<StoreQrManagementViewProps> = ({ onBack }) => {
-  const { lang, notify } = useApp();
+  const { lang, notify, confirmDelete, confirmAction } = useApp();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [qrCodes, setQrCodes] = useState<AttendanceQrCode[]>([]);
@@ -114,9 +114,13 @@ export const StoreQrManagementView: React.FC<StoreQrManagementViewProps> = ({ on
   };
 
   const handleRegenerate = async (id: number) => {
-    if (!window.confirm(lang === 'kh' ? 'តើអ្នកពិតជាចង់បង្កើតកូដ QR ថ្មីមែនទេ? កូដចាស់នឹងលែងដំណើរការទៀតហើយ។' : 'Regenerate secure QR token? The previous QR code will immediately become invalid for employee check-in.')) {
-      return;
-    }
+    const ok = await confirmAction({
+      title: lang === 'kh' ? 'បង្កើតកូដសម្ងាត់ QR ថ្មី?' : 'Regenerate QR Token?',
+      message: lang === 'kh' ? 'តើអ្នកពិតជាចង់បង្កើតកូដ QR ថ្មីមែនទេ? កូដចាស់នឹងលែងដំណើរការទៀតហើយ។' : 'Regenerate secure QR token? The previous QR code will immediately become invalid for employee check-in.',
+      variant: 'warning',
+      confirmText: lang === 'kh' ? 'បង្កើតថ្មី' : 'Regenerate',
+    });
+    if (!ok) return;
 
     try {
       const res = await regenerateAttendanceQrCode(id);
@@ -158,9 +162,12 @@ export const StoreQrManagementView: React.FC<StoreQrManagementViewProps> = ({ on
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm(lang === 'kh' ? 'តើអ្នកពិតជាចង់លុបកូដ QR នេះមែនទេ?' : 'Are you sure you want to delete this Store QR Code?')) {
-      return;
-    }
+    const ok = await confirmDelete({
+      title: lang === 'kh' ? 'លុបកូដ QR ហាង?' : 'Delete Store QR?',
+      message: lang === 'kh' ? 'តើអ្នកពិតជាចង់លុបកូដ QR នេះមែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។' : 'Are you sure you want to delete this Store QR Code? This action cannot be undone.',
+      confirmText: lang === 'kh' ? 'យល់ព្រមលុប' : 'Delete QR',
+    });
+    if (!ok) return;
 
     try {
       const res = await deleteAttendanceQrCode(id);

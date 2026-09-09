@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const SalesHistoryView: React.FC = () => {
-  const { t, lang, notify } = useApp();
+  const { t, lang, notify, confirmAction } = useApp();
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,16 +35,32 @@ export const SalesHistoryView: React.FC = () => {
     fetchSales();
   }, []);
 
-  const handleVoid = async (id: number) => {
-    const reason = prompt(lang === 'kh' ? 'សូមបញ្ចូលមូលហេតុនៃការលុបចោលការលក់នេះ:' : 'Please enter reason for voiding this sale:');
-    if (!reason) return;
+  const handleVoid = async (sale: Sale) => {
+    const confirmed = await confirmAction({
+      title: lang === 'kh' ? 'លុបចោលវិក្កយបត្រលក់?' : 'Void Completed Sale?',
+      message: lang === 'kh'
+        ? `តើអ្នកប្រាកដជាចង់លុបចោលវិក្កយបត្រ ${sale.sale_number} (សរុប $${Number(sale.total_amount).toFixed(2)}) ឬទេ? ចលនាសន្និធិនឹងត្រូវបានកែសម្រួលត្រឡប់វិញ។`
+        : `Are you sure you want to void sale #${sale.sale_number} ($${Number(sale.total_amount).toFixed(2)})? Inventory movements will be reverted.`,
+      confirmText: lang === 'kh' ? 'បន្តលុបចោល' : 'Proceed to Void',
+      cancelText: lang === 'kh' ? 'រក្សាទុក' : 'Keep Sale',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    const reason = prompt(
+      lang === 'kh'
+        ? 'សូមបញ្ចូលមូលហេតុនៃការលុបចោលការលក់នេះ:'
+        : 'Please enter reason for voiding this sale:'
+    );
+    if (!reason || !reason.trim()) return;
+
     try {
-      await voidSale(id, reason);
+      await voidSale(sale.id, reason.trim());
       notify.success(
         lang === 'kh'
-          ? 'ការលក់ត្រូវបានលុបចោលជោគជ័យ! ចលនាសន្និធិត្រូវបានកែតម្រូវឡើងវិញ។'
-          : 'Sale voided successfully! Compensating inventory movement created.',
-        'Sale Voided'
+          ? `វិក្កយបត្រ #${sale.sale_number} ត្រូវបានលុបចោលជោគជ័យ! ចលនាសន្និធិត្រូវបានកែតម្រូវឡើងវិញ។`
+          : `Sale #${sale.sale_number} voided successfully! Compensating inventory movement created.`,
+        lang === 'kh' ? 'បានលុបចោលវិក្កយបត្រ' : 'Sale Voided'
       );
       fetchSales();
     } catch (err: any) {
@@ -263,7 +279,7 @@ export const SalesHistoryView: React.FC = () => {
                               <span>Print Slip</span>
                             </button>
                             <button
-                              onClick={() => handleVoid(sale.id)}
+                              onClick={() => handleVoid(sale)}
                               className="flex items-center space-x-1 px-2.5 py-1.5 text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg text-xs font-bold transition"
                               title="Void Sale"
                             >

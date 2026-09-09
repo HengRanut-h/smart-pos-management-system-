@@ -1,4 +1,5 @@
 import { BrowserMultiFormatReader } from '@zxing/browser';
+import { DecodeHintType, BarcodeFormat } from '@zxing/library';
 import { ScannerCameraDevice, ScanListener, ScanResult } from './types';
 
 /**
@@ -20,7 +21,24 @@ export class CameraScanner {
 
   constructor() {
     try {
-      this.codeReader = new BrowserMultiFormatReader();
+      const hints = new Map<DecodeHintType, any>();
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.CODE_39,
+        BarcodeFormat.CODE_93,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.UPC_E,
+        BarcodeFormat.ITF,
+        BarcodeFormat.QR_CODE,
+        BarcodeFormat.DATA_MATRIX,
+      ]);
+      hints.set(DecodeHintType.TRY_HARDER, true);
+
+      this.codeReader = new BrowserMultiFormatReader(hints, {
+        delayBetweenScanAttempts: 80,
+      });
     } catch (e) {
       console.warn('[CameraScanner] BrowserMultiFormatReader initialization error:', e);
     }

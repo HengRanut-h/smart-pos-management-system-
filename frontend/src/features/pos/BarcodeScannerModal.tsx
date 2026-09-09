@@ -13,6 +13,7 @@ import {
   ShoppingCart,
   RefreshCw,
   Layers,
+  Upload,
 } from 'lucide-react';
 
 export interface BarcodeScannerModalProps {
@@ -53,8 +54,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
   const scannerControlsRef = useRef<IScannerControls | null>(null);
-  const nativeDetectionAnimRef = useRef<number | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const recentScansMapRef = useRef<Map<string, number>>(new Map());
   const scanMultiplierRef = useRef<number>(1);
   scanMultiplierRef.current = scanMultiplier;
@@ -95,7 +95,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     }
   };
 
-  // Ultra-Fast High-Quality Scanner Engine (Hardware-Accelerated GPU BarcodeDetector + Continuous Autofocus)
+  // Universal High-Accuracy Barcode Scanner Engine powered by @zxing/browser
   const startScanner = async (overrideDeviceId?: string) => {
     setCameraError(null);
     if (!videoRef.current) return;
@@ -111,171 +111,64 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     try {
       stopScanner();
 
-      // High definition video constraints with fallback
-      const videoConstraints: MediaTrackConstraints = {
-        deviceId: deviceToUse ? { exact: deviceToUse } : undefined,
-        facingMode: !deviceToUse ? { ideal: cameraFacing } : undefined,
-        width: { ideal: 1920, min: 1280 },
-        height: { ideal: 1080, min: 720 },
-        frameRate: { ideal: 60, min: 30 },
-      };
+      // Configure full spectrum of 1D and 2D barcode formats with TRY_HARDER
+      const hints = new Map<DecodeHintType, any>();
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.CODE_39,
+        BarcodeFormat.CODE_93,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.UPC_E,
+        BarcodeFormat.ITF,
+        BarcodeFormat.QR_CODE,
+        BarcodeFormat.DATA_MATRIX,
+      ]);
+      hints.set(DecodeHintType.TRY_HARDER, true);
 
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: videoConstraints,
-          audio: false,
-        });
-      } catch (err) {
-        // Fallback to basic constraint if 1080p or exact constraint fails
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: deviceToUse ? { deviceId: { ideal: deviceToUse } } : true,
-          audio: false,
-        });
-      }
+      const reader = new BrowserMultiFormatReader(hints, {
+        delayBetweenScanAttempts: 60,
+      });
+      codeReaderRef.current = reader;
 
-      mediaStreamRef.current = stream;
+      console.log('[CameraScanner] Starting ZXing with EAN_13, UPC_A, CODE_128, QR_CODE...');
 
-      // Re-enumerate devices so friendly labels (e.g. "Logitech Webcam") populate after permission is granted
-      if (typeof navigator !== 'undefined' && navigator.mediaDevices?.enumerateDevices) {
-        navigator.mediaDevices.enumerateDevices().then((devs) => {
-          const videoDevs = devs.filter((d) => d.kind === 'videoinput');
-          if (videoDevs.length > 0) {
-            setAvailableDevices(videoDevs);
+      const controls = await reader.decodeFromVideoDevice(
+        deviceToUse || undefined,
+        videoRef.current,
+        (result, error) => {
+          if (result) {
+            const text = result.getText();
+            console.log('✅ DETECTED:', text, 'Format:', result.getBarcodeFormat());
+            handleBarcodeDetected(text);
           }
-        }).catch(() => {});
-      }
+        }
+      );
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute('playsinline', 'true');
-        await videoRef.current.play().catch(() => {});
-      }
-
+      scannerControlsRef.current = controls;
       setIsCameraActive(true);
 
-      // Apply Advanced Hardware Constraints (Continuous Autofocus & Exposure for razor-sharp barcodes)
-      const track = stream.getVideoTracks()[0];
-      if (track && (track as any).getCapabilities) {
-        try {
-          const capabilities = (track as any).getCapabilities();
-          const advancedConstraints: any = {};
+      // Refresh devices list so user sees friendly camera labels
+      refreshDevices();
 
-          if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-            advancedConstraints.focusMode = 'continuous';
-          }
-          if (capabilities.exposureMode && capabilities.exposureMode.includes('continuous')) {
-            advancedConstraints.exposureMode = 'continuous';
-          }
-          if (capabilities.whiteBalanceMode && capabilities.whiteBalanceMode.includes('continuous')) {
-            advancedConstraints.whiteBalanceMode = 'continuous';
-          }
-
-          setHasTorchSupport(!!capabilities.torch);
-
-          if (Object.keys(advancedConstraints).length > 0) {
-            await (track as any).applyConstraints({
-              advanced: [advancedConstraints],
-            }).catch(() => {});
-          }
-        } catch (e) {
-          console.debug('Advanced constraints not fully supported', e);
-        }
-      }
-
-      const hasNativeDetector = typeof window !== 'undefined' && 'BarcodeDetector' in window;
-
-      if (hasNativeDetector) {
-        // Dedicated Hardware GPU Acceleration Engine (Sub-10ms response time)
-        let supportedFormats = ['ean_13', 'ean_8', 'code_128', 'code_39', 'code_93', 'upc_a', 'upc_e', 'qr_code', 'data_matrix', 'itf'];
-        try {
-          if ((window as any).BarcodeDetector.getSupportedFormats) {
-            const systemFormats = await (window as any).BarcodeDetector.getSupportedFormats();
-            if (systemFormats && systemFormats.length > 0) {
-              supportedFormats = supportedFormats.filter((fmt) => systemFormats.includes(fmt));
-            }
-          }
-        } catch {}
-
-        const nativeDetector = new (window as any).BarcodeDetector({ formats: supportedFormats });
-        let isDetecting = false;
-
-        const loopNativeDetection = async () => {
-          if (!videoRef.current || videoRef.current.readyState < 2) {
-            nativeDetectionAnimRef.current = requestAnimationFrame(loopNativeDetection);
-            return;
-          }
-
-          if (!isDetecting) {
-            isDetecting = true;
-            try {
-              const barcodes = await nativeDetector.detect(videoRef.current);
-              if (barcodes && barcodes.length > 0) {
-                for (const item of barcodes) {
-                  if (item.rawValue) {
-                    handleBarcodeDetected(item.rawValue);
-                  }
-                }
-              }
-            } catch (err) {
-              // Frame dropped, proceed to next frame
-            } finally {
-              isDetecting = false;
-            }
-          }
-
-          nativeDetectionAnimRef.current = requestAnimationFrame(loopNativeDetection);
-        };
-
-        nativeDetectionAnimRef.current = requestAnimationFrame(loopNativeDetection);
-      } else {
-        // High-Precision ZXing Fallback (Only active if Native BarcodeDetector is unavailable)
-        if (!codeReaderRef.current) {
-          const hints = new Map();
-          hints.set(DecodeHintType.POSSIBLE_FORMATS, [
-            BarcodeFormat.EAN_13,
-            BarcodeFormat.EAN_8,
-            BarcodeFormat.CODE_128,
-            BarcodeFormat.CODE_39,
-            BarcodeFormat.CODE_93,
-            BarcodeFormat.UPC_A,
-            BarcodeFormat.UPC_E,
-            BarcodeFormat.QR_CODE,
-            BarcodeFormat.ITF,
-            BarcodeFormat.DATA_MATRIX,
-          ]);
-          hints.set(DecodeHintType.TRY_HARDER, true);
-          codeReaderRef.current = new BrowserMultiFormatReader(hints);
-        }
-
-        const reader = codeReaderRef.current;
-        if (videoRef.current) {
-          const controls = await reader.decodeFromVideoElement(
-            videoRef.current,
-            (result) => {
-              if (result) {
-                handleBarcodeDetected(result.getText());
-              }
-            }
-          );
-          scannerControlsRef.current = controls;
+      // Check flashlight/torch capability
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        const track = stream.getVideoTracks()[0];
+        if (track && (track as any).getCapabilities) {
+          const caps = (track as any).getCapabilities();
+          setHasTorchSupport(Boolean(caps.torch));
         }
       }
     } catch (err: any) {
-      console.error('Scanner error', err);
-      setCameraError(err.message || 'Unable to access camera. Please allow camera permissions.');
+      console.error('Camera Scanner error:', err);
+      setCameraError(err.message || 'Unable to access camera. Please check permissions and HTTPS context.');
       setIsCameraActive(false);
     }
   };
 
   const stopScanner = () => {
-    // 1. Stop native detection animation frame loop
-    if (nativeDetectionAnimRef.current) {
-      cancelAnimationFrame(nativeDetectionAnimRef.current);
-      nativeDetectionAnimRef.current = null;
-    }
-
-    // 2. Stop ZXing controls
     if (scannerControlsRef.current) {
       try {
         scannerControlsRef.current.stop();
@@ -283,26 +176,13 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
       scannerControlsRef.current = null;
     }
 
-    // 3. Explicitly shut down all mediaStream hardware tracks
-    if (mediaStreamRef.current) {
-      try {
-        mediaStreamRef.current.getTracks().forEach((track) => {
-          try {
-            track.stop();
-          } catch {}
-        });
-      } catch {}
-      mediaStreamRef.current = null;
-    }
-
-    // 4. Detach and pause video element
     if (videoRef.current) {
       if (videoRef.current.srcObject) {
         try {
           const stream = videoRef.current.srcObject as MediaStream;
-          stream.getTracks().forEach((track) => {
+          stream.getTracks().forEach((t) => {
             try {
-              track.stop();
+              t.stop();
             } catch {}
           });
         } catch {}
@@ -321,6 +201,53 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const handleClose = () => {
     stopScanner();
     onClose();
+  };
+
+  // Upload or test photo of a barcode
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const imgUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.src = imgUrl;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      const hints = new Map<DecodeHintType, any>();
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.CODE_39,
+        BarcodeFormat.CODE_93,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.UPC_E,
+        BarcodeFormat.ITF,
+        BarcodeFormat.QR_CODE,
+        BarcodeFormat.DATA_MATRIX,
+      ]);
+      hints.set(DecodeHintType.TRY_HARDER, true);
+
+      const reader = new BrowserMultiFormatReader(hints);
+      const result = await reader.decodeFromImageElement(img);
+      if (result) {
+        const text = result.getText();
+        console.log('✅ DETECTED FROM PHOTO:', text);
+        handleBarcodeDetected(text);
+      }
+      URL.revokeObjectURL(imgUrl);
+    } catch (err) {
+      console.warn('Could not detect barcode from image:', err);
+      alert('Could not detect barcode from image. Please make sure the barcode is clear, focused, and well-lit.');
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   // Explicit device selection from dropdown
@@ -591,6 +518,24 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 <Flashlight className={`w-4 h-4 ${isTorchOn ? 'text-white' : 'text-amber-400'}`} />
               </button>
             )}
+
+            {/* Upload / Test Barcode Photo */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoUpload}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="p-2 bg-slate-800 hover:bg-slate-700 text-sky-400 hover:text-sky-300 rounded-xl transition border border-slate-700 shadow-xs flex items-center gap-1.5 text-xs font-semibold"
+              title="Upload photo or image of a barcode"
+            >
+              <Upload className="w-4 h-4" />
+              <span className="hidden sm:inline">Upload Photo</span>
+            </button>
 
             {/* Close Button */}
             <button

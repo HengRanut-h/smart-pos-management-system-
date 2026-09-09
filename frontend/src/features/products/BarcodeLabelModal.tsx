@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Product } from '../../foundation/types';
+import { BarcodeView } from '../../presentation/components/barcode/BarcodeView';
 import {
   Printer,
   X,
@@ -55,24 +56,9 @@ export const BarcodeLabelModal: React.FC<BarcodeLabelModalProps> = ({
     return found ? [found] : products;
   }, [selectedProductId, products]);
 
-  // Generate SVG vector stripes for barcode
+  // Generate standards-compliant, scannable barcode
   const renderBarcodeSvg = (code: string) => {
-    const bars: boolean[] = [];
-    for (let i = 0; i < code.length; i++) {
-      const charCode = code.charCodeAt(i);
-      bars.push(true, (charCode % 2 === 0), (charCode % 3 === 0), false, (charCode % 5 === 0));
-    }
-    bars.push(true, false, true);
-
-    return (
-      <svg className="w-full h-8" viewBox={`0 0 ${bars.length * 3} 28`} preserveAspectRatio="none">
-        {bars.map((isDark, idx) =>
-          isDark ? (
-            <rect key={idx} x={idx * 3} y="0" width="2.2" height="28" fill="#0f172a" />
-          ) : null
-        )}
-      </svg>
-    );
+    return <BarcodeView value={code} height={28} width={1.8} className="w-full h-8" />;
   };
 
   // Build the flat list of labels based on quantity

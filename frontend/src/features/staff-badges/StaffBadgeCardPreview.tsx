@@ -3,6 +3,7 @@ import { StaffBadgeTemplate, StaffBadgeCard, BadgeFrontDesign, BadgeBackDesign }
 import { Employee } from '../../foundation/types';
 import QRCode from 'qrcode';
 import { SmartPosLogo } from '../../presentation/components/SmartPosLogo';
+import { BarcodeView } from '../../presentation/components/barcode/BarcodeView';
 import { 
   CreditCard, 
   Wifi, 
@@ -115,23 +116,9 @@ export const StaffBadgeCardPreview: React.FC<StaffBadgeCardPreviewProps> = ({
       : { width: 490, height: 310 }; // Horizontal 85.6mm x 54mm
   }, [template.card_size, isVertical]);
 
-  // Code 128 Barcode simulation
+  // Standards-compliant Code 128 Barcode
   const renderBarcodeSvg = (code: string) => {
-    const cleanCode = code || 'EMP-001';
-    const bars: boolean[] = [true, false, true, true, false];
-    for (let i = 0; i < cleanCode.length; i++) {
-      const c = cleanCode.charCodeAt(i);
-      bars.push(true, c % 2 === 0, c % 3 === 0, false, c % 5 === 0, true, c % 4 === 0, false);
-    }
-    bars.push(true, false, true, false, true, true);
-
-    return (
-      <svg className="w-full h-8" viewBox={`0 0 ${bars.length * 3} 24`} preserveAspectRatio="none">
-        {bars.map((isDark, idx) =>
-          isDark ? <rect key={idx} x={idx * 3} y="0" width="2.2" height="24" fill="#09090b" /> : null
-        )}
-      </svg>
-    );
+    return <BarcodeView value={code || 'EMP-001'} height={24} width={1.8} className="w-full h-8" />;
   };
 
   // Photo shape styling

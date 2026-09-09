@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Employee } from '../../foundation/types';
+import { BarcodeView } from '../../presentation/components/barcode/BarcodeView';
 import {
   Printer,
   X,
@@ -44,34 +45,9 @@ export const StaffBadgePrintModal: React.FC<StaffBadgePrintModalProps> = ({
     return found ? [found] : employees;
   }, [selectedEmployeeId, employees]);
 
-  // Generate crisp scannable barcode pattern
+  // Generate standards-compliant, scannable barcode
   const renderBarcodeSvg = (code: string) => {
-    const cleanCode = code || 'EMP-001';
-    const bars: boolean[] = [true, false, true, true, false]; // start sentinel
-    for (let i = 0; i < cleanCode.length; i++) {
-      const charCode = cleanCode.charCodeAt(i);
-      bars.push(
-        true,
-        charCode % 2 === 0,
-        charCode % 3 === 0,
-        false,
-        charCode % 5 === 0,
-        true,
-        charCode % 4 === 0,
-        false
-      );
-    }
-    bars.push(true, false, true, false, true, true); // stop sentinel
-
-    return (
-      <svg className="w-full h-10" viewBox={`0 0 ${bars.length * 3} 32`} preserveAspectRatio="none">
-        {bars.map((isDark, idx) =>
-          isDark ? (
-            <rect key={idx} x={idx * 3} y="0" width="2.2" height="32" fill="#09090b" />
-          ) : null
-        )}
-      </svg>
-    );
+    return <BarcodeView value={code || 'EMP-001'} height={32} width={1.8} className="w-full h-10" />;
   };
 
   const handlePrint = () => {

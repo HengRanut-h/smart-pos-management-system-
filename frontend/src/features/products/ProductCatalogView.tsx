@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../application/context/AppContext';
 import { Product } from '../../foundation/types';
 import { BarcodeLabelModal } from './BarcodeLabelModal';
+import { BarcodeView } from '../../presentation/components/barcode/BarcodeView';
 import {
   getProducts,
   createProduct,
@@ -412,20 +413,7 @@ export const ProductCatalogView: React.FC = () => {
 
   // Generate Barcode SVG graphic based on string
   const renderBarcodeSvg = (code: string) => {
-    // Generate pseudo barcode bars based on char codes
-    const bars: boolean[] = [];
-    const clean = code || '885000000000';
-    for (let i = 0; i < clean.length; i++) {
-      const num = clean.charCodeAt(i) % 4;
-      bars.push(true, false, num % 2 === 0, true, false, true);
-    }
-    return (
-      <svg className="w-full h-12" viewBox={`0 0 ${bars.length * 3} 40`} preserveAspectRatio="none">
-        {bars.map((isBar, idx) =>
-          isBar ? <rect key={idx} x={idx * 3} y="0" width="2" height="40" fill="#111827" /> : null
-        )}
-      </svg>
-    );
+    return <BarcodeView value={code || '885000000000'} height={40} width={2} className="w-full h-12" />;
   };
 
   // Margin Calculator values for form

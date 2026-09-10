@@ -909,13 +909,46 @@ export const SidebarNav: React.FC = () => {
     }
   };
 
+  // Handle ESC key and window resize for responsive drawer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileDrawerOpen) {
+        setIsMobileDrawerOpen(false);
+      }
+    };
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobileDrawerOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [isMobileDrawerOpen, setIsMobileDrawerOpen]);
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (isMobileDrawerOpen && window.innerWidth < 1024) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileDrawerOpen]);
+
   return (
     <>
       {/* Mobile Backdrop */}
       {isMobileDrawerOpen && (
         <div
           onClick={() => setIsMobileDrawerOpen(false)}
-          className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden transition-opacity"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-300"
+          aria-label="Close navigation drawer"
         />
       )}
 
@@ -1024,13 +1057,9 @@ export const SidebarNav: React.FC = () => {
       {/* 2. EXPANDED SIDEBAR (DESKTOP when !isSidebarCollapsed OR MOBILE DRAWER) */}
       {/* ========================================================= */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-50 w-72 bg-white border-r border-gray-200 flex flex-col justify-between transition-all duration-300 font-sans ${
-          isMobileDrawerOpen
-            ? 'translate-x-0'
-            : isSidebarCollapsed
-            ? '-translate-x-full'
-            : 'translate-x-0'
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white border-r border-gray-200 flex flex-col justify-between transition-transform duration-300 ease-in-out font-sans ${
+          isMobileDrawerOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+        } ${isSidebarCollapsed ? 'lg:-translate-x-full' : 'lg:translate-x-0 lg:shadow-none'}`}
       >
         {/* TOP: Brand Header & Search */}
         <div className="flex flex-col flex-1 overflow-hidden">

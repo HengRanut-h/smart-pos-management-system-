@@ -103,14 +103,14 @@ export const Navbar: React.FC = () => {
             <Menu className="w-5 h-5" strokeWidth={2.2} />
           </button>
 
-          <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="font-bold text-base text-gray-900 leading-tight">{getPageTitle()}</h1>
-              <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
+          <div className="min-w-0">
+            <div className="flex items-center space-x-2 min-w-0">
+              <h1 className="font-bold text-base text-gray-900 leading-tight truncate max-w-[150px] sm:max-w-xs md:max-w-none">{getPageTitle()}</h1>
+              <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200 shrink-0">
                 HQ-01
               </span>
             </div>
-            <span className="text-[11px] text-gray-400 hidden sm:block">{t.hqStation}</span>
+            <span className="text-[11px] text-gray-400 hidden sm:block truncate">{t.hqStation}</span>
           </div>
         </div>
 

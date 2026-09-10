@@ -14,6 +14,7 @@ export const MobileBottomNav: React.FC = () => {
     setActiveTab,
     cart,
     toggleMobileDrawer,
+    isMobileDrawerOpen,
     lang,
   } = useApp();
 
@@ -67,14 +68,14 @@ export const MobileBottomNav: React.FC = () => {
       labelKh: 'ម៉ឺនុយ',
       icon: <Menu className="w-5 h-5" />,
       action: toggleMobileDrawer,
-      isActive: false,
+      isActive: isMobileDrawerOpen,
     },
   ];
 
   return (
     <nav
       aria-label="Mobile Bottom Navigation"
-      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-gray-200/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-safe transition-transform select-none"
+      className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-white/95 backdrop-blur-md border-t border-gray-200/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-safe transition-transform select-none"
     >
       <div className="grid grid-cols-5 h-14 items-center px-1 max-w-lg mx-auto">
         {navItems.map((item) => {

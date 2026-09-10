@@ -55,7 +55,6 @@ import {
 import { ThermalReceiptModal } from '../../presentation/components/ThermalReceiptModal';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { barcodeScannerService } from '../../services/barcode';
-import { ScannerStatus } from '../../presentation/components/barcode/ScannerStatus';
 
 export const POSTerminal: React.FC = () => {
   const {
@@ -1101,8 +1100,6 @@ export const POSTerminal: React.FC = () => {
               />
               <Barcode className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
             </div>
-
-            <ScannerStatus onOpenCameraModal={() => setIsBarcodeScannerModalOpen(true)} compact={true} />
 
             <button
               type="button"

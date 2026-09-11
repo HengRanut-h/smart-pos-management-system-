@@ -10,6 +10,7 @@ import {
   X,
   Send,
 } from 'lucide-react';
+import { Language } from '../../foundation/i18n/translations';
 
 interface OtpVerificationModalProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ interface OtpVerificationModalProps {
   onVerify: (otpCode: string, channel: 'EMAIL' | 'SMS') => Promise<void>;
   onResend: (channel: 'EMAIL' | 'SMS') => Promise<string | void>;
   onCancel: () => void;
-  lang?: 'en' | 'kh';
+  lang?: Language;
 }
 
 export const OtpVerificationModal: React.FC<OtpVerificationModalProps> = ({

@@ -21,7 +21,7 @@ export const BundleBomModal: React.FC<BundleBomModalProps> = ({
   onSaved,
   mode,
 }) => {
-  const { notify } = useApp();
+  const { lang, notify } = useApp();
   const [items, setItems] = useState<Array<{ id: number; quantity: number; unit_price: number; scrap?: number }>>([]);
   const [selectedProductId, setSelectedProductId] = useState<number>(
     allProducts.find(p => p.id !== product.id)?.id || 1
@@ -74,7 +74,9 @@ export const BundleBomModal: React.FC<BundleBomModalProps> = ({
         await productEnterpriseApi.saveBomItems(product.id, payload);
       }
       notify.success(
-        mode === 'BUNDLE' ? 'Bundle items saved successfully!' : 'Bill of Materials (BOM) saved successfully!',
+        mode === 'BUNDLE'
+          ? (lang === 'kh' ? 'បានរក្សាទុកមុខទំនិញកញ្ចប់Comboជោគជ័យ!' : 'Bundle items saved successfully!')
+          : (lang === 'kh' ? 'បានរក្សាទុកមេអំបៅគ្រឿងផ្សំ (BOM) ជោគជ័យ!' : 'Bill of Materials (BOM) saved successfully!'),
         'Saved'
       );
       onSaved();
@@ -97,9 +99,13 @@ export const BundleBomModal: React.FC<BundleBomModalProps> = ({
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900">
-                {mode === 'BUNDLE' ? 'Combo Kit & Bundle Item Builder' : 'BOM / Manufacturing Recipe Builder'}
+                {mode === 'BUNDLE'
+                  ? (lang === 'kh' ? 'ឧបករណ៍បង្កើតកញ្ចប់ទំនិញ Combo' : 'Combo Kit \u0026 Bundle Item Builder')
+                  : (lang === 'kh' ? 'ឧបករណ៍បង្កើតរូបមន្តគ្រឿងផ្សំ BOM' : 'BOM / Manufacturing Recipe Builder')}
               </h3>
-              <p className="text-xs text-gray-500">Product: {product.name} ({product.product_type})</p>
+              <p className="text-xs text-gray-500">
+                {lang === 'kh' ? 'ទំនិញ៖' : 'Product:'} {product.name} ({product.product_type})
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-700 rounded-full">
@@ -110,7 +116,9 @@ export const BundleBomModal: React.FC<BundleBomModalProps> = ({
         <div className="p-6 space-y-4">
           <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
             <h4 className="text-xs font-bold text-gray-700 mb-2 uppercase">
-              {mode === 'BUNDLE' ? 'Add Item to Bundle' : 'Add Raw Material / Ingredient'}
+              {mode === 'BUNDLE'
+                ? (lang === 'kh' ? 'បន្ថែមទំនិញចូលក្នុងកញ្ចប់' : 'Add Item to Bundle')
+                : (lang === 'kh' ? 'បន្ថែមវត្ថុតាងដើម / គ្រឿងផ្សំ' : 'Add Raw Material / Ingredient')}
             </h4>
             <div className="flex items-center space-x-2">
               <select
@@ -133,14 +141,14 @@ export const BundleBomModal: React.FC<BundleBomModalProps> = ({
                 value={qty}
                 onChange={e => setQty(parseFloat(e.target.value) || 1)}
                 className="w-20 px-2 py-2 text-xs border border-gray-300 rounded-lg text-center"
-                placeholder="Qty"
+                placeholder={lang === 'kh' ? 'ចំនួន' : 'Qty'}
               />
               <button
                 onClick={handleAddItem}
                 className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold rounded-lg flex items-center space-x-1"
               >
                 <Plus className="w-4 h-4" />
-                <span>Add</span>
+                <span>{lang === 'kh' ? 'បន្ថែម' : 'Add'}</span>
               </button>
             </div>
           </div>
@@ -149,18 +157,20 @@ export const BundleBomModal: React.FC<BundleBomModalProps> = ({
             <table className="w-full text-left text-xs">
               <thead className="bg-gray-100 text-gray-700 font-semibold uppercase">
                 <tr>
-                  <th className="px-3 py-2">Item Name</th>
-                  <th className="px-3 py-2 text-center">Quantity</th>
-                  <th className="px-3 py-2 text-right">Unit Cost</th>
-                  <th className="px-3 py-2 text-right">Line Total</th>
-                  <th className="px-3 py-2 text-right">Action</th>
+                  <th className="px-3 py-2">{lang === 'kh' ? 'ឈ្មោះមុខទំនិញ' : 'Item Name'}</th>
+                  <th className="px-3 py-2 text-center">{lang === 'kh' ? 'ចំនួន' : 'Quantity'}</th>
+                  <th className="px-3 py-2 text-right">{lang === 'kh' ? 'ថ្លៃដើមក្នុងមួយខ្នាត' : 'Unit Cost'}</th>
+                  <th className="px-3 py-2 text-right">{lang === 'kh' ? 'សរុបជួរ' : 'Line Total'}</th>
+                  <th className="px-3 py-2 text-right">{lang === 'kh' ? 'សកម្មភាព' : 'Action'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {items.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="text-center py-6 text-gray-400 italic">
-                      No items added yet. Select products above to build your {mode === 'BUNDLE' ? 'bundle' : 'BOM recipe'}.
+                      {lang === 'kh'
+                        ? `មិនទាន់មានមុខទំនិញត្រូវបានបន្ថែម។ ជ្រើសរើសទំនិញខាងលើដើម្បីបង្កើត ${mode === 'BUNDLE' ? 'កញ្ចប់ទំនិញ' : 'រូបមន្តគ្រឿងផ្សំ BOM'}`
+                        : `No items added yet. Select products above to build your ${mode === 'BUNDLE' ? 'bundle' : 'BOM recipe'}.`}
                     </td>
                   </tr>
                 ) : (
@@ -187,14 +197,16 @@ export const BundleBomModal: React.FC<BundleBomModalProps> = ({
           </div>
 
           <div className="flex justify-between items-center p-3 bg-violet-50 rounded-xl border border-violet-200">
-            <span className="text-xs font-semibold text-gray-700">Total Component Cost:</span>
+            <span className="text-xs font-semibold text-gray-700">
+              {lang === 'kh' ? 'ថ្លៃដើមសមាសភាគសរុប៖' : 'Total Component Cost:'}
+            </span>
             <span className="text-base font-extrabold text-violet-800">${totalCost.toFixed(2)}</span>
           </div>
         </div>
 
         <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-end space-x-3">
           <button onClick={onClose} className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-200 rounded-lg">
-            Cancel
+            {lang === 'kh' ? 'បោះបង់' : 'Cancel'}
           </button>
           <button
             onClick={handleSave}
@@ -202,7 +214,11 @@ export const BundleBomModal: React.FC<BundleBomModalProps> = ({
             className="px-5 py-2 text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded-lg shadow-md flex items-center space-x-1.5"
           >
             <Check className="w-4 h-4" />
-            <span>{isSaving ? 'Saving...' : 'Save Configuration'}</span>
+            <span>
+              {isSaving
+                ? (lang === 'kh' ? 'កំពុងរក្សាទុក...' : 'Saving...')
+                : (lang === 'kh' ? 'រក្សាទុកការកែប្រែ' : 'Save Configuration')}
+            </span>
           </button>
         </div>
       </div>

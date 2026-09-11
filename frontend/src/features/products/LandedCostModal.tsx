@@ -17,7 +17,7 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
   onClose,
   onSaved,
 }) => {
-  const { notify } = useApp();
+  const { lang, notify } = useApp();
   const [baseCost, setBaseCost] = useState(product.cost_price || 0);
   const [shippingCost, setShippingCost] = useState(product.shipping_cost || 0);
   const [importTax, setImportTax] = useState(product.import_tax || 0);
@@ -55,7 +55,10 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
         });
       }
 
-      notify.success('Landed cost and pricing updated successfully!', 'Cost Updated');
+      notify.success(
+        lang === 'kh' ? 'បានធ្វើបច្ចុប្បន្នភាពថ្លៃដើមដឹកជញ្ជូន និងតម្លៃលក់ជោគជ័យ!' : 'Landed cost and pricing updated successfully!',
+        'Cost Updated'
+      );
       onSaved();
       onClose();
     } catch (err: any) {
@@ -75,8 +78,12 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
               <Calculator className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Landed Cost & Margin Studio</h3>
-              <p className="text-xs text-gray-500">Product: {product.name} ({product.sku})</p>
+              <h3 className="text-lg font-bold text-gray-900">
+                {lang === 'kh' ? 'ស្ទូឌីយោគណនាថ្លៃដើមដឹកជញ្ជូន \u0026 ភាគរយចំណេញ' : 'Landed Cost \u0026 Margin Studio'}
+              </h3>
+              <p className="text-xs text-gray-500">
+                {lang === 'kh' ? 'ទំនិញ៖' : 'Product:'} {product.name} ({product.sku})
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-700 rounded-full">
@@ -87,7 +94,9 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Base Supplier Cost ($)</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'ថ្លៃដើមទិញពីអ្នកផ្គត់ផ្គង់ ($)' : 'Base Supplier Cost ($)'}
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -97,7 +106,9 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Freight / Shipping ($)</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'ថ្លៃដឹកជញ្ជូន ($)' : 'Freight / Shipping ($)'}
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -107,7 +118,9 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Customs Duty & Import Tax ($)</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'ពន្ធគយ \u0026 នាំចូល ($)' : 'Customs Duty \u0026 Import Tax ($)'}
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -117,7 +130,9 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Warehouse & Handling ($)</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'ថ្លៃសេវាឃ្លាំង \u0026 ចំណាយសេវា ($)' : 'Warehouse \u0026 Handling ($)'}
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -127,7 +142,9 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Other Tariff & Port Fees ($)</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'ថ្លៃសេវាកំពង់ផែ \u0026 ចំណាយផ្សេងៗ ($)' : 'Other Tariff \u0026 Port Fees ($)'}
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -140,12 +157,16 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
 
           <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-3">
             <div className="flex justify-between items-center text-sm">
-              <span className="font-semibold text-gray-700">Calculated True Landed Cost:</span>
+              <span className="font-semibold text-gray-700">
+                {lang === 'kh' ? 'ថ្លៃដើមដឹកជញ្ជូនសរុប (Landed Cost)៖' : 'Calculated True Landed Cost:'}
+              </span>
               <span className="text-base font-bold text-emerald-700">${totalLandedCost.toFixed(2)}</span>
             </div>
             
             <div className="flex items-center space-x-3 pt-2 border-t border-emerald-200/60">
-              <span className="text-xs font-semibold text-gray-600">Target Margin:</span>
+              <span className="text-xs font-semibold text-gray-600">
+                {lang === 'kh' ? 'គោលដៅភាគរយចំណេញ៖' : 'Target Margin:'}
+              </span>
               <div className="flex items-center space-x-1">
                 <input
                   type="number"
@@ -157,20 +178,26 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
                 />
                 <Percent className="w-3.5 h-3.5 text-emerald-600" />
               </div>
-              <span className="text-xs text-gray-500">→ Suggested Price:</span>
+              <span className="text-xs text-gray-500">
+                {lang === 'kh' ? '→ តម្លៃលក់ណែនាំ៖' : '→ Suggested Price:'}
+              </span>
               <span className="text-sm font-extrabold text-gray-900">${suggestedSellingPrice.toFixed(2)}</span>
             </div>
 
             <div className="text-xs text-gray-500 flex justify-between">
-              <span>Current Selling Price: ${product.selling_price || 0}</span>
-              <span className="font-medium text-emerald-700">Projected Profit / Unit: ${projectedProfit.toFixed(2)}</span>
+              <span>
+                {lang === 'kh' ? `តម្លៃលក់បច្ចុប្បន្ន៖ $${product.selling_price || 0}` : `Current Selling Price: $${product.selling_price || 0}`}
+              </span>
+              <span className="font-medium text-emerald-700">
+                {lang === 'kh' ? `ចំណេញក្នុង១ខ្នាត៖ $${projectedProfit.toFixed(2)}` : `Projected Profit / Unit: $${projectedProfit.toFixed(2)}`}
+              </span>
             </div>
           </div>
         </div>
 
         <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-end space-x-3">
           <button onClick={onClose} className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-200 rounded-lg">
-            Cancel
+            {lang === 'kh' ? 'បោះបង់' : 'Cancel'}
           </button>
           <button
             onClick={handleSave}
@@ -178,7 +205,11 @@ export const LandedCostModal: React.FC<LandedCostModalProps> = ({
             className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg shadow-md flex items-center space-x-1.5"
           >
             <Check className="w-4 h-4" />
-            <span>{isSaving ? 'Updating...' : 'Save Landed Cost'}</span>
+            <span>
+              {isSaving
+                ? (lang === 'kh' ? 'កំពុងកែប្រែ...' : 'Updating...')
+                : (lang === 'kh' ? 'រក្សាទុកថ្លៃដើម' : 'Save Landed Cost')}
+            </span>
           </button>
         </div>
       </div>

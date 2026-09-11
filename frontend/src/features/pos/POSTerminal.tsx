@@ -910,11 +910,15 @@ export const POSTerminal: React.FC = () => {
         ...payload,
         items: cart.map((i) => ({
           product_id: i.product.id,
+          unit_id: i.product.unit?.id || (i.product as any).unit_id || 1,
           product: i.product,
           name: i.product.name,
           quantity: i.quantity,
           unit_price: i.unit_price,
           total_amount: i.unit_price * i.quantity,
+          tax_rate: 0.1,
+          tax_amount: (i.subtotal || i.unit_price * i.quantity) * 0.1,
+          discount_amount: 0,
         })),
         queued_at: new Date().toISOString(),
         local_id: 'OFFLINE-' + Date.now(),
@@ -980,13 +984,24 @@ export const POSTerminal: React.FC = () => {
     let remaining = [...offlineQueue];
     try {
       for (const sale of offlineQueue) {
+        // Format items to conform with backend CompleteSaleRequest
+        const sanitizedItems = (sale.items || []).map((it: any) => ({
+          product_id: it.product_id || it.product?.id,
+          unit_id: it.unit_id || it.product?.unit?.id || it.product?.unit_id || 1,
+          quantity: Number(it.quantity) || 1,
+          unit_price: Number(it.unit_price) || 0,
+          discount_amount: Number(it.discount_amount) || 0,
+          tax_rate: Number(it.tax_rate) || 0.1,
+          tax_amount: Number(it.tax_amount) || 0,
+        }));
+
         await completeSale({
-          branch_id: sale.branch_id,
-          warehouse_id: sale.warehouse_id,
-          customer_id: sale.customer_id,
-          points_redeemed: sale.points_redeemed,
-          coupon_code: sale.coupon_code,
-          items: sale.items,
+          branch_id: sale.branch_id || 1,
+          warehouse_id: sale.warehouse_id || 1,
+          customer_id: sale.customer_id || null,
+          points_redeemed: sale.points_redeemed || 0,
+          coupon_code: sale.coupon_code || null,
+          items: sanitizedItems,
           payment: sale.payment,
           notes: sale.notes,
         });
@@ -998,15 +1013,27 @@ export const POSTerminal: React.FC = () => {
         lang === 'kh' ? 'ការលក់ក្រៅបណ្ដាញបានធ្វើសមកាលកម្មដោយជោគជ័យ!' : 'Offline sales synced successfully!',
         lang === 'kh' ? 'សមកាលកម្ម' : 'Sync Complete'
       );
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to sync offline sales', err);
+      const errorMsg = err?.response?.data?.message || err?.message || '';
       notify.warning(
-        lang === 'kh' ? 'ការលក់មួយចំនួនមិនអាចធ្វើសមកាលកម្មបានទេ។ នឹងព្យាយាមម្ដងទៀតនៅពេលមានការតភ្ជាប់ឡើងវិញ។' : 'Some sales could not be synced. Will retry when connection stabilizes.',
-        lang === 'kh' ? 'ការព្រមាន' : 'Sync Warning'
+        errorMsg
+          ? (lang === 'kh' ? `មិនអាចធ្វើសមកាលកម្មបានទេ៖ ${errorMsg}` : `Could not sync offline sale: ${errorMsg}`)
+          : (lang === 'kh' ? 'ការលក់មួយចំនួនមិនអាចធ្វើសមកាលកម្មបានទេ។ នឹងព្យាយាមម្ដងទៀតនៅពេលមានការតភ្ជាប់ឡើងវិញ។' : 'Some sales could not be synced. Will retry when connection stabilizes.'),
+        lang === 'kh' ? 'ការព្រមានសមកាលកម្ម' : 'Sync Warning'
       );
     } finally {
       setIsSyncingOffline(false);
     }
+  };
+
+  const handleClearOfflineQueue = () => {
+    setOfflineQueue([]);
+    localStorage.removeItem('smartpos_offline_sales');
+    notify.info(
+      lang === 'kh' ? 'ជួររង់ចាំក្រៅបណ្តាញត្រូវបានសម្អាត' : 'Offline sales queue cleared',
+      lang === 'kh' ? 'បានសម្អាត' : 'Queue Cleared'
+    );
   };
 
   return (
@@ -1021,21 +1048,31 @@ export const POSTerminal: React.FC = () => {
 
       {/* Offline Banner */}
       {offlineQueue.length > 0 && (
-        <div className="bg-amber-500/10 border-b border-amber-200 px-4 py-1.5 flex items-center justify-between text-xs text-amber-800">
+        <div className="bg-amber-500/10 border-b border-amber-200 px-4 py-2 flex items-center justify-between text-xs text-amber-800">
           <div className="flex items-center space-x-2 font-medium">
             <WifiOff className="w-4 h-4 text-amber-600 animate-pulse" />
             <span>
-              {offlineQueue.length} sale(s) saved offline in browser storage.
+              {offlineQueue.length} {lang === 'kh' ? 'ការលក់ត្រូវបានរក្សាទុកក្រៅបណ្តាញ (browser storage)' : 'sale(s) saved offline in browser storage.'}
             </span>
           </div>
-          <button
-            onClick={handleSyncOfflineSales}
-            disabled={isSyncingOffline}
-            className="flex items-center space-x-1 px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition"
-          >
-            <RefreshCw className={`w-3 h-3 ${isSyncingOffline ? 'animate-spin' : ''}`} />
-            <span>{isSyncingOffline ? 'Syncing...' : 'Sync Now'}</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleSyncOfflineSales}
+              disabled={isSyncingOffline}
+              className="flex items-center space-x-1 px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition cursor-pointer"
+            >
+              <RefreshCw className={`w-3 h-3 ${isSyncingOffline ? 'animate-spin' : ''}`} />
+              <span>{isSyncingOffline ? (lang === 'kh' ? 'កំពុងសមកាលកម្ម...' : 'Syncing...') : (lang === 'kh' ? 'សមកាលកម្មឥឡូវ' : 'Sync Now')}</span>
+            </button>
+            <button
+              onClick={handleClearOfflineQueue}
+              disabled={isSyncingOffline}
+              className="px-2.5 py-1 text-amber-700 hover:text-red-700 hover:bg-amber-100 rounded-lg text-[11px] font-medium transition cursor-pointer"
+              title={lang === 'kh' ? 'សម្អាតជួររង់ចាំ' : 'Clear Queue'}
+            >
+              {lang === 'kh' ? 'សម្អាត' : 'Clear'}
+            </button>
+          </div>
         </div>
       )}
 

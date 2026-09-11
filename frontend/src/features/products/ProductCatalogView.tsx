@@ -488,14 +488,16 @@ export const ProductCatalogView: React.FC = () => {
         {/* Total Products */}
         <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-xs">
           <div className="flex items-center justify-between text-gray-500 text-xs font-semibold mb-2">
-            <span>{lang === 'kh' ? 'ទំនិញសរុប' : 'Total SKUs'}</span>
+            <span>{lang === 'kh' ? 'ចំនួន SKU សរុប' : 'Total SKUs'}</span>
             <Layers className="w-4 h-4 text-gray-400" />
           </div>
           <div className="text-2xl font-black text-gray-900">{metrics.totalCount}</div>
           <div className="text-[11px] text-gray-400 mt-1 flex items-center space-x-1">
-            <span className="font-semibold text-emerald-600">{metrics.inStock} In Stock</span>
+            <span className="font-semibold text-emerald-600">
+              {metrics.inStock} {lang === 'kh' ? 'មានក្នុងស្តុក' : 'In Stock'}
+            </span>
             <span>•</span>
-            <span>{categories.length} Categories</span>
+            <span>{metrics.totalCount > 0 ? categories.length : 0} {lang === 'kh' ? 'ប្រភេទ' : 'Categories'}</span>
           </div>
         </div>
 
@@ -507,7 +509,7 @@ export const ProductCatalogView: React.FC = () => {
           </div>
           <div className="text-2xl font-black text-amber-600">{metrics.lowStock}</div>
           <div className="text-[11px] text-gray-400 mt-1">
-            <span>{metrics.outOfStock} Out of Stock items</span>
+            <span>{metrics.outOfStock} {lang === 'kh' ? 'មុខទំនិញអស់ពីស្តុក' : 'Out of Stock items'}</span>
           </div>
         </div>
 
@@ -531,7 +533,7 @@ export const ProductCatalogView: React.FC = () => {
           </div>
           <div className="text-2xl font-black text-teal-700">{metrics.avgMargin.toFixed(1)}%</div>
           <div className="text-[11px] text-gray-400 mt-1">
-            Cost: ${metrics.totalCostVal.toFixed(2)}
+            {lang === 'kh' ? 'ដើមទុន:' : 'Cost:'} ${metrics.totalCostVal.toFixed(2)}
           </div>
         </div>
       </div>
@@ -567,10 +569,10 @@ export const ProductCatalogView: React.FC = () => {
               onChange={(e) => setStockStatusFilter(e.target.value as any)}
               className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-hidden focus:border-emerald-500"
             >
-              <option value="ALL">All Stock Status</option>
-              <option value="IN_STOCK">In Stock (&gt; 10)</option>
-              <option value="LOW_STOCK">Low Stock (≤ 10)</option>
-              <option value="OUT_OF_STOCK">Out of Stock (0)</option>
+              <option value="ALL">{lang === 'kh' ? 'ស្ថានភាពស្តុកទាំងអស់' : 'All Stock Status'}</option>
+              <option value="IN_STOCK">{lang === 'kh' ? 'មានក្នុងស្តុក (> ១០)' : 'In Stock (> 10)'}</option>
+              <option value="LOW_STOCK">{lang === 'kh' ? 'ជិតអស់ពីស្តុក (≤ ១០)' : 'Low Stock (≤ 10)'}</option>
+              <option value="OUT_OF_STOCK">{lang === 'kh' ? 'អស់ពីស្តុក (០)' : 'Out of Stock (0)'}</option>
             </select>
 
             {/* Sort filter */}
@@ -579,11 +581,11 @@ export const ProductCatalogView: React.FC = () => {
               onChange={(e) => setSortBy(e.target.value as any)}
               className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-hidden focus:border-emerald-500"
             >
-              <option value="name_asc">Name: A to Z</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="stock_asc">Stock: Low to High</option>
-              <option value="stock_desc">Stock: High to Low</option>
+              <option value="name_asc">{lang === 'kh' ? 'ឈ្មោះ: A ដល់ Z' : 'Name: A to Z'}</option>
+              <option value="price_asc">{lang === 'kh' ? 'តម្លៃ: ទាប ទៅ ខ្ពស់' : 'Price: Low to High'}</option>
+              <option value="price_desc">{lang === 'kh' ? 'តម្លៃ: ខ្ពស់ ទៅ ទាប' : 'Price: High to Low'}</option>
+              <option value="stock_asc">{lang === 'kh' ? 'ស្តុក: ទាប ទៅ ខ្ពស់' : 'Stock: Low to High'}</option>
+              <option value="stock_desc">{lang === 'kh' ? 'ស្តុក: ខ្ពស់ ទៅ ទាប' : 'Stock: High to Low'}</option>
             </select>
 
             {/* View Mode Toggle: Grid vs Table */}
@@ -649,20 +651,26 @@ export const ProductCatalogView: React.FC = () => {
       {isLoading ? (
         <div className="py-20 flex flex-col items-center justify-center space-y-3 bg-white rounded-3xl border border-gray-200">
           <RefreshCw className="w-8 h-8 text-emerald-600 animate-spin" />
-          <p className="text-xs font-semibold text-gray-500">Loading catalog items...</p>
+          <p className="text-xs font-semibold text-gray-500">
+            {lang === 'kh' ? 'កំពុងទាញយកទិន្នន័យកាតាឡុក...' : 'Loading catalog items...'}
+          </p>
         </div>
       ) : filteredProducts.length === 0 ? (
         <div className="py-16 text-center bg-white rounded-3xl border border-gray-200 p-8 space-y-3">
           <Package className="w-12 h-12 text-gray-300 mx-auto" />
-          <h3 className="text-base font-bold text-gray-800">No products found</h3>
+          <h3 className="text-base font-bold text-gray-800">
+            {lang === 'kh' ? 'មិនរកឃើញទំនិញឡើយ' : 'No products found'}
+          </h3>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
-            No products match your current search or category filter. Try clearing your filters or create a new product.
+            {lang === 'kh'
+              ? 'មិនមានទំនិញត្រូវគ្នានឹងការស្វែងរកឬតម្រងប្រភេទបច្ចុប្បន្នទេ។ សូមព្យាយាមសម្អាតតម្រង ឬបង្កើតទំនិញថ្មី។'
+              : 'No products match your current search or category filter. Try clearing your filters or create a new product.'}
           </p>
           <button
             onClick={handleOpenCreateModal}
             className="mt-2 px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-xs hover:bg-emerald-700"
           >
-            + Add New Product
+            {lang === 'kh' ? '+ បន្ថែមទំនិញថ្មី' : '+ Add New Product'}
           </button>
         </div>
       ) : viewMode === 'grid' ? (
@@ -687,7 +695,7 @@ export const ProductCatalogView: React.FC = () => {
                 <div
                   className={`relative aspect-[4/3] bg-gray-100 overflow-hidden ${p.image_url ? 'cursor-pointer group/img' : ''}`}
                   onClick={() => p.image_url && handlePreviewImage(p.image_url, p.name, p.sku, sellPrice, p.category?.name)}
-                  title={p.image_url ? "Click to view full photo" : "No image"}
+                  title={p.image_url ? (lang === 'kh' ? 'ចុចដើម្បីមើលរូបភាពពេញ' : 'Click to view full photo') : (lang === 'kh' ? 'គ្មានរូបភាព' : 'No image')}
                 >
                   {p.image_url ? (
                     <>
@@ -699,20 +707,20 @@ export const ProductCatalogView: React.FC = () => {
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center space-x-1.5 text-white font-bold text-xs backdrop-blur-[1px]">
                         <Eye className="w-5 h-5 drop-shadow-md" />
-                        <span className="drop-shadow-md">Preview Image</span>
+                        <span className="drop-shadow-md">{lang === 'kh' ? 'មើលរូបភាពជាមុន' : 'Preview Image'}</span>
                       </div>
                     </>
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                       <ImageIcon className="w-10 h-10 mb-1 opacity-50" />
-                      <span className="text-[10px] font-semibold">No Image</span>
+                      <span className="text-[10px] font-semibold">{lang === 'kh' ? 'គ្មានរូបភាព' : 'No Image'}</span>
                     </div>
                   )}
 
                   {/* Category badge */}
                   <div className="absolute top-2.5 left-2.5 z-10">
                     <span className="px-2 py-1 bg-gray-900/80 backdrop-blur-xs text-white text-[10px] font-bold rounded-lg uppercase tracking-wider">
-                      {p.category?.name || 'General'}
+                      {p.category?.name || (lang === 'kh' ? 'ទូទៅ' : 'General')}
                     </span>
                   </div>
 
@@ -727,7 +735,7 @@ export const ProductCatalogView: React.FC = () => {
                           : 'bg-emerald-600 text-white'
                       }`}
                     >
-                      {isOut ? 'Out of Stock' : `${qty} in stock`}
+                      {isOut ? (lang === 'kh' ? 'អស់ពីស្តុក' : 'Out of Stock') : `${qty} ${lang === 'kh' ? 'ក្នុងស្តុក' : 'in stock'}`}
                     </span>
                   </div>
                 </div>
@@ -754,13 +762,13 @@ export const ProductCatalogView: React.FC = () => {
                         </span>
                       </div>
                       <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-teal-50 text-teal-700">
-                        {margin}% margin
+                        {lang === 'kh' ? `ចំណេញ ${margin}%` : `${margin}% margin`}
                       </span>
                     </div>
 
                     <div className="text-[11px] text-gray-400 flex items-center justify-between">
-                      <span>Cost: ${costPrice.toFixed(2)}</span>
-                      <span>Unit: {p.unit?.name || 'Piece'}</span>
+                      <span>{lang === 'kh' ? 'ដើម:' : 'Cost:'} ${costPrice.toFixed(2)}</span>
+                      <span>{lang === 'kh' ? 'ខ្នាត:' : 'Unit:'} {p.unit?.name || (lang === 'kh' ? 'កំប៉ុង/គ្រាប់' : 'Piece')}</span>
                     </div>
                   </div>
 
@@ -769,19 +777,19 @@ export const ProductCatalogView: React.FC = () => {
                     <button
                       onClick={() => handleOpenBarcodeModal(p)}
                       className="flex-1 py-1.5 px-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1 border border-gray-200 transition"
-                      title="Print Barcode Shelf Label"
+                      title={lang === 'kh' ? 'បោះពុម្ពបាកូដស្លាកធ្នើរ' : 'Print Barcode Shelf Label'}
                     >
                       <Barcode className="w-3.5 h-3.5" />
-                      <span>Tag</span>
+                      <span>{lang === 'kh' ? 'បាកូដ' : 'Tag'}</span>
                     </button>
 
                     <button
                       onClick={() => handleOpenEditModal(p)}
                       className="flex-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1 border border-emerald-200 transition"
-                      title="Edit Product"
+                      title={lang === 'kh' ? 'កែប្រែទំនិញ' : 'Edit Product'}
                     >
                       <Edit2 className="w-3.5 h-3.5" />
-                      <span>Edit</span>
+                      <span>{lang === 'kh' ? 'កែប្រែ' : 'Edit'}</span>
                     </button>
 
                     <button
@@ -790,7 +798,7 @@ export const ProductCatalogView: React.FC = () => {
                         setIsDeleteModalOpen(true);
                       }}
                       className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-200 transition"
-                      title="Delete Product"
+                      title={lang === 'kh' ? 'លុបទំនិញ' : 'Delete Product'}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -807,14 +815,14 @@ export const ProductCatalogView: React.FC = () => {
             <table className="w-full text-left text-xs text-gray-600">
               <thead className="bg-gray-50 text-gray-500 uppercase tracking-wider font-bold text-[10px] border-b border-gray-200">
                 <tr>
-                  <th className="px-4 py-3.5">Product</th>
-                  <th className="px-4 py-3.5">SKU / Barcode</th>
-                  <th className="px-4 py-3.5">Category</th>
-                  <th className="px-4 py-3.5 text-right">Cost ($)</th>
-                  <th className="px-4 py-3.5 text-right">Selling Price</th>
-                  <th className="px-4 py-3.5 text-right">Margin</th>
-                  <th className="px-4 py-3.5 text-center">Stock Level</th>
-                  <th className="px-4 py-3.5 text-center">Actions</th>
+                  <th className="px-4 py-3.5">{lang === 'kh' ? 'ឈ្មោះទំនិញ' : 'Product'}</th>
+                  <th className="px-4 py-3.5">{lang === 'kh' ? 'លេខ SKU / បាកូដ' : 'SKU / Barcode'}</th>
+                  <th className="px-4 py-3.5">{lang === 'kh' ? 'ប្រភេទទំនិញ' : 'Category'}</th>
+                  <th className="px-4 py-3.5 text-right">{lang === 'kh' ? 'ថ្លៃដើម ($)' : 'Cost ($)'}</th>
+                  <th className="px-4 py-3.5 text-right">{lang === 'kh' ? 'តម្លៃលក់' : 'Selling Price'}</th>
+                  <th className="px-4 py-3.5 text-right">{lang === 'kh' ? 'ភាគរយចំណេញ' : 'Margin'}</th>
+                  <th className="px-4 py-3.5 text-center">{lang === 'kh' ? 'កម្រិតស្តុក' : 'Stock Level'}</th>
+                  <th className="px-4 py-3.5 text-center">{lang === 'kh' ? 'សកម្មភាព' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -965,9 +973,13 @@ export const ProductCatalogView: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg font-bold text-gray-900">
-                    {editingProduct ? `Edit Product: ${editingProduct.name}` : 'Create New Product'}
+                    {editingProduct
+                      ? (lang === 'kh' ? `កែប្រែទំនិញ: ${editingProduct.name}` : `Edit Product: ${editingProduct.name}`)
+                      : (lang === 'kh' ? 'បង្កើតទំនិញថ្មី' : 'Create New Product')}
                   </h2>
-                  <p className="text-xs text-gray-500">Configure SKU, pricing, photo and inventory defaults</p>
+                  <p className="text-xs text-gray-500">
+                    {lang === 'kh' ? 'កំណត់រចនាសម្ព័ន្ធ SKU, តម្លៃលក់, រូបភាព និងកម្រិតស្តុក' : 'Configure SKU, pricing, photo and inventory defaults'}
+                  </p>
                 </div>
               </div>
               <button
@@ -989,16 +1001,18 @@ export const ProductCatalogView: React.FC = () => {
 
               {/* Basic Details */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Basic Information</h4>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  {lang === 'kh' ? 'ព័ត៌មានមូលដ្ឋាន' : 'Basic Information'}
+                </h4>
 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Product Name <span className="text-rose-500">*</span>
+                    {lang === 'kh' ? 'ឈ្មោះទំនិញ' : 'Product Name'} <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Signature Iced Americano"
+                    placeholder={lang === 'kh' ? 'ឧទាហរណ៍៖ កាហ្វេទឹកកកពិសេស' : 'e.g. Signature Iced Americano'}
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-hidden focus:border-emerald-500 focus:bg-white"
@@ -1008,7 +1022,7 @@ export const ProductCatalogView: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      SKU Code <span className="text-rose-500">*</span>
+                      {lang === 'kh' ? 'កូដ SKU' : 'SKU Code'} <span className="text-rose-500">*</span>
                     </label>
                     <div className="flex space-x-1.5">
                       <input
@@ -1022,15 +1036,17 @@ export const ProductCatalogView: React.FC = () => {
                         type="button"
                         onClick={() => setFormSku(`SKU-${Math.floor(1000 + Math.random() * 9000)}`)}
                         className="px-2.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-xl font-bold"
-                        title="Auto Generate SKU"
+                        title={lang === 'kh' ? 'បង្កើតកូដ SKU ដោយស្វ័យប្រវត្តិ' : 'Auto Generate SKU'}
                       >
-                        Auto
+                        {lang === 'kh' ? 'ស្វ័យប្រវត្តិ' : 'Auto'}
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Barcode (EAN-13 / UPC)</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {lang === 'kh' ? 'កូដបារ (EAN-13 / UPC)' : 'Barcode (EAN-13 / UPC)'}
+                    </label>
                     <div className="flex space-x-1.5">
                       <input
                         type="text"
@@ -1043,9 +1059,9 @@ export const ProductCatalogView: React.FC = () => {
                         type="button"
                         onClick={() => setFormBarcode(generateValidEan13('200'))}
                         className="px-2.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-xl font-bold"
-                        title="Generate EAN-13 Barcode"
+                        title={lang === 'kh' ? 'បង្កើតបាកូដ EAN-13' : 'Generate EAN-13 Barcode'}
                       >
-                        Gen
+                        {lang === 'kh' ? 'បង្កើត' : 'Gen'}
                       </button>
                     </div>
                   </div>
@@ -1053,7 +1069,9 @@ export const ProductCatalogView: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Category</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {lang === 'kh' ? 'ប្រភេទទំនិញ' : 'Category'}
+                    </label>
                     <select
                       value={formCategoryId}
                       onChange={(e) => setFormCategoryId(e.target.value ? Number(e.target.value) : '')}
@@ -1068,7 +1086,9 @@ export const ProductCatalogView: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Unit of Measure</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {lang === 'kh' ? 'ខ្នាតរាប់' : 'Unit of Measure'}
+                    </label>
                     <select
                       value={formUnitId}
                       onChange={(e) => setFormUnitId(e.target.value ? Number(e.target.value) : '')}
@@ -1086,12 +1106,14 @@ export const ProductCatalogView: React.FC = () => {
 
               {/* Pricing & Economics */}
               <div className="space-y-3 pt-3 border-t border-gray-100">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pricing & Economics</h4>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  {lang === 'kh' ? 'តម្លៃ និងសេដ្ឋកិច្ច' : 'Pricing & Economics'}
+                </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Cost Price ($ USD) <span className="text-rose-500">*</span>
+                      {lang === 'kh' ? 'ថ្លៃដើម ($ USD)' : 'Cost Price ($ USD)'} <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="number"
@@ -1106,7 +1128,7 @@ export const ProductCatalogView: React.FC = () => {
 
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Selling Price ($ USD) <span className="text-rose-500">*</span>
+                      {lang === 'kh' ? 'តម្លៃលក់ ($ USD)' : 'Selling Price ($ USD)'} <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="number"
@@ -1136,17 +1158,19 @@ export const ProductCatalogView: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <TrendingUp className="w-4 h-4" />
                     <span className="text-xs font-semibold">
-                      Gross Profit per Unit: <strong>${formMarginStats.profit.toFixed(2)}</strong>
+                      {lang === 'kh' ? 'ប្រាក់ចំណេញក្នុងមួយខ្នាត:' : 'Gross Profit per Unit:'} <strong>${formMarginStats.profit.toFixed(2)}</strong>
                     </span>
                   </div>
                   <div className="text-xs font-black">
-                    Margin: {formMarginStats.marginPct}%
+                    {lang === 'kh' ? 'ភាគរយចំណេញ:' : 'Margin:'} {formMarginStats.marginPct}%
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Stock on Hand (HQ-01)</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {lang === 'kh' ? 'ចំនួនស្តុកដែលមាន (HQ-01)' : 'Stock on Hand (HQ-01)'}
+                    </label>
                     <input
                       type="number"
                       min="0"
@@ -1157,7 +1181,9 @@ export const ProductCatalogView: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Low Stock Warning Threshold</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {lang === 'kh' ? 'កម្រិតព្រមានស្តុកទាប' : 'Low Stock Warning Threshold'}
+                    </label>
                     <input
                       type="number"
                       min="0"
@@ -1172,8 +1198,12 @@ export const ProductCatalogView: React.FC = () => {
               {/* Product Media & Image Selector */}
               <div className="space-y-3 pt-3 border-t border-gray-100">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Product Photo</h4>
-                  <span className="text-[10px] text-gray-400 font-semibold uppercase">Supports PNG, JPG, WEBP (Max 5MB)</span>
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    {lang === 'kh' ? 'រូបភាពទំនិញ' : 'Product Photo'}
+                  </h4>
+                  <span className="text-[10px] text-gray-400 font-semibold uppercase">
+                    {lang === 'kh' ? 'គាំទ្រ PNG, JPG, WEBP (អតិបរមា 5MB)' : 'Supports PNG, JPG, WEBP (Max 5MB)'}
+                  </span>
                 </div>
 
                 {/* Local Device Upload Dropzone */}
@@ -1188,17 +1218,19 @@ export const ProductCatalogView: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-xs font-bold text-gray-900 block">
-                        {isUploadingImage ? 'Uploading Image...' : 'Upload Photo from Local Computer'}
+                        {isUploadingImage
+                          ? (lang === 'kh' ? 'កំពុងផ្ទុករូបភាព...' : 'Uploading Image...')
+                          : (lang === 'kh' ? 'ផ្ទុករូបភាពពីកុំព្យូទ័រ' : 'Upload Photo from Local Computer')}
                       </span>
                       <p className="text-[10px] text-gray-500">
-                        Choose an image file stored on your PC or Laptop disk
+                        {lang === 'kh' ? 'ជ្រើសរើសឯកសាររូបភាពដែលរក្សាទុកក្នុងកុំព្យូទ័ររបស់អ្នក' : 'Choose an image file stored on your PC or Laptop disk'}
                       </p>
                     </div>
                   </div>
 
                   <label className="cursor-pointer px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center space-x-1.5 shadow-xs transition shrink-0">
                     <Upload className="w-3.5 h-3.5" />
-                    <span>Browse File</span>
+                    <span>{lang === 'kh' ? 'ជ្រើសរើសឯកសារ' : 'Browse File'}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -1210,7 +1242,9 @@ export const ProductCatalogView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Or Enter Web Image URL</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    {lang === 'kh' ? 'ឬបញ្ចូលតំណភ្ជាប់រូបភាព URL' : 'Or Enter Web Image URL'}
+                  </label>
                   <input
                     type="url"
                     placeholder="https://images.unsplash.com/... or /storage/products/..."
@@ -1224,7 +1258,7 @@ export const ProductCatalogView: React.FC = () => {
                 <div>
                   <span className="text-[11px] font-semibold text-gray-500 block mb-1.5 flex items-center space-x-1">
                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Or Pick from Sample Photo Library:</span>
+                    <span>{lang === 'kh' ? 'ឬជ្រើសរើសពីរូបភាពគំរូ:' : 'Or Pick from Sample Photo Library:'}</span>
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {SAMPLE_IMAGE_PRESETS.map((preset, idx) => (
@@ -1251,7 +1285,7 @@ export const ProductCatalogView: React.FC = () => {
                       <div
                         onClick={() => handlePreviewImage(formImageUrl, formName || 'Product Image Preview', formSku, Number(formSellingPrice) || 0)}
                         className="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 shrink-0 border border-gray-300 relative group/previewthumb cursor-pointer hover:border-emerald-500 hover:ring-2 hover:ring-emerald-200 transition"
-                        title="Click to view full photo"
+                        title={lang === 'kh' ? 'ចុចដើម្បីមើលរូបភាពពេញ' : 'Click to view full photo'}
                       >
                         <img
                           src={formImageUrl}
@@ -1267,14 +1301,16 @@ export const ProductCatalogView: React.FC = () => {
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center space-x-1.5">
-                          <span className="text-xs font-bold text-gray-900 block truncate">Active Product Image</span>
+                          <span className="text-xs font-bold text-gray-900 block truncate">
+                            {lang === 'kh' ? 'រូបភាពទំនិញសកម្ម' : 'Active Product Image'}
+                          </span>
                           <button
                             type="button"
                             onClick={() => handlePreviewImage(formImageUrl, formName || 'Product Image Preview', formSku, Number(formSellingPrice) || 0)}
                             className="text-[10px] text-emerald-600 hover:underline font-bold flex items-center space-x-0.5"
                           >
                             <Eye className="w-3 h-3" />
-                            <span>Preview</span>
+                            <span>{lang === 'kh' ? 'មើលជាមុន' : 'Preview'}</span>
                           </button>
                         </div>
                         <span className="text-[10px] font-mono text-emerald-700 block truncate max-w-xs">{formImageUrl}</span>
@@ -1285,7 +1321,7 @@ export const ProductCatalogView: React.FC = () => {
                       type="button"
                       onClick={() => setFormImageUrl('')}
                       className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                      title="Clear photo"
+                      title={lang === 'kh' ? 'លុបរូបភាព' : 'Clear photo'}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -1300,7 +1336,7 @@ export const ProductCatalogView: React.FC = () => {
                   onClick={() => setIsEditModalOpen(false)}
                   className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition"
                 >
-                  Cancel
+                  {lang === 'kh' ? 'បោះបង់' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
@@ -1310,12 +1346,16 @@ export const ProductCatalogView: React.FC = () => {
                   {isSaving ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Saving...</span>
+                      <span>{lang === 'kh' ? 'កំពុងរក្សាទុក...' : 'Saving...'}</span>
                     </>
                   ) : (
                     <>
                       <Check className="w-4 h-4" />
-                      <span>{editingProduct ? 'Save Changes' : 'Create Product'}</span>
+                      <span>
+                        {editingProduct
+                          ? (lang === 'kh' ? 'រក្សាទុកការកែប្រែ' : 'Save Changes')
+                          : (lang === 'kh' ? 'បង្កើតទំនិញ' : 'Create Product')}
+                      </span>
                     </>
                   )}
                 </button>
@@ -1337,8 +1377,12 @@ export const ProductCatalogView: React.FC = () => {
                   <Printer className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 text-sm">Print Barcode Shelf Label</h3>
-                  <p className="text-[11px] text-gray-400">Retail shelf price tag (50mm x 30mm)</p>
+                  <h3 className="font-bold text-gray-900 text-sm">
+                    {lang === 'kh' ? 'បោះពុម្ពបាកូដស្លាកធ្នើរ' : 'Print Barcode Shelf Label'}
+                  </h3>
+                  <p className="text-[11px] text-gray-400">
+                    {lang === 'kh' ? 'ស្លាកតម្លៃធ្នើរលក់រាយ (50mm x 30mm)' : 'Retail shelf price tag (50mm x 30mm)'}
+                  </p>
                 </div>
               </div>
               <button
@@ -1374,7 +1418,9 @@ export const ProductCatalogView: React.FC = () => {
               {/* Price Callout */}
               <div className="w-full pt-1.5 border-t border-gray-100 flex items-center justify-between px-2">
                 <div className="text-left">
-                  <span className="text-[9px] text-gray-400 block uppercase">Retail Price</span>
+                  <span className="text-[9px] text-gray-400 block uppercase">
+                    {lang === 'kh' ? 'តម្លៃលក់រាយ' : 'Retail Price'}
+                  </span>
                   <span className="text-xs text-emerald-600 font-bold">
                     ៛ {(Number(barcodeProduct.selling_price) * 4100).toLocaleString()}
                   </span>
@@ -1390,7 +1436,9 @@ export const ProductCatalogView: React.FC = () => {
 
             {/* Print quantity options */}
             <div className="flex items-center justify-between text-xs pt-1">
-              <span className="text-gray-600 font-medium">Number of tags to print:</span>
+              <span className="text-gray-600 font-medium">
+                {lang === 'kh' ? 'ចំនួនស្លាកត្រូវបោះពុម្ព:' : 'Number of tags to print:'}
+              </span>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setBarcodeQuantity((q) => Math.max(1, q - 1))}
@@ -1414,7 +1462,7 @@ export const ProductCatalogView: React.FC = () => {
                 onClick={() => setIsBarcodeModalOpen(false)}
                 className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl"
               >
-                Close
+                {lang === 'kh' ? 'បិទ' : 'Close'}
               </button>
               <button
                 onClick={() => {
@@ -1423,7 +1471,9 @@ export const ProductCatalogView: React.FC = () => {
                 className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-200 flex items-center justify-center space-x-1.5"
               >
                 <Printer className="w-4 h-4" />
-                <span>Print Tag ({barcodeQuantity})</span>
+                <span>
+                  {lang === 'kh' ? `បោះពុម្ពស្លាក (${barcodeQuantity})` : `Print Tag (${barcodeQuantity})`}
+                </span>
               </button>
             </div>
           </div>
@@ -1441,9 +1491,13 @@ export const ProductCatalogView: React.FC = () => {
             </div>
 
             <div className="text-center space-y-1">
-              <h3 className="font-bold text-gray-900 text-base">Delete Product?</h3>
+              <h3 className="font-bold text-gray-900 text-base">
+                {lang === 'kh' ? 'លុបទំនិញនេះ?' : 'Delete Product?'}
+              </h3>
               <p className="text-xs text-gray-500">
-                Are you sure you want to remove <strong>"{productToDelete.name}"</strong> ({productToDelete.sku}) from the active catalog?
+                {lang === 'kh'
+                  ? `តើអ្នកប្រាកដជាចង់លុប "${productToDelete.name}" (${productToDelete.sku}) ចេញពីកាតាឡុកឬ?`
+                  : `Are you sure you want to remove "${productToDelete.name}" (${productToDelete.sku}) from the active catalog?`}
               </p>
             </div>
 
@@ -1455,13 +1509,13 @@ export const ProductCatalogView: React.FC = () => {
                 }}
                 className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl"
               >
-                Cancel
+                {lang === 'kh' ? 'បោះបង់' : 'Cancel'}
               </button>
               <button
                 onClick={handleDeleteProduct}
                 className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-200"
               >
-                Delete SKU
+                {lang === 'kh' ? 'លុប SKU នេះ' : 'Delete SKU'}
               </button>
             </div>
           </div>

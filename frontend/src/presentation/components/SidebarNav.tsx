@@ -1,5 +1,5 @@
 import { SmartPosLogo } from './SmartPosLogo';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Factory } from 'react';
 import { useApp, NavTab } from '../../application/context/AppContext';
 import { getNotifications } from '../../data-access/posApi';
 import {
@@ -64,6 +64,20 @@ import {
   Printer,
   Server,
   Send,
+  MessageCircleQuestion,
+  StarHalf,
+  ClipboardList,
+  ListTree,
+  Download,
+  Upload,
+  RefreshCw,
+  Tags,
+  Ruler,
+  ArrowRightLeft,
+  ScanBarcode,
+  Receipt,
+  FactoryIcon,
+  Paperclip,
 } from 'lucide-react';
 
 interface NavItem {
@@ -382,7 +396,7 @@ export const SidebarNav: React.FC = () => {
       },
       {
         id: 'products_group',
-        title: 'Product Management',
+        title: 'Product',
         titleKh: 'គ្រប់គ្រងទំនិញ',
         icon: <Package className="w-4 h-4" />,
         items: [
@@ -395,44 +409,204 @@ export const SidebarNav: React.FC = () => {
             subTab: 'dashboard',
           },
           {
-            id: 'prod_catalog',
-            name: 'Product Catalog',
-            nameKh: 'កាតាឡុកទំនិញ',
+            id: 'prod_all_products',
+            name: 'All Products',
+            nameKh: 'ទំនិញទាំងអស់',
             icon: <Package className="w-4 h-4" />,
             tab: 'products',
             subTab: 'catalog',
           },
+          // {
+          //   id: 'prod_add_product',
+          //   name: 'Add Product',
+          //   nameKh: 'បន្ថែមទំនិញ',
+          //   icon: <Package className="w-4 h-4" />,
+          //   tab: 'products',
+          //   subTab: 'add-product',
+          // },
+          {
+            id: 'prod_categories',
+            name: 'Categories',
+            nameKh: 'ប្រភេទទំនិញ',
+            icon: <FolderTree className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'categories',
+          },
+          {
+            id: 'prod_subcategories',
+            name: 'Subcategories',
+            nameKh: 'ប្រភេទរង',
+            icon: <FolderTree className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'subcategories',
+          },
           {
             id: 'prod_attributes',
-            name: 'Categories & Attributes',
-            nameKh: 'ជំពូក ម៉ាកយីហោ & ខ្នាត',
-            icon: <FolderTree className="w-4 h-4" />,
+            name: 'Attributes',
+            nameKh: 'លក្ខណៈទំនិញ',
+            icon: <Tag className="w-4 h-4" />,
             tab: 'products',
             subTab: 'attributes',
           },
           {
+            id: 'prod_variants',
+            name: 'Variants',
+            nameKh: 'ជម្រើសទំនិញ',
+            icon: <Layers className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'variants',
+          },
+          {
+            id: 'prod_brands',
+            name: 'Brands',
+            nameKh: 'ម៉ាកយីហោ',
+            icon: <Tag className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'brands',
+          },
+          {
+            id: 'prod_units',
+            name: 'Units',
+            nameKh: 'ខ្នាតទំនិញ',
+            icon: <Paperclip className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'units',
+          },
+          {
             id: 'prod_pricing',
-            name: 'Pricing & Costs',
-            nameKh: 'តម្លៃទំនិញ & ថ្លៃដើម',
+            name: 'Product Pricing',
+            nameKh: 'ការកំណត់តម្លៃទំនិញ',
             icon: <DollarSign className="w-4 h-4" />,
             tab: 'products',
             subTab: 'pricing',
           },
           {
-            id: 'prod_tracking',
-            name: 'Batches & Warranties',
-            nameKh: 'ឡូត៍ទំនិញ ស៊េរី & ការធានា',
+            id: 'prod_costs',
+            name: 'Costs',
+            nameKh: 'ថ្លៃដើម',
+            icon: <DollarSign className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'costs',
+          },
+          {
+            id: 'prod_price_history',
+            name: 'Price History',
+            nameKh: 'ប្រវត្តិតម្លៃ',
+            icon: <History className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'price-history',
+          },
+          {
+            id: 'prod_barcodes',
+            name: 'Barcodes',
+            nameKh: 'បាកូដ',
+            icon: <Barcode className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'barcodes',
+          },
+          {
+            id: 'prod_qr_codes',
+            name: 'QR Codes',
+            nameKh: 'QR Code',
+            icon: <QrCode className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'qr-codes',
+          },
+          {
+            id: 'prod_serial_numbers',
+            name: 'Serial Numbers',
+            nameKh: 'លេខស៊េរី',
+            icon: <Hash className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'serial-numbers',
+          },
+          {
+            id: 'prod_batches',
+            name: 'Batches',
+            nameKh: 'ឡូត៍ទំនិញ',
+            icon: <Boxes className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'batches',
+          },
+          {
+            id: 'prod_warranties',
+            name: 'Warranties',
+            nameKh: 'ការធានា',
+            icon: <ShieldCheck className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'warranties',
+          },
+          {
+            id: 'prod_expiration',
+            name: 'Expiration Tracking',
+            nameKh: 'ការតាមដានថ្ងៃផុតកំណត់',
             icon: <Calendar className="w-4 h-4" />,
             tab: 'products',
-            subTab: 'tracking',
+            subTab: 'expiration',
           },
           {
             id: 'prod_manufacturing',
-            name: 'Manufacturing & Operations',
-            nameKh: 'ផលិតកម្ម & ប្រតិបត្តិការ',
-            icon: <Wrench className="w-4 h-4" />,
+            name: 'Manufacturing',
+            nameKh: 'ផលិតកម្ម',
+            icon: <BarChart3 className="w-4 h-4" />,
             tab: 'products',
             subTab: 'manufacturing',
+          },
+          {
+            id: 'prod_operation',
+            name: 'Operation',
+            nameKh: 'ប្រតិបត្តិការ',
+            icon: <Wrench className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'operation',
+          },
+          {
+            id: 'prod_bom',
+            name: 'Bill of Materials',
+            nameKh: 'បញ្ជីសម្ភារៈផលិត',
+            icon: <ClipboardList className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'bom',
+          },
+          {
+            id: 'prod_recipes',
+            name: 'Recipes',
+            nameKh: 'រូបមន្តផលិត',
+            icon: <ListTree className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'recipes',
+          },
+          {
+            id: 'prod_reviews',
+            name: 'Product Reviews',
+            nameKh: 'ការវាយតម្លៃទំនិញ',
+            icon: <Star className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'reviews',
+          },
+          {
+            id: 'prod_questions',
+            name: 'Product Questions',
+            nameKh: 'សំណួរអំពីទំនិញ',
+            icon: <MessageCircleQuestion className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'questions',
+          },
+          {
+            id: 'prod_import_export',
+            name: 'Import & Export',
+            nameKh: 'នាំចូល & នាំចេញទំនិញ',
+            icon: <ArrowRightLeft className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'import',
+          },
+          {
+            id: 'prod_bulk_update',
+            name: 'Bulk Update',
+            nameKh: 'កែប្រែទំនិញច្រើន',
+            icon: <RefreshCw className="w-4 h-4" />,
+            tab: 'products',
+            subTab: 'bulk-update',
           },
         ],
       },
@@ -1183,13 +1357,7 @@ export const SidebarNav: React.FC = () => {
                       {group.items.map((item) => {
                         const isProductSubActive = (subTab?: string) => {
                           if (!subTab) return true;
-                          if (productSubTab === subTab) return true;
-                          if (subTab === 'catalog' && ['catalog', 'variants', 'types', 'barcodes'].includes(productSubTab)) return true;
-                          if (subTab === 'attributes' && ['attributes', 'categories', 'brands', 'units'].includes(productSubTab)) return true;
-                          if (subTab === 'pricing' && ['pricing', 'landed_cost', 'promotions'].includes(productSubTab)) return true;
-                          if (subTab === 'tracking' && ['tracking', 'batches', 'serials', 'warranties'].includes(productSubTab)) return true;
-                          if (subTab === 'manufacturing' && ['manufacturing', 'bom', 'bundles', 'qc', 'data', 'import_export', 'templates', 'audit_logs', 'returns', 'reviews'].includes(productSubTab)) return true;
-                          return false;
+                          return productSubTab === subTab;
                         };
 
                         const isDeliverySubActive = (subTab?: string) => {

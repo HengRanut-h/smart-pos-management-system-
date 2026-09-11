@@ -1,25 +1,24 @@
 <?php
 
-namespace App\Modules\Category\Http\Controllers;
+namespace App\Modules\Brand\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Category\Persistence\Models\Category;
+use App\Modules\Brand\Persistence\Models\Brand;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class CategoryController extends Controller
+class BrandController extends Controller
 {
     public function index(): JsonResponse
     {
-        $categories = Category::query()
-            ->orderBy('sort_order', 'asc')
+        $brands = Brand::query()
             ->orderBy('name', 'asc')
             ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $categories,
+            'data' => $brands,
         ]);
     }
 
@@ -29,55 +28,55 @@ class CategoryController extends Controller
             'name' => 'required|string|max:150',
             'code' => 'nullable|string|max:50',
             'description' => 'nullable|string',
-            'parent_id' => 'nullable|exists:categories,id',
-            'sort_order' => 'nullable|integer',
+            'website' => 'nullable|string|max:255',
+            'logo_path' => 'nullable|string|max:255',
             'status_id' => 'nullable|integer',
         ]);
 
         if (empty($validated['code'])) {
-            $validated['code'] = 'CAT-' . strtoupper(Str::random(6));
+            $validated['code'] = 'BRD-' . strtoupper(Str::random(6));
         }
         $validated['status_id'] = $validated['status_id'] ?? 1;
 
-        $category = Category::create($validated);
+        $brand = Brand::create($validated);
 
         return response()->json([
             'success' => true,
-            'message' => 'Category created successfully',
-            'data' => $category,
+            'message' => 'Brand created successfully',
+            'data' => $brand,
         ], 201);
     }
 
     public function update(Request $request, int $id): JsonResponse
     {
-        $category = Category::findOrFail($id);
+        $brand = Brand::findOrFail($id);
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:150',
             'code' => 'nullable|string|max:50',
             'description' => 'nullable|string',
-            'parent_id' => 'nullable|exists:categories,id',
-            'sort_order' => 'nullable|integer',
+            'website' => 'nullable|string|max:255',
+            'logo_path' => 'nullable|string|max:255',
             'status_id' => 'nullable|integer',
         ]);
 
-        $category->update($validated);
+        $brand->update($validated);
 
         return response()->json([
             'success' => true,
-            'message' => 'Category updated successfully',
-            'data' => $category,
+            'message' => 'Brand updated successfully',
+            'data' => $brand,
         ]);
     }
 
     public function destroy(int $id): JsonResponse
     {
-        $category = Category::findOrFail($id);
-        $category->delete();
+        $brand = Brand::findOrFail($id);
+        $brand->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Category deleted successfully',
+            'message' => 'Brand deleted successfully',
         ]);
     }
 }

@@ -197,5 +197,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
+
+        // 8. Seed Enterprise Products Catalog, Variants, Bundles, and Barcodes
+        $this->call([
+            ProductCatalogSeeder::class,
+            ProductEnterpriseSeeder::class,
+            ProductBarcodeSeeder::class,
+        ]);
     }
 }

@@ -211,9 +211,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
   };
 
-  // Current User Profile State & Auth Session (Managed via HttpOnly Session Cookie)
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  // Current User Profile State & Auth Session (Managed via Bearer Token & HttpOnly Session Cookie)
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem('smartpos_auth_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return !!localStorage.getItem('smartpos_auth_user') || !!localStorage.getItem('auth_token');
+  });
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
 
@@ -221,6 +230,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(user);
     setIsAuthenticated(true);
     setIsLocked(false);
+    try {
+      localStorage.setItem('smartpos_auth_user', JSON.stringify(user));
+    } catch (e) {}
   };
 
   const logoutUser = () => {
@@ -272,7 +284,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const refreshUserProfile = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const hasOAuth = urlParams.has('oauth') || urlParams.has('token');
+    const hasOAuth = urlParams.has('oauth') || urlParams.has('token') || urlParams.has('code');
+
+    // If OAuth is actively processing in URL query, let LoginView handle exchange
+    if (hasOAuth) {
+      setIsLoadingProfile(false);
+      return;
+    }
+
+    const token = localStorage.getItem('auth_token');
+    if (!token && !currentUser) {
+      setIsLoadingProfile(false);
+      setIsAuthenticated(false);
+      return;
+    }
 
     setIsLoadingProfile(true);
     getUserProfile()
@@ -280,6 +305,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (data && data.id) {
           setCurrentUser(data);
           setIsAuthenticated(true);
+          try {
+            localStorage.setItem('smartpos_auth_user', JSON.stringify(data));
+          } catch (e) {}
 
           // Route to Customer Portal or Staff POS based on role
           const roleCodes = data.roles?.map((r) => r.code?.toUpperCase()) || [];
@@ -291,17 +319,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           setCurrentUser(null);
           setIsAuthenticated(false);
+          localStorage.removeItem('smartpos_auth_user');
+          localStorage.removeItem('auth_token');
         }
       })
-      .catch((err) => {
-        setCurrentUser(null);
-        setIsAuthenticated(false);
+      .catch(() => {
+        // If profile fetch fails but we had a stored user, keep local or reset
+        if (!token) {
+          setCurrentUser(null);
+          setIsAuthenticated(false);
+        }
       })
       .finally(() => {
         setIsLoadingProfile(false);
-        if (hasOAuth) {
-          window.history.replaceState({}, document.title, window.location.pathname || '/');
-        }
       });
   };
 

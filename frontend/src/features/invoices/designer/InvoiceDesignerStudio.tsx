@@ -23,6 +23,7 @@ import {
   ZoomIn,
   ZoomOut,
   Stamp,
+  FileText,
 } from 'lucide-react';
 import { BACKGROUND_TONE_PRESETS, WATERMARK_PRESETS } from '../invoiceCustomization';
 

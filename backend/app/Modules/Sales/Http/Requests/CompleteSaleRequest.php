@@ -4,12 +4,34 @@ namespace App\Modules\Sales\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Modules\Sales\Application\DTOs\CompleteSaleDTO;
+use App\Modules\Product\Persistence\Models\Product;
+use App\Modules\Unit\Persistence\Models\Unit;
 
 class CompleteSaleRequest extends FormRequest
 {
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $rawItems = $this->input('items');
+        if (is_array($rawItems)) {
+            $defaultUnitId = Unit::value('id') ?? 1;
+            $items = array_map(function ($item) use ($defaultUnitId) {
+                if (is_array($item)) {
+                    if (empty($item['unit_id'])) {
+                        $productId = $item['product_id'] ?? null;
+                        $productUnitId = $productId ? Product::where('id', $productId)->value('unit_id') : null;
+                        $item['unit_id'] = $productUnitId ?: $defaultUnitId;
+                    }
+                }
+                return $item;
+            }, $rawItems);
+
+            $this->merge(['items' => $items]);
+        }
     }
 
     public function rules(): array

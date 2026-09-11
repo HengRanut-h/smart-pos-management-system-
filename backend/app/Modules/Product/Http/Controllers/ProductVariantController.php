@@ -49,24 +49,62 @@ class ProductVariantController extends Controller
         ], 201);
     }
 
-    public function generateMatrix(Request $request): JsonResponse
+    public function update(Request $request, $id): JsonResponse
     {
+        $variant = ProductVariant::findOrFail($id);
+
         $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
+            'sku' => 'nullable|string',
+            'barcode' => 'nullable|string',
+            'variant_name' => 'nullable|string',
+            'attribute_values' => 'nullable|array',
+            'cost_price' => 'nullable|numeric|min:0',
+            'selling_price' => 'nullable|numeric|min:0',
+            'wholesale_price' => 'nullable|numeric|min:0',
+            'weight' => 'nullable|numeric',
+            'stock_quantity' => 'nullable|numeric|min:0',
+            'image_url' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $variant->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Variant updated successfully',
+            'data' => $variant,
+        ]);
+    }
+
+    public function generateMatrix(Request $request, $id = null): JsonResponse
+    {
+        $targetId = $id ?? $request->input('product_id');
+
+        if (!$targetId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product ID is required.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
             'attributes' => 'required|array',
             'base_price' => 'nullable|numeric',
             'base_cost' => 'nullable|numeric',
+            'default_price' => 'nullable|numeric',
+            'default_cost' => 'nullable|numeric',
         ]);
 
-        $product = Product::findOrFail($validated['product_id']);
+        $product = Product::findOrFail($targetId);
         $attrs = $validated['attributes'];
-        $basePrice = $validated['base_price'] ?? $product->selling_price;
-        $baseCost = $validated['base_cost'] ?? $product->cost_price;
+        $basePrice = $validated['base_price'] ?? $validated['default_price'] ?? $product->selling_price;
+        $baseCost = $validated['base_cost'] ?? $validated['default_cost'] ?? $product->cost_price;
 
         $combinations = [[]];
         foreach ($attrs as $attr) {
             $name = $attr['name'];
             $values = $attr['values'] ?? [];
+            if (empty($values)) continue;
             $tmp = [];
             foreach ($combinations as $comb) {
                 foreach ($values as $v) {
@@ -74,6 +112,13 @@ class ProductVariantController extends Controller
                 }
             }
             $combinations = $tmp;
+        }
+
+        if (empty($combinations) || (count($combinations) === 1 && empty($combinations[0]))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No valid attribute values provided.',
+            ], 422);
         }
 
         $created = [];

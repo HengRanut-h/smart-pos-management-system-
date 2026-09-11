@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StaffBadgeTemplate, StaffBadgeTemplateVersion, BadgeOrientation, BadgeCardSize, PhotoShape } from './types';
+import React, { useState, useEffect } from 'react';
+import { StaffBadgeTemplate, StaffBadgeTemplateVersion, BadgeOrientation, BadgeCardSize, PhotoShape, BadgeBackDesign } from './types';
 import { StaffBadgeCardPreview } from './StaffBadgeCardPreview';
 import { saveStaffBadgeTemplate, restoreStaffBadgeTemplateVersion } from '../../data-access/posApi';
 import { useApp } from '../../application/context/AppContext';
@@ -60,7 +60,7 @@ export const StaffBadgeDesignerStudio: React.FC<StaffBadgeDesignerStudioProps> =
   const [isDefault, setIsDefault] = useState(template.is_default || false);
 
   const [frontDesign, setFrontDesign] = useState(template.front_design);
-  const [backDesign, setBackDesign] = useState(template.back_design || {
+  const [backDesign, setBackDesign] = useState<BadgeBackDesign>(template.back_design || {
     background_color: '#ffffff',
     text_color: '#1e293b',
     instructions: "This card is the property of SmartPOS Solutions Co., Ltd.\nIf found, please return to any SmartPOS branch or call +855 23 999 888.\nUnauthorized use or duplication is strictly prohibited.",
@@ -68,7 +68,7 @@ export const StaffBadgeDesignerStudio: React.FC<StaffBadgeDesignerStudioProps> =
     show_emergency_contact: true,
     emergency_phone: '+855 12 999 111',
     show_barcode: true,
-    barcode_type: 'CODE_128',
+    barcode_type: 'CODE_128' as const,
     show_signature_strip: true,
   });
 

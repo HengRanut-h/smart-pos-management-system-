@@ -551,14 +551,61 @@ export const deleteProduct = async (id: number): Promise<void> => {
   await apiClient.delete(`/products/${id}`);
 };
 
-export const getCategories = async (): Promise<Array<{ id: number; name: string }>> => {
+export const getCategories = async (): Promise<Array<{ id: number; name: string; code?: string; description?: string; parent_id?: number | null; sort_order?: number }>> => {
   const res = await apiClient.get('/categories');
   return res.data?.data || [];
 };
 
-export const getUnits = async (): Promise<Array<{ id: number; name: string; symbol?: string }>> => {
+export const createCategory = async (payload: { name: string; code?: string; description?: string; parent_id?: number | null }): Promise<any> => {
+  const res = await apiClient.post('/categories', payload);
+  return res.data?.data || res.data;
+};
+
+export const updateCategory = async (id: number, payload: { name?: string; code?: string; description?: string; parent_id?: number | null }): Promise<any> => {
+  const res = await apiClient.put(`/categories/${id}`, payload);
+  return res.data?.data || res.data;
+};
+
+export const deleteCategory = async (id: number): Promise<void> => {
+  await apiClient.delete(`/categories/${id}`);
+};
+
+export const getUnits = async (): Promise<Array<{ id: number; name: string; code?: string; symbol?: string; decimal_places?: number }>> => {
   const res = await apiClient.get('/units');
   return res.data?.data || [];
+};
+
+export const createUnit = async (payload: { name: string; code?: string; symbol?: string; decimal_places?: number }): Promise<any> => {
+  const res = await apiClient.post('/units', payload);
+  return res.data?.data || res.data;
+};
+
+export const updateUnit = async (id: number, payload: { name?: string; code?: string; symbol?: string; decimal_places?: number }): Promise<any> => {
+  const res = await apiClient.put(`/units/${id}`, payload);
+  return res.data?.data || res.data;
+};
+
+export const deleteUnit = async (id: number): Promise<void> => {
+  await apiClient.delete(`/units/${id}`);
+};
+
+export const getBrands = async (): Promise<Array<{ id: number; name: string; code?: string; description?: string; website?: string }>> => {
+  const res = await apiClient.get('/brands');
+  return res.data?.data || [];
+};
+
+export const createBrand = async (payload: { name: string; code?: string; description?: string; website?: string }): Promise<any> => {
+  const res = await apiClient.post('/brands', payload);
+  return res.data?.data || res.data;
+};
+
+export const updateBrand = async (id: number, payload: { name?: string; code?: string; description?: string; website?: string }): Promise<any> => {
+  const res = await apiClient.put(`/brands/${id}`, payload);
+  return res.data?.data || res.data;
+};
+
+export const deleteBrand = async (id: number): Promise<void> => {
+  await apiClient.delete(`/brands/${id}`);
 };
 
 

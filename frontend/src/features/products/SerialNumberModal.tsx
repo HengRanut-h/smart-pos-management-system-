@@ -17,7 +17,7 @@ export const SerialNumberModal: React.FC<SerialNumberModalProps> = ({
   onClose,
   onSaved,
 }) => {
-  const { notify } = useApp();
+  const { lang, notify } = useApp();
   const [serialNumber, setSerialNumber] = useState(`SN-${product.sku || 'ITEM'}-${Math.floor(100000 + Math.random() * 900000)}`);
   const [imei, setImei] = useState(`86${Math.floor(1000000000000 + Math.random() * 9000000000000)}`);
   const [macAddress, setMacAddress] = useState('00:1B:44:11:3A:B7');
@@ -38,7 +38,10 @@ export const SerialNumberModal: React.FC<SerialNumberModalProps> = ({
         warranty_months: warrantyMonths,
         status,
       });
-      notify.success(`Serial number "${serialNumber}" registered successfully!`, 'Serial Number Saved');
+      notify.success(
+        lang === 'kh' ? `បានចុះបញ្ជីលេខស៊េរី "${serialNumber}" ជោគជ័យ!` : `Serial number "${serialNumber}" registered successfully!`,
+        'Serial Number Saved'
+      );
       onSaved();
       onClose();
     } catch (err: any) {
@@ -58,8 +61,12 @@ export const SerialNumberModal: React.FC<SerialNumberModalProps> = ({
               <Hash className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Serial & IMEI Register</h3>
-              <p className="text-xs text-gray-500">Product: {product.name}</p>
+              <h3 className="text-lg font-bold text-gray-900">
+                {lang === 'kh' ? 'ចុះបញ្ជីលេខស៊េរី \u0026 IMEI' : 'Serial \u0026 IMEI Register'}
+              </h3>
+              <p className="text-xs text-gray-500">
+                {lang === 'kh' ? 'ទំនិញ៖' : 'Product:'} {product.name}
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-700 rounded-full">
@@ -69,7 +76,9 @@ export const SerialNumberModal: React.FC<SerialNumberModalProps> = ({
 
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Serial Number (Unique)</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              {lang === 'kh' ? 'លេខស៊េរី (មិនច្រឡំគ្នា)' : 'Serial Number (Unique)'}
+            </label>
             <input
               type="text"
               value={serialNumber}
@@ -78,7 +87,9 @@ export const SerialNumberModal: React.FC<SerialNumberModalProps> = ({
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">IMEI Number (Optional)</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              {lang === 'kh' ? 'លេខ IMEI (ជម្រើស)' : 'IMEI Number (Optional)'}
+            </label>
             <input
               type="text"
               value={imei}
@@ -87,7 +98,9 @@ export const SerialNumberModal: React.FC<SerialNumberModalProps> = ({
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">MAC Address (Optional)</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              {lang === 'kh' ? 'អាសយដ្ឋាន MAC (ជម្រើស)' : 'MAC Address (Optional)'}
+            </label>
             <input
               type="text"
               value={macAddress}
@@ -97,7 +110,9 @@ export const SerialNumberModal: React.FC<SerialNumberModalProps> = ({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Warranty (Months)</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'ធានា (ខែ)' : 'Warranty (Months)'}
+              </label>
               <input
                 type="number"
                 value={warrantyMonths}
@@ -106,16 +121,18 @@ export const SerialNumberModal: React.FC<SerialNumberModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Status</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'ស្ថានភាព' : 'Status'}
+              </label>
               <select
                 value={status}
                 onChange={e => setStatus(e.target.value as any)}
                 className="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 outline-none bg-white"
               >
-                <option value="AVAILABLE">AVAILABLE</option>
-                <option value="ALLOCATED">ALLOCATED</option>
-                <option value="SOLD">SOLD</option>
-                <option value="DEFECTIVE">DEFECTIVE</option>
+                <option value="AVAILABLE">{lang === 'kh' ? 'ទំនេរអាចលក់បាន' : 'AVAILABLE'}</option>
+                <option value="ALLOCATED">{lang === 'kh' ? 'បានបែងចែក' : 'ALLOCATED'}</option>
+                <option value="SOLD">{lang === 'kh' ? 'បានលក់រួច' : 'SOLD'}</option>
+                <option value="DEFECTIVE">{lang === 'kh' ? 'ខូច/មានបញ្ហា' : 'DEFECTIVE'}</option>
               </select>
             </div>
           </div>
@@ -123,7 +140,7 @@ export const SerialNumberModal: React.FC<SerialNumberModalProps> = ({
 
         <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-end space-x-3">
           <button onClick={onClose} className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-200 rounded-lg">
-            Cancel
+            {lang === 'kh' ? 'បោះបង់' : 'Cancel'}
           </button>
           <button
             onClick={handleSave}
@@ -131,7 +148,11 @@ export const SerialNumberModal: React.FC<SerialNumberModalProps> = ({
             className="px-5 py-2 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 rounded-lg shadow-md flex items-center space-x-1.5"
           >
             <Check className="w-4 h-4" />
-            <span>{isSaving ? 'Saving...' : 'Register Serial'}</span>
+            <span>
+              {isSaving
+                ? (lang === 'kh' ? 'កំពុងរក្សាទុក...' : 'Saving...')
+                : (lang === 'kh' ? 'ចុះបញ្ជីលេខស៊េរី' : 'Register Serial')}
+            </span>
           </button>
         </div>
       </div>

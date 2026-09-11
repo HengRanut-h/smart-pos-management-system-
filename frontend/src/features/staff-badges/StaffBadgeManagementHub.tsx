@@ -612,7 +612,10 @@ export const StaffBadgeManagementHub: React.FC = () => {
                       {/* Action Buttons Footer */}
                       <div className="flex items-center justify-end space-x-2 pt-2 border-t border-gray-100">
                         <button
-                          onClick={() => setPreviewingBadge(badge)}
+                          onClick={() => {
+                            setSelectedBadgeForPrint(badge);
+                            setIsSinglePrintModalOpen(true);
+                          }}
                           className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold transition flex items-center space-x-1"
                         >
                           <Eye className="w-3.5 h-3.5" />

@@ -132,7 +132,8 @@ class GoogleAuthController extends Controller
             }
         }
 
-        // Verify identity integrity
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+
         if (!$googleData || empty($googleData['email'])) {
             $errorMsg = $exchangeError ?: 'Failed to retrieve authenticated Google profile. Please try again.';
             if ($request->expectsJson() || $request->isJson()) {
@@ -141,7 +142,7 @@ class GoogleAuthController extends Controller
                     'message' => $errorMsg,
                 ], 422);
             }
-            return redirect('http://localhost:3000/login?error=' . urlencode($errorMsg));
+            return redirect($frontendUrl . '/?error=' . urlencode($errorMsg));
         }
 
         if (isset($googleData['email_verified']) && $googleData['email_verified'] === false) {
@@ -151,7 +152,7 @@ class GoogleAuthController extends Controller
                     'message' => 'Your Google email is not verified.',
                 ], 422);
             }
-            return redirect('http://localhost:3000/login?error=' . urlencode('Google email is not verified.'));
+            return redirect($frontendUrl . '/?error=' . urlencode('Google email is not verified.'));
         }
 
         $user = $this->googleAuthService->handleGoogleUser($googleData);
@@ -179,7 +180,7 @@ class GoogleAuthController extends Controller
             ]);
         }
 
-        // Clean redirect without exposing sensitive tokens in URL query string
-        return redirect('http://localhost:3000/?oauth=google');
+        // Redirect with token to frontend SPA for seamless session authentication
+        return redirect($frontendUrl . '/?token=' . urlencode($sessionData['token']) . '&oauth=google');
     }
 }

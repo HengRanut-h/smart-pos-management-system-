@@ -147,15 +147,30 @@ class ProductCatalogController extends Controller
             'gallery_images' => 'nullable|array',
             'tags' => 'nullable|array',
             'weight' => 'nullable|numeric',
-            'dimensions' => 'nullable|string',
+            'dimensions' => 'nullable',
             'seo_slug' => 'nullable|string',
             'seo_title' => 'nullable|string',
             'seo_description' => 'nullable|string',
             'is_featured' => 'nullable|boolean',
             'is_new' => 'nullable|boolean',
-            'visibility' => 'nullable|array',
+            'visibility' => 'nullable',
             'status_id' => 'nullable|exists:sys_statuses,id',
         ]);
+
+        if (isset($validated['dimensions']) && is_array($validated['dimensions'])) {
+            $l = $validated['dimensions']['length'] ?? null;
+            $w = $validated['dimensions']['width'] ?? null;
+            $h = $validated['dimensions']['height'] ?? null;
+            if ($l || $w || $h) {
+                $validated['dimensions'] = trim("{$l}x{$w}x{$h} cm");
+            } else {
+                $validated['dimensions'] = null;
+            }
+        }
+
+        if (isset($validated['visibility']) && is_string($validated['visibility'])) {
+            $validated['visibility'] = [$validated['visibility']];
+        }
 
         if (empty($validated['status_id'])) {
             $validated['status_id'] = 1;
@@ -221,16 +236,31 @@ class ProductCatalogController extends Controller
             'gallery_images' => 'nullable|array',
             'tags' => 'nullable|array',
             'weight' => 'nullable|numeric',
-            'dimensions' => 'nullable|string',
+            'dimensions' => 'nullable',
             'seo_slug' => 'nullable|string',
             'seo_title' => 'nullable|string',
             'seo_description' => 'nullable|string',
             'is_featured' => 'nullable|boolean',
             'is_new' => 'nullable|boolean',
             'is_discontinued' => 'nullable|boolean',
-            'visibility' => 'nullable|array',
+            'visibility' => 'nullable',
             'status_id' => 'nullable|exists:sys_statuses,id',
         ]);
+
+        if (isset($validated['dimensions']) && is_array($validated['dimensions'])) {
+            $l = $validated['dimensions']['length'] ?? null;
+            $w = $validated['dimensions']['width'] ?? null;
+            $h = $validated['dimensions']['height'] ?? null;
+            if ($l || $w || $h) {
+                $validated['dimensions'] = trim("{$l}x{$w}x{$h} cm");
+            } else {
+                $validated['dimensions'] = null;
+            }
+        }
+
+        if (isset($validated['visibility']) && is_string($validated['visibility'])) {
+            $validated['visibility'] = [$validated['visibility']];
+        }
 
         if (isset($validated['selling_price']) && (float)$validated['selling_price'] !== (float)$product->selling_price) {
             ProductPriceHistory::create([

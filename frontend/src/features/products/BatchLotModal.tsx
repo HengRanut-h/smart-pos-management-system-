@@ -17,7 +17,7 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
   onClose,
   onSaved,
 }) => {
-  const { notify } = useApp();
+  const { lang, notify } = useApp();
   const [batchNumber, setBatchNumber] = useState(`BATCH-${Date.now().toString().slice(-6)}`);
   const [lotNumber, setLotNumber] = useState(`LOT-${new Date().getFullYear()}-01`);
   const [mfgDate, setMfgDate] = useState(new Date().toISOString().split('T')[0]);
@@ -46,7 +46,10 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
         cost_per_unit: costPerUnit,
         status: 'ACTIVE',
       });
-      notify.success('Batch / Lot created successfully!', 'Batch Created');
+      notify.success(
+        lang === 'kh' ? 'បានចុះបញ្ជីឡូត៍/កាលបរិច្ឆេទផុតកំណត់ជោគជ័យ!' : 'Batch / Lot created successfully!',
+        'Batch Created'
+      );
       onSaved();
       onClose();
     } catch (err: any) {
@@ -66,8 +69,12 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
               <Calendar className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Add Batch & Expiry Tracker</h3>
-              <p className="text-xs text-gray-500">Product: {product.name} ({product.sku})</p>
+              <h3 className="text-lg font-bold text-gray-900">
+                {lang === 'kh' ? 'បន្ថែមការតាមដានឡូត៍ \u0026 ផុតកំណត់' : 'Add Batch \u0026 Expiry Tracker'}
+              </h3>
+              <p className="text-xs text-gray-500">
+                {lang === 'kh' ? 'ទំនិញ៖' : 'Product:'} {product.name} ({product.sku})
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-700 rounded-full">
@@ -78,7 +85,9 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Batch Number</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'លេខឡូត៍' : 'Batch Number'}
+              </label>
               <input
                 type="text"
                 value={batchNumber}
@@ -87,7 +96,9 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Lot Number</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'លេខកញ្ចប់ Lot' : 'Lot Number'}
+              </label>
               <input
                 type="text"
                 value={lotNumber}
@@ -96,7 +107,9 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Manufacturing Date</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'កាលបរិច្ឆេទផលិត' : 'Manufacturing Date'}
+              </label>
               <input
                 type="date"
                 value={mfgDate}
@@ -105,7 +118,9 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Expiry Date</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'កាលបរិច្ឆេទផុតកំណត់' : 'Expiry Date'}
+              </label>
               <input
                 type="date"
                 value={expDate}
@@ -114,7 +129,9 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Batch Quantity</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'ចំនួនក្នុងឡូត៍' : 'Batch Quantity'}
+              </label>
               <input
                 type="number"
                 value={quantity}
@@ -123,7 +140,9 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Cost Per Unit ($)</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'ថ្លៃដើមក្នុងមួយខ្នាត ($)' : 'Cost Per Unit ($)'}
+              </label>
               <input
                 type="number"
                 step="0.01"
@@ -133,7 +152,9 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Alert Threshold (Days Before Expiry)</label>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {lang === 'kh' ? 'កម្រិតព្រមាន (ចំនួនថ្ងៃមុនផុតកំណត់)' : 'Alert Threshold (Days Before Expiry)'}
+              </label>
               <input
                 type="number"
                 value={alertDays}
@@ -146,7 +167,7 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
 
         <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-end space-x-3">
           <button onClick={onClose} className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-200 rounded-lg">
-            Cancel
+            {lang === 'kh' ? 'បោះបង់' : 'Cancel'}
           </button>
           <button
             onClick={handleSave}
@@ -154,7 +175,11 @@ export const BatchLotModal: React.FC<BatchLotModalProps> = ({
             className="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 rounded-lg shadow-md flex items-center space-x-1.5"
           >
             <Check className="w-4 h-4" />
-            <span>{isSaving ? 'Registering...' : 'Register Batch'}</span>
+            <span>
+              {isSaving
+                ? (lang === 'kh' ? 'កំពុងចុះបញ្ជី...' : 'Registering...')
+                : (lang === 'kh' ? 'ចុះបញ្ជីឡូត៍' : 'Register Batch')}
+            </span>
           </button>
         </div>
       </div>

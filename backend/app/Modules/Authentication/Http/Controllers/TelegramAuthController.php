@@ -31,6 +31,8 @@ class TelegramAuthController extends Controller
     {
         $data = $request->all();
 
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+
         if (empty($data['id'])) {
             if ($request->expectsJson() || $request->isJson()) {
                 return response()->json([
@@ -38,7 +40,7 @@ class TelegramAuthController extends Controller
                     'message' => 'Invalid Telegram user payload.',
                 ], 422);
             }
-            return redirect('http://localhost:3000/login?error=' . urlencode('Invalid Telegram authentication payload.'));
+            return redirect($frontendUrl . '/?error=' . urlencode('Invalid Telegram authentication payload.'));
         }
 
         // Validate cryptographic signature using Telegram Bot Token if set
@@ -52,7 +54,7 @@ class TelegramAuthController extends Controller
                         'message' => 'Invalid Telegram authentication signature.',
                     ], 403);
                 }
-                return redirect('http://localhost:3000/login?error=' . urlencode('Telegram signature verification failed.'));
+                return redirect($frontendUrl . '/?error=' . urlencode('Telegram signature verification failed.'));
             }
         }
 
@@ -81,6 +83,6 @@ class TelegramAuthController extends Controller
             ]);
         }
 
-        return redirect('http://localhost:3000/?oauth=telegram');
+        return redirect($frontendUrl . '/?token=' . urlencode($sessionData['token']) . '&oauth=telegram');
     }
 }

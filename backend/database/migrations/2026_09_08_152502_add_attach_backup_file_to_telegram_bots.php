@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('telegram_bots')) {
+            return;
+        }
+
         Schema::table('telegram_bots', function (Blueprint $table) {
             if (!Schema::hasColumn('telegram_bots', 'attach_backup_file')) {
                 $table->boolean('attach_backup_file')->default(true)->after('notify_restore_events');

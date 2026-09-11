@@ -27,29 +27,38 @@ Route::prefix('products')->group(function () {
     // 04. Variants
     Route::get('/variants', [ProductVariantController::class, 'index']);
     Route::post('/variants', [ProductVariantController::class, 'store']);
-    Route::post('/variants/matrix', [ProductVariantController::class, 'generateMatrix']);
+    Route::put('/variants/{id}', [ProductVariantController::class, 'update'])->where('id', '[0-9]+');
     Route::delete('/variants/{id}', [ProductVariantController::class, 'destroy'])->where('id', '[0-9]+');
+    Route::post('/variants/matrix', [ProductVariantController::class, 'generateMatrix']);
+    Route::post('/{id}/variants/generate', [ProductVariantController::class, 'generateMatrix'])->where('id', '[0-9]+');
 
     // 08 & 09. Pricing & Landed Cost
     Route::get('/price-rules', [ProductPricingController::class, 'getPriceRules']);
     Route::post('/price-rules', [ProductPricingController::class, 'storePriceRule']);
+    Route::post('/{id}/price-rules', [ProductPricingController::class, 'storePriceRule'])->where('id', '[0-9]+');
     Route::post('/landed-cost/calculate', [ProductPricingController::class, 'calculateLandedCost']);
+    Route::post('/{id}/landed-cost', [ProductPricingController::class, 'calculateLandedCost'])->where('id', '[0-9]+');
 
     // 10, 11, 12, 23, 25. Inventory, Warehouse Bins, Batches, Serials, Conversions
     Route::get('/warehouse-locations', [ProductInventoryController::class, 'getWarehouseLocations']);
     Route::post('/warehouse-locations', [ProductInventoryController::class, 'storeWarehouseLocation']);
+    Route::post('/{id}/warehouse-locations', [ProductInventoryController::class, 'storeWarehouseLocation'])->where('id', '[0-9]+');
     Route::get('/batches', [ProductInventoryController::class, 'getBatches']);
     Route::post('/batches', [ProductInventoryController::class, 'storeBatch']);
     Route::get('/serials', [ProductInventoryController::class, 'getSerialNumbers']);
+    Route::get('/serial-numbers', [ProductInventoryController::class, 'getSerialNumbers']);
     Route::post('/serials', [ProductInventoryController::class, 'storeSerialNumber']);
+    Route::post('/serial-numbers', [ProductInventoryController::class, 'storeSerialNumber']);
     Route::get('/unit-conversions', [ProductInventoryController::class, 'getUnitConversions']);
     Route::post('/unit-conversions', [ProductInventoryController::class, 'storeUnitConversion']);
 
     // 21 & 22. Bundles & BOM Manufacturing
     Route::get('/{productId}/bundles', [ProductManufacturingController::class, 'getBundles'])->where('productId', '[0-9]+');
     Route::post('/bundles', [ProductManufacturingController::class, 'saveBundle']);
+    Route::post('/{id}/bundle-items', [ProductManufacturingController::class, 'saveBundle'])->where('id', '[0-9]+');
     Route::get('/{productId}/boms', [ProductManufacturingController::class, 'getBoms'])->where('productId', '[0-9]+');
     Route::post('/boms', [ProductManufacturingController::class, 'saveBom']);
+    Route::post('/{id}/bom-items', [ProductManufacturingController::class, 'saveBom'])->where('id', '[0-9]+');
 
     // 28 & 31. QC Inspections & Reviews
     Route::get('/qc-inspections', [ProductQualityController::class, 'getQcInspections']);

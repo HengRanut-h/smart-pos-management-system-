@@ -181,28 +181,63 @@ export const LoginView: React.FC = () => {
     if (oauthError) {
       setErrorMsg(decodeURIComponent(oauthError));
       window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (oauth) {
-      setIsSubmitting(true);
-      setSuccessMsg(lang === 'kh' ? 'កំពុងផ្ទៀងផ្ទាត់គណនី...' : 'Verifying authenticated session...');
+      return;
+    }
 
+    const effectiveToken = token || localStorage.getItem('auth_token');
+
+    if (token) {
+      localStorage.setItem('auth_token', token);
+    }
+
+    if (token || oauth) {
+      setIsSubmitting(true);
+      const isKh = lang === 'kh';
+      setSuccessMsg(isKh ? 'កំពុងផ្ទៀងផ្ទាត់គណនី...' : 'Verifying authenticated session...');
+
+      const headers: Record<string, string> = {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      };
+      if (effectiveToken) {
+        headers['Authorization'] = `Bearer ${effectiveToken}`;
+      }
+
+      // Try user profile first, fallback to /auth/me
       fetch('/api/v1/user/profile', {
         credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
+        headers,
       })
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.data) {
-            setSuccessMsg(lang === 'kh' ? 'ចូលប្រព័ន្ធបានជោគជ័យ!' : 'Logged in successfully!');
+            setSuccessMsg(isKh ? 'ចូលប្រព័ន្ធបានជោគជ័យ!' : 'Logged in successfully!');
             buildUserProfileAndLogin(data.data);
+          } else if (effectiveToken) {
+            // Fallback to /auth/me with Bearer token
+            return fetch('/api/v1/auth/me', {
+              credentials: 'include',
+              headers: {
+                'Authorization': `Bearer ${effectiveToken}`,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+              },
+            })
+              .then((res) => res.json())
+              .then((meData) => {
+                if (meData.success && meData.data) {
+                  setSuccessMsg(isKh ? 'ចូលប្រព័ន្ធបានជោគជ័យ!' : 'Logged in successfully!');
+                  buildUserProfileAndLogin(meData.data);
+                } else {
+                  setErrorMsg(isKh ? 'បរាជ័យក្នុងការទាញយកព័ត៌មានគណនី' : 'Failed to initialize session profile.');
+                }
+              });
           } else {
-            setErrorMsg('Failed to initialize session profile.');
+            setErrorMsg(isKh ? 'បរាជ័យក្នុងការទាញយកព័ត៌មានគណនី' : 'Failed to initialize session profile.');
           }
         })
         .catch((err) => {
-          setErrorMsg('Authentication error: ' + err.message);
+          setErrorMsg(isKh ? `កំហុសក្នុងការផ្ទៀងផ្ទាត់: ${err.message}` : `Authentication error: ${err.message}`);
         })
         .finally(() => {
           setIsSubmitting(false);
@@ -229,6 +264,9 @@ export const LoginView: React.FC = () => {
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.data?.user) {
+            if (data.data.token) {
+              localStorage.setItem('auth_token', data.data.token);
+            }
             setSuccessMsg(lang === 'kh' ? 'ចូលប្រព័ន្ធជាមួយ Google បានជោគជ័យ!' : 'Logged in successfully with Google!');
             buildUserProfileAndLogin(data.data.user);
           } else {
@@ -237,34 +275,6 @@ export const LoginView: React.FC = () => {
         })
         .catch((err) => {
           setErrorMsg('Google login error: ' + err.message);
-        })
-        .finally(() => {
-          setIsSubmitting(false);
-          window.history.replaceState({}, document.title, window.location.pathname);
-        });
-    } else if (token) {
-      setIsSubmitting(true);
-      setSuccessMsg(lang === 'kh' ? 'កំពុងទាញយកព័ត៌មានគណនី...' : 'Authenticated successfully! Loading profile...');
-
-      fetch('/api/v1/auth/me', {
-        credentials: 'include',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success && data.data) {
-            setSuccessMsg(lang === 'kh' ? 'ចូលប្រព័ន្ធបានជោគជ័យ!' : 'Logged in successfully!');
-            buildUserProfileAndLogin(data.data);
-          } else {
-            setErrorMsg('Failed to initialize session profile.');
-          }
-        })
-        .catch((err) => {
-          setErrorMsg('Authentication error: ' + err.message);
         })
         .finally(() => {
           setIsSubmitting(false);

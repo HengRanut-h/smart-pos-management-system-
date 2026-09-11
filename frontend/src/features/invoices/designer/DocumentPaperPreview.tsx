@@ -102,7 +102,7 @@ export const DocumentPaperPreview: React.FC<DocumentPaperPreviewProps> = ({
           <div className="text-center space-y-1.5 pb-3">
             {layout.show_logo && (
               <div className="flex justify-center pb-1">
-                <SmartPosLogo variant="symbol" size={is58mm ? 'sm' : 'md'} />
+                <SmartPosLogo variant="icon" size={is58mm ? 'sm' : 'md'} />
               </div>
             )}
             <h1 className="font-extrabold text-sm uppercase tracking-wider">

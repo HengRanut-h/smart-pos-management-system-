@@ -208,11 +208,12 @@ export const BackupManagementView: React.FC = () => {
   };
 
   const handleDeleteSnapshot = async (record: BackupRecordItem) => {
+    const fileName = record.filename || (record as any).file_name || '';
     const ok = await confirmDelete({
       title: lang === 'kh' ? 'លុបច្បាប់ចម្លងបម្រុង?' : 'Delete Backup Snapshot?',
       message: lang === 'kh'
-        ? `តើអ្នកពិតជាចង់លុបច្បាប់ចម្លង ${record.backup_code} (${record.file_name}) មែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។`
-        : `Are you sure you want to permanently delete snapshot ${record.backup_code} (${record.file_name})? This action cannot be undone.`,
+        ? `តើអ្នកពិតជាចង់លុបច្បាប់ចម្លង ${record.backup_code} (${fileName}) មែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។`
+        : `Are you sure you want to permanently delete snapshot ${record.backup_code} (${fileName})? This action cannot be undone.`,
       confirmText: lang === 'kh' ? 'យល់ព្រមលុប' : 'Delete Snapshot',
     });
     if (!ok) return;

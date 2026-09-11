@@ -70,6 +70,7 @@ export interface StaffBadgeTemplate {
   branch?: { id: number; name: string; code: string };
   badges_count?: number;
   versions_count?: number;
+  versions?: StaffBadgeTemplateVersion[];
   created_at?: string;
   updated_at?: string;
 }

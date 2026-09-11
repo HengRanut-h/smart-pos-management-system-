@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { ErrorFallbackView } from './presentation/components/ErrorFallbackView';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -10,56 +11,36 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
 class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    this.setState({ errorInfo });
     console.error('Uncaught error in React render tree:', error, errorInfo);
   }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: null, errorInfo: null });
+  };
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-6">
-          <div className="max-w-lg w-full bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center space-x-3 text-rose-400">
-              <span className="text-3xl">⚠️</span>
-              <div>
-                <h1 className="text-xl font-bold">Something went wrong</h1>
-                <p className="text-xs text-slate-400">SmartPOS encountered an unexpected rendering error</p>
-              </div>
-            </div>
-            <div className="p-3 bg-slate-950 rounded-lg text-xs font-mono text-rose-300 overflow-x-auto max-h-48 border border-rose-900/50">
-              {this.state.error?.message || 'Unknown error'}
-            </div>
-            <div className="flex space-x-3 pt-2">
-              <button
-                onClick={() => window.location.reload()}
-                className="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm rounded-xl transition cursor-pointer"
-              >
-                Reload Application
-              </button>
-              <button
-                onClick={() => {
-                  localStorage.clear();
-                  window.location.href = '/';
-                }}
-                className="py-2.5 px-4 bg-slate-700 hover:bg-slate-600 text-slate-300 font-semibold text-sm rounded-xl transition cursor-pointer"
-              >
-                Clear Cache & Reset
-              </button>
-            </div>
-          </div>
-        </div>
+        <ErrorFallbackView
+          error={this.state.error}
+          errorInfo={this.state.errorInfo}
+          onReset={this.handleReset}
+        />
       );
     }
     return this.props.children;

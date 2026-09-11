@@ -17,7 +17,7 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
   onClose,
   onSaved,
 }) => {
-  const { notify } = useApp();
+  const { lang, notify } = useApp();
   const [attributeNames, setAttributeNames] = useState<string[]>(['Size', 'Color']);
   const [attributeValues, setAttributeValues] = useState<Record<string, string[]>>({
     Size: ['S', 'M', 'L', 'XL'],
@@ -113,7 +113,10 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
         default_price: product.selling_price,
       });
 
-      notify.success('Variant matrix generated and saved successfully!', 'Variants Saved');
+      notify.success(
+        lang === 'kh' ? 'បង្កើត និងរក្សាទុកម៉ាទ្រីសវ៉ារ្យ៉ង់ជោគជ័យ!' : 'Variant matrix generated and saved successfully!',
+        'Variants Saved'
+      );
       onSaved();
       onClose();
     } catch (err: any) {
@@ -133,9 +136,11 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
               <Layers className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900">Variant Matrix Generator</h3>
+              <h3 className="text-xl font-bold text-gray-900">
+                {lang === 'kh' ? 'ឧបករណ៍បង្កើតម៉ាទ្រីសវ៉ារ្យ៉ង់' : 'Variant Matrix Generator'}
+              </h3>
               <p className="text-xs text-gray-500">
-                Product: <span className="font-semibold text-indigo-700">{product.name}</span> ({product.sku})
+                {lang === 'kh' ? 'ទំនិញ៖' : 'Product:'} <span className="font-semibold text-indigo-700">{product.name}</span> ({product.sku})
               </p>
             </div>
           </div>
@@ -151,12 +156,12 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
           <div className="bg-gray-50/80 rounded-xl p-4 border border-gray-200/70">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
-                1. Define Attributes & Values
+                {lang === 'kh' ? '១. កំណត់លក្ខណៈ \u0026 តម្លៃ' : '1. Define Attributes \u0026 Values'}
               </h4>
               <div className="flex items-center space-x-2">
                 <input
                   type="text"
-                  placeholder="New Attribute (e.g. Material)"
+                  placeholder={lang === 'kh' ? 'លក្ខណៈថ្មី (ឧ. ពណ៌/ទំហំ)' : 'New Attribute (e.g. Material)'}
                   value={newAttrName}
                   onChange={e => setNewAttrName(e.target.value)}
                   className="px-3 py-1.5 text-xs bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -166,7 +171,7 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
                   className="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg flex items-center space-x-1"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add Attribute</span>
+                  <span>{lang === 'kh' ? 'បន្ថែមលក្ខណៈ' : 'Add Attribute'}</span>
                 </button>
               </div>
             </div>
@@ -179,7 +184,7 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
                     <div className="flex items-center space-x-1.5">
                       <input
                         type="text"
-                        placeholder="Add value..."
+                        placeholder={lang === 'kh' ? 'បន្ថែមតម្លៃ...' : 'Add value...'}
                         value={newAttrValue[attr] || ''}
                         onChange={e => setNewAttrValue({ ...newAttrValue, [attr]: e.target.value })}
                         onKeyDown={e => e.key === 'Enter' && handleAddValue(attr)}
@@ -209,7 +214,9 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
                       </span>
                     ))}
                     {(attributeValues[attr] || []).length === 0 && (
-                      <span className="text-xs text-gray-400 italic">No values added yet</span>
+                      <span className="text-xs text-gray-400 italic">
+                        {lang === 'kh' ? 'មិនទាន់មានតម្លៃត្រូវបានបន្ថែម' : 'No values added yet'}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -223,7 +230,7 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
                 className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold rounded-lg shadow flex items-center space-x-2 transition"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>Auto-Generate Variant Combinations</span>
+                <span>{lang === 'kh' ? 'បង្កើតបន្សំវ៉ារ្យ៉ង់ស្វ័យប្រវត្តិ' : 'Auto-Generate Variant Combinations'}</span>
               </button>
             </div>
           </div>
@@ -231,7 +238,9 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
-                2. Generated Variant Combinations ({generatedVariants.length})
+                {lang === 'kh'
+                  ? `២. បន្សំវ៉ារ្យ៉ង់ដែលបានបង្កើត (${generatedVariants.length})`
+                  : `2. Generated Variant Combinations (${generatedVariants.length})`}
               </h4>
             </div>
 
@@ -240,21 +249,23 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
                 <table className="w-full text-left text-xs text-gray-600">
                   <thead className="bg-gray-100 text-gray-700 font-semibold sticky top-0 uppercase tracking-wider">
                     <tr>
-                      <th className="px-3 py-2.5">Variant Name</th>
+                      <th className="px-3 py-2.5">{lang === 'kh' ? 'ឈ្មោះវ៉ារ្យ៉ង់' : 'Variant Name'}</th>
                       <th className="px-3 py-2.5">SKU</th>
-                      <th className="px-3 py-2.5">Barcode</th>
-                      <th className="px-3 py-2.5">Cost ($)</th>
-                      <th className="px-3 py-2.5">Selling Price ($)</th>
-                      <th className="px-3 py-2.5">Stock</th>
-                      <th className="px-3 py-2.5 text-center">Status</th>
-                      <th className="px-3 py-2.5 text-right">Action</th>
+                      <th className="px-3 py-2.5">{lang === 'kh' ? 'បាកូដ' : 'Barcode'}</th>
+                      <th className="px-3 py-2.5">{lang === 'kh' ? 'ថ្លៃដើម ($)' : 'Cost ($)'}</th>
+                      <th className="px-3 py-2.5">{lang === 'kh' ? 'តម្លៃលក់ ($)' : 'Selling Price ($)'}</th>
+                      <th className="px-3 py-2.5">{lang === 'kh' ? 'ស្តុក' : 'Stock'}</th>
+                      <th className="px-3 py-2.5 text-center">{lang === 'kh' ? 'ស្ថានភាព' : 'Status'}</th>
+                      <th className="px-3 py-2.5 text-right">{lang === 'kh' ? 'សកម្មភាព' : 'Action'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {generatedVariants.length === 0 ? (
                       <tr>
                         <td colSpan={8} className="text-center py-8 text-gray-400 italic">
-                          Click "Auto-Generate Variant Combinations" to produce the variant grid.
+                          {lang === 'kh'
+                            ? 'ចុច "បង្កើតបន្សំវ៉ារ្យ៉ង់ស្វ័យប្រវត្តិ" ដើម្បីបង្កើតតារាងវ៉ារ្យ៉ង់'
+                            : 'Click "Auto-Generate Variant Combinations" to produce the variant grid.'}
                         </td>
                       </tr>
                     ) : (
@@ -312,7 +323,7 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
                           </td>
                           <td className="px-3 py-2 text-center">
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800">
-                              Active
+                              {lang === 'kh' ? 'សកម្ម' : 'Active'}
                             </span>
                           </td>
                           <td className="px-3 py-2 text-right">
@@ -337,14 +348,16 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
 
         <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
           <span className="text-xs text-gray-500">
-            {generatedVariants.length} variants ready to save
+            {lang === 'kh'
+              ? `${generatedVariants.length} វ៉ារ្យ៉ង់ត្រៀមខ្លួនសម្រាប់រក្សាទុក`
+              : `${generatedVariants.length} variants ready to save`}
           </span>
           <div className="flex items-center space-x-3">
             <button
               onClick={onClose}
               className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-200 rounded-lg"
             >
-              Cancel
+              {lang === 'kh' ? 'បោះបង់' : 'Cancel'}
             </button>
             <button
               onClick={handleSaveVariants}
@@ -352,7 +365,11 @@ export const VariantMatrixModal: React.FC<VariantMatrixModalProps> = ({
               className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-lg shadow-md flex items-center space-x-1.5"
             >
               <Check className="w-4 h-4" />
-              <span>{isSaving ? 'Saving...' : 'Apply & Save Matrix'}</span>
+              <span>
+                {isSaving
+                  ? (lang === 'kh' ? 'កំពុងរក្សាទុក...' : 'Saving...')
+                  : (lang === 'kh' ? 'អនុវត្ត \u0026 រក្សាទុកម៉ាទ្រីស' : 'Apply \u0026 Save Matrix')}
+              </span>
             </button>
           </div>
         </div>

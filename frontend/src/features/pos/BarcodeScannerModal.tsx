@@ -644,7 +644,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               <p className="text-xs font-semibold text-rose-300">{cameraError}</p>
               <button
                 type="button"
-                onClick={startScanner}
+                onClick={() => startScanner()}
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 mx-auto"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
